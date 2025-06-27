@@ -16,6 +16,16 @@ import AdminProjects from "./pages/admin/AdminProjects";
 import AdminQuotes from "./pages/admin/AdminQuotes";
 import AdminInvoices from "./pages/admin/AdminInvoices";
 import NotFound from "./pages/NotFound";
+import Team from "./pages/Team";
+import Testimonials from "./pages/Testimonials";
+import Gallery from "./pages/Gallery";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
+import Career from "./pages/Career";
+import FAQ from "./pages/FAQ";
+import Portfolio from "./pages/Portfolio";
+import Pricing from "./pages/Pricing";
+import ServiceDetail from "./pages/ServiceDetail";
 
 const queryClient = new QueryClient();
 
@@ -29,10 +39,20 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/about" element={<About />} />
           <Route path="/services" element={<Services />} />
+          <Route path="/services/:id" element={<ServiceDetail />} />
           <Route path="/projects" element={<Projects />} />
+          <Route path="/portfolio" element={<Portfolio />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/request-quote" element={<RequestQuote />} />
           <Route path="/book-visit" element={<BookVisit />} />
+          <Route path="/team" element={<Team />} />
+          <Route path="/testimonials" element={<Testimonials />} />
+          <Route path="/gallery" element={<Gallery />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
+          <Route path="/career" element={<Career />} />
+          <Route path="/faq" element={<FAQ />} />
+          <Route path="/pricing" element={<Pricing />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/projects" element={<AdminProjects />} />
           <Route path="/admin/quotes" element={<AdminQuotes />} />
