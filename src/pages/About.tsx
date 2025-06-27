@@ -2,8 +2,7 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Users, Award, Target } from "lucide-react";
+import { CheckCircle, Users, Award, Target, Phone, Mail, MapPin } from "lucide-react";
 
 const About = () => {
   const values = [
@@ -25,15 +24,33 @@ const About = () => {
     {
       icon: <Target className="w-8 h-8 text-orange-500" />,
       title: "Innovation",
-      description: "Embracing modern construction techniques and sustainable practices"
+      description: "Embracing modern engineering techniques and sustainable practices"
     }
   ];
 
   const certifications = [
-    "NCA (National Construction Authority) Certified",
+    "National Construction Authority (NCA) Certified",
     "ISO 9001:2015 Quality Management",
     "OSHA Safety Standards Compliant",
-    "Green Building Council Member"
+    "Kenya Association of Building and Civil Engineering Contractors Member"
+  ];
+
+  const teamMembers = [
+    {
+      name: "Eng. Samuel Akibeki",
+      role: "Chief Executive Officer",
+      description: "15+ years in civil and structural engineering"
+    },
+    {
+      name: "Eng. Mary Wanjiku",
+      role: "Project Manager",
+      description: "Specialist in project coordination and quality control"
+    },
+    {
+      name: "John Mwangi",
+      role: "Site Supervisor",
+      description: "Expert in construction supervision and safety management"
+    }
   ];
 
   return (
@@ -44,7 +61,7 @@ const About = () => {
       <section className="bg-gradient-to-r from-blue-900 to-blue-800 text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">About BuildCorp</h1>
+            <h1 className="text-4xl md:text-6xl font-bold mb-6">About AKIBEKS</h1>
             <p className="text-xl md:text-2xl max-w-3xl mx-auto">
               Building Kenya's future with excellence, integrity, and innovation for over 15 years
             </p>
@@ -59,14 +76,14 @@ const About = () => {
             <div>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Our Story</h2>
               <p className="text-lg text-gray-600 mb-6">
-                Founded in 2008, BuildCorp has grown from a small local contractor to one of Kenya's 
-                most trusted construction companies. We specialize in residential, commercial, and 
-                infrastructure projects across the country.
+                Founded in 2008, AKIBEKS Engineering Solutions has grown from a small local contractor 
+                to one of Kenya's most trusted engineering and construction companies. We specialize in 
+                residential, commercial, and infrastructure projects across the country.
               </p>
               <p className="text-lg text-gray-600 mb-6">
                 Our commitment to quality, timely delivery, and customer satisfaction has earned us 
                 recognition from clients and industry peers alike. We take pride in transforming 
-                visions into reality.
+                visions into reality through innovative engineering solutions.
               </p>
               <div className="grid grid-cols-2 gap-4">
                 <div className="text-center">
@@ -79,7 +96,12 @@ const About = () => {
                 </div>
               </div>
             </div>
-            <div className="w-full h-96 bg-gray-200 rounded-lg"></div>
+            <div className="w-full h-96 bg-gradient-to-br from-blue-100 to-orange-100 rounded-lg flex items-center justify-center">
+              <div className="text-center p-8">
+                <div className="text-6xl font-bold text-orange-500 mb-4">AKIBEKS</div>
+                <div className="text-xl text-gray-600">Engineering Solutions</div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -94,9 +116,9 @@ const About = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600 text-center">
-                  To deliver exceptional construction services that exceed client expectations 
-                  while contributing to Kenya's infrastructural development through innovation, 
-                  quality, and sustainable practices.
+                  To deliver exceptional engineering and construction services that exceed client 
+                  expectations while contributing to Kenya's infrastructural development through 
+                  innovation, quality, and sustainable practices.
                 </p>
               </CardContent>
             </Card>
@@ -106,9 +128,9 @@ const About = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600 text-center">
-                  To be the leading construction company in East Africa, known for transforming 
-                  communities through world-class infrastructure and creating lasting value for 
-                  all stakeholders.
+                  To be the leading engineering solutions company in East Africa, known for 
+                  transforming communities through world-class infrastructure and creating 
+                  lasting value for all stakeholders.
                 </p>
               </CardContent>
             </Card>
@@ -140,6 +162,31 @@ const About = () => {
         </div>
       </section>
 
+      {/* Team Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Our Leadership Team</h2>
+            <p className="text-xl text-gray-600">Experienced professionals driving our success</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {teamMembers.map((member, index) => (
+              <Card key={index} className="text-center">
+                <CardContent className="p-6">
+                  <div className="w-24 h-24 bg-orange-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+                    <span className="text-2xl font-bold text-white">{member.name.split(' ').map(n => n[0]).join('')}</span>
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">{member.name}</h3>
+                  <p className="text-orange-600 font-medium mb-3">{member.role}</p>
+                  <p className="text-gray-600">{member.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Certifications */}
       <section className="py-16 bg-blue-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -155,6 +202,34 @@ const About = () => {
                 <span className="text-lg">{cert}</span>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Contact Info */}
+      <section className="py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Get In Touch</h2>
+            <p className="text-xl text-gray-600">Ready to discuss your project?</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <Phone className="w-12 h-12 text-orange-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Call Us</h3>
+              <p className="text-gray-600">+254 710 245 118</p>
+            </div>
+            <div className="text-center">
+              <Mail className="w-12 h-12 text-orange-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Email Us</h3>
+              <p className="text-gray-600">info@akibeks.co.ke</p>
+            </div>
+            <div className="text-center">
+              <MapPin className="w-12 h-12 text-orange-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Visit Us</h3>
+              <p className="text-gray-600">Nairobi, Kenya</p>
+            </div>
           </div>
         </div>
       </section>

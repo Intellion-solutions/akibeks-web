@@ -1,4 +1,5 @@
 
+import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,89 +7,100 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "react-router-dom";
-import { MapPin, Calendar, ArrowRight } from "lucide-react";
+import { MapPin, Calendar, ArrowRight, DollarSign, Clock } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+
+interface Project {
+  id: string;
+  title: string;
+  description: string;
+  location: string;
+  status: string;
+  budget: number;
+  start_date: string;
+  end_date: string;
+  progress_percentage: number;
+  clients: {
+    full_name: string;
+  };
+}
 
 const Projects = () => {
-  const projects = [
-    {
-      id: 1,
-      title: "Luxury Villa - Karen",
-      location: "Karen, Nairobi",
-      type: "Residential",
-      status: "Completed",
-      budget: "KSh 12M",
-      completionDate: "Dec 2023",
-      description: "Modern 4-bedroom villa with swimming pool and landscaped gardens",
-      image: "/placeholder.svg"
-    },
-    {
-      id: 2,
-      title: "Commercial Complex - Westlands",
-      location: "Westlands, Nairobi",
-      type: "Commercial",
-      status: "Ongoing",
-      budget: "KSh 45M",
-      completionDate: "Jun 2024",
-      description: "5-story office complex with retail spaces on ground floor",
-      image: "/placeholder.svg"
-    },
-    {
-      id: 3,
-      title: "Residential Estate - Kiambu",
-      location: "Kiambu County",
-      type: "Residential",
-      status: "Completed",
-      budget: "KSh 80M",
-      completionDate: "Sep 2023",
-      description: "50-unit gated community with modern amenities",
-      image: "/placeholder.svg"
-    },
-    {
-      id: 4,
-      title: "School Infrastructure - Machakos",
-      location: "Machakos County",
-      type: "Infrastructure",
-      status: "Completed",
-      budget: "KSh 25M",
-      completionDate: "Mar 2023",
-      description: "Primary school with 12 classrooms, library, and laboratory",
-      image: "/placeholder.svg"
-    },
-    {
-      id: 5,
-      title: "Industrial Warehouse - Mombasa",
-      location: "Mombasa",
-      type: "Industrial",
-      status: "Ongoing",
-      budget: "KSh 35M",
-      completionDate: "Aug 2024",
-      description: "Large-scale warehouse facility with loading docks",
-      image: "/placeholder.svg"
-    },
-    {
-      id: 6,
-      title: "Hospital Extension - Kisumu",
-      location: "Kisumu County",
-      type: "Healthcare",
-      status: "Planning",
-      budget: "KSh 60M",
-      completionDate: "Dec 2024",
-      description: "Additional wing with 100 beds and modern medical equipment",
-      image: "/placeholder.svg"
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  useEffect(() => {
+    if (statusFilter === "all") {
+      setFilteredProjects(projects);
+    } else {
+      setFilteredProjects(projects.filter(project => project.status === statusFilter));
     }
-  ];
+  }, [projects, statusFilter]);
+
+  const fetchProjects = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select(`
+          *,
+          clients (
+            full_name
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setProjects(data || []);
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "Completed":
+      case "completed":
         return "bg-green-100 text-green-800";
-      case "Ongoing":
+      case "in_progress":
         return "bg-blue-100 text-blue-800";
-      case "Planning":
+      case "planning":
         return "bg-yellow-100 text-yellow-800";
+      case "on_hold":
+        return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
+  };
+
+  const formatStatus = (status: string) => {
+    return status.split('_').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-KE', {
+      style: 'currency',
+      currency: 'KES',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'TBD';
+    return new Date(dateString).toLocaleDateString('en-GB', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
   return (
@@ -101,7 +113,7 @@ const Projects = () => {
           <div className="text-center">
             <h1 className="text-4xl md:text-6xl font-bold mb-6">Our Projects</h1>
             <p className="text-xl md:text-2xl max-w-3xl mx-auto">
-              Explore our portfolio of successful construction projects across Kenya
+              Explore our portfolio of successful engineering projects across Kenya
             </p>
           </div>
         </div>
@@ -110,44 +122,17 @@ const Projects = () => {
       {/* Filters */}
       <section className="py-8 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap gap-4 justify-center">
-            <Select>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Filter by Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Projects</SelectItem>
-                <SelectItem value="residential">Residential</SelectItem>
-                <SelectItem value="commercial">Commercial</SelectItem>
-                <SelectItem value="infrastructure">Infrastructure</SelectItem>
-                <SelectItem value="industrial">Industrial</SelectItem>
-                <SelectItem value="healthcare">Healthcare</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            <Select>
+          <div className="flex justify-center">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="Filter by Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="all">All Projects</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="ongoing">Ongoing</SelectItem>
+                <SelectItem value="in_progress">In Progress</SelectItem>
                 <SelectItem value="planning">Planning</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            <Select>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Filter by Location" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Locations</SelectItem>
-                <SelectItem value="nairobi">Nairobi</SelectItem>
-                <SelectItem value="kiambu">Kiambu</SelectItem>
-                <SelectItem value="mombasa">Mombasa</SelectItem>
-                <SelectItem value="kisumu">Kisumu</SelectItem>
-                <SelectItem value="machakos">Machakos</SelectItem>
+                <SelectItem value="on_hold">On Hold</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -157,38 +142,73 @@ const Projects = () => {
       {/* Projects Grid */}
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {projects.map((project) => (
-              <Card key={project.id} className="hover:shadow-lg transition-shadow overflow-hidden">
-                <div className="w-full h-48 bg-gray-200"></div>
-                <CardHeader>
-                  <div className="flex justify-between items-start mb-2">
-                    <CardTitle className="text-lg">{project.title}</CardTitle>
-                    <Badge className={getStatusColor(project.status)}>
-                      {project.status}
-                    </Badge>
-                  </div>
-                  <CardDescription>{project.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2 text-sm text-gray-600">
-                    <div className="flex items-center">
-                      <MapPin className="w-4 h-4 mr-2" />
-                      {project.location}
-                    </div>
-                    <div className="flex items-center">
-                      <Calendar className="w-4 h-4 mr-2" />
-                      {project.completionDate}
-                    </div>
-                    <div className="flex justify-between items-center mt-4">
-                      <span className="font-semibold text-orange-600">{project.budget}</span>
-                      <Badge variant="outline">{project.type}</Badge>
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="text-lg">Loading projects...</div>
+            </div>
+          ) : filteredProjects.length === 0 ? (
+            <div className="text-center py-12">
+              <h3 className="text-2xl font-semibold text-gray-900 mb-4">No Projects Found</h3>
+              <p className="text-gray-600 mb-8">We haven't added any projects yet, but we're working on exciting new developments!</p>
+              <Button asChild>
+                <Link to="/request-quote">Start Your Project</Link>
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredProjects.map((project) => (
+                <Card key={project.id} className="hover:shadow-lg transition-shadow overflow-hidden">
+                  <div className="w-full h-48 bg-gradient-to-br from-blue-100 to-orange-100 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-orange-600 mb-2">{project.progress_percentage}%</div>
+                      <div className="text-sm text-gray-600">Complete</div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  <CardHeader>
+                    <div className="flex justify-between items-start mb-2">
+                      <CardTitle className="text-lg">{project.title}</CardTitle>
+                      <Badge className={getStatusColor(project.status)}>
+                        {formatStatus(project.status)}
+                      </Badge>
+                    </div>
+                    <CardDescription>{project.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 text-sm text-gray-600">
+                      <div className="flex items-center">
+                        <MapPin className="w-4 h-4 mr-2" />
+                        {project.location}
+                      </div>
+                      {project.clients && (
+                        <div className="flex items-center">
+                          <DollarSign className="w-4 h-4 mr-2" />
+                          Client: {project.clients.full_name}
+                        </div>
+                      )}
+                      <div className="flex items-center">
+                        <Calendar className="w-4 h-4 mr-2" />
+                        {formatDate(project.start_date)} - {formatDate(project.end_date)}
+                      </div>
+                      {project.budget && (
+                        <div className="flex items-center">
+                          <Clock className="w-4 h-4 mr-2" />
+                          Budget: {formatCurrency(project.budget)}
+                        </div>
+                      )}
+                      <div className="mt-4">
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-orange-500 h-2 rounded-full" 
+                            style={{ width: `${project.progress_percentage}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
