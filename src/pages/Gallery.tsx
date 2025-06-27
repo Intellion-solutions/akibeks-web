@@ -80,7 +80,7 @@ const Gallery = () => {
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-gray-900 to-gray-700 text-white py-20 relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-0 left-0 w-full h-full bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="4"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]"></div>
+          <div className="absolute top-0 left-0 w-full h-full bg-[url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%23ffffff\" fill-opacity=\"0.1\"%3E%3Ccircle cx=\"30\" cy=\"30\" r=\"4\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]"></div>
         </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center">
@@ -140,11 +140,11 @@ const Gallery = () => {
                         <h3 className="text-xl font-semibold mb-2 group-hover:text-orange-600 transition-colors">
                           {project.title}
                         </h3>
-                        <p className="text-gray-600 mb-4 line-clamp-2">{project.description}</p>
+                        <p className="text-gray-600 mb-4 line-clamp-2">{project.description || 'No description available'}</p>
                         <div className="flex items-center text-sm text-gray-500 space-x-4">
                           <div className="flex items-center">
                             <MapPin className="w-4 h-4 mr-1" />
-                            {project.location}
+                            {project.location || 'Location not specified'}
                           </div>
                           <div className="flex items-center">
                             <Calendar className="w-4 h-4 mr-1" />
@@ -155,10 +155,10 @@ const Gallery = () => {
                           <div className="w-full bg-gray-200 rounded-full h-2">
                             <div 
                               className="bg-orange-500 h-2 rounded-full transition-all duration-1000" 
-                              style={{ width: `${project.progress_percentage}%` }}
+                              style={{ width: `${project.progress_percentage || 0}%` }}
                             ></div>
                           </div>
-                          <p className="text-sm text-gray-600 mt-1">{project.progress_percentage}% Complete</p>
+                          <p className="text-sm text-gray-600 mt-1">{project.progress_percentage || 0}% Complete</p>
                         </div>
                       </CardContent>
                     </Card>
@@ -174,11 +174,11 @@ const Gallery = () => {
                       </div>
                       <div>
                         <h2 className="text-2xl font-bold mb-4">{project.title}</h2>
-                        <p className="text-gray-600 mb-4">{project.description}</p>
+                        <p className="text-gray-600 mb-4">{project.description || 'No description available'}</p>
                         <div className="space-y-2">
                           <div className="flex items-center">
                             <MapPin className="w-4 h-4 mr-2 text-orange-500" />
-                            <span>{project.location}</span>
+                            <span>{project.location || 'Location not specified'}</span>
                           </div>
                           <div className="flex items-center">
                             <Calendar className="w-4 h-4 mr-2 text-orange-500" />
@@ -193,10 +193,10 @@ const Gallery = () => {
                             <div className="w-full bg-gray-200 rounded-full h-3">
                               <div 
                                 className="bg-orange-500 h-3 rounded-full" 
-                                style={{ width: `${project.progress_percentage}%` }}
+                                style={{ width: `${project.progress_percentage || 0}%` }}
                               ></div>
                             </div>
-                            <p className="text-sm text-gray-600 mt-1">{project.progress_percentage}% Complete</p>
+                            <p className="text-sm text-gray-600 mt-1">{project.progress_percentage || 0}% Complete</p>
                           </div>
                         </div>
                       </div>

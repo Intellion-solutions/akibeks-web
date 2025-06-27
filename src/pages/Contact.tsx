@@ -360,7 +360,7 @@ const Contact = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="w-full h-64 bg-gradient-to-br from-blue-100 to-orange-100 rounded-lg mb-4 flex items-center justify-center relative overflow-hidden">
-                    <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23000000" fill-opacity="0.05"%3E%3Cpath d="M20 20c0-5.5-4.5-10-10-10s-10 4.5-10 10 4.5 10 10 10 10-4.5 10-10zm10 0c0-5.5-4.5-10-10-10s-10 4.5-10 10 4.5 10 10 10 10-4.5 10-10z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]"></div>
+                    <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\"40\" height=\"40\" viewBox=\"0 0 40 40\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%23000000\" fill-opacity=\"0.05\"%3E%3Cpath d=\"M20 20c0-5.5-4.5-10-10-10s-10 4.5-10 10 4.5 10 10 10 10-4.5 10-10zm10 0c0-5.5-4.5-10-10-10s-10 4.5-10 10 4.5 10 10 10 10-4.5 10-10z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]"></div>
                     <div className="text-center z-10">
                       <MapPin className="w-12 h-12 text-orange-500 mx-auto mb-2 animate-bounce" />
                       <p className="text-gray-700 font-semibold">Interactive Map Coming Soon</p>
@@ -400,46 +400,6 @@ const Contact = () => {
                 </CardContent>
               </Card>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ Section */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h2>
-            <p className="text-xl text-gray-600">Quick answers to common questions</p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {[
-              {
-                q: "How long does a typical project take?",
-                a: "Project timelines vary based on scope and complexity. Residential projects typically take 3-6 months, while commercial projects can take 6-18 months."
-              },
-              {
-                q: "Do you provide free estimates?",
-                a: "Yes, we provide free initial consultations and estimates for all projects. Detailed quotes are provided after site visits and requirement analysis."
-              },
-              {
-                q: "Are you licensed and insured?",
-                a: "Absolutely! We are fully licensed by the National Construction Authority (NCA) and carry comprehensive insurance coverage for all our projects."
-              },
-              {
-                q: "What areas do you serve?",
-                a: "We serve clients across Kenya, with primary focus on Nairobi, Central Kenya, and Coast regions. Contact us to confirm service availability in your area."
-              }
-            ].map((faq, index) => (
-              <Card key={index} className="hover:shadow-lg transition-all duration-300">
-                <CardHeader>
-                  <CardTitle className="text-lg">{faq.q}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600">{faq.a}</p>
-                </CardContent>
-              </Card>
-            ))}
           </div>
         </div>
       </section>

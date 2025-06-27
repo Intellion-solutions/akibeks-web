@@ -12,7 +12,10 @@ import {
   TrendingUp,
   Building,
   Clock,
-  CheckCircle
+  CheckCircle,
+  Settings,
+  BarChart3,
+  FileTemplate
 } from "lucide-react";
 
 const AdminDashboard = () => {
@@ -39,6 +42,51 @@ const AdminDashboard = () => {
     { id: 3, name: "Karen Villa", progress: 30, deadline: "2024-02-28", status: "delayed" },
   ];
 
+  const adminModules = [
+    {
+      title: "Projects",
+      description: "Manage all construction projects",
+      icon: Building,
+      link: "/admin/projects",
+      color: "bg-blue-500"
+    },
+    {
+      title: "Quotes",
+      description: "Review and manage quote requests",
+      icon: FileText,
+      link: "/admin/quotes",
+      color: "bg-green-500"
+    },
+    {
+      title: "Invoices",
+      description: "Generate and manage invoices",
+      icon: DollarSign,
+      link: "/admin/invoices",
+      color: "bg-yellow-500"
+    },
+    {
+      title: "Reports",
+      description: "Analytics and business insights",
+      icon: BarChart3,
+      link: "/admin/reports",
+      color: "bg-purple-500"
+    },
+    {
+      title: "Templates",
+      description: "Manage document templates",
+      icon: FileTemplate,
+      link: "/admin/templates",
+      color: "bg-orange-500"
+    },
+    {
+      title: "Settings",
+      description: "System and company settings",
+      icon: Settings,
+      link: "/admin/settings",
+      color: "bg-gray-500"
+    }
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -46,7 +94,7 @@ const AdminDashboard = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+              <h1 className="text-2xl font-bold text-gray-900">AKIBEKS Admin Dashboard</h1>
               <p className="text-gray-600">Welcome back! Here's what's happening with your projects.</p>
             </div>
             <div className="flex space-x-3">
@@ -64,7 +112,7 @@ const AdminDashboard = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
+          <Card className="hover:shadow-lg transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Projects</CardTitle>
               <Building className="h-4 w-4 text-muted-foreground" />
@@ -77,7 +125,7 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="hover:shadow-lg transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Active Projects</CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
@@ -90,7 +138,7 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="hover:shadow-lg transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -103,7 +151,7 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="hover:shadow-lg transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Pending Quotes</CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
@@ -117,6 +165,30 @@ const AdminDashboard = () => {
           </Card>
         </div>
 
+        {/* Admin Modules Grid */}
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold mb-4">Administration Modules</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {adminModules.map((module) => (
+              <Card key={module.title} className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                <CardContent className="p-6">
+                  <Link to={module.link} className="block">
+                    <div className="flex items-center space-x-4">
+                      <div className={`p-3 rounded-lg ${module.color}`}>
+                        <module.icon className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-lg">{module.title}</h4>
+                        <p className="text-gray-600 text-sm">{module.description}</p>
+                      </div>
+                    </div>
+                  </Link>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Recent Quotes */}
           <Card>
@@ -127,7 +199,7 @@ const AdminDashboard = () => {
             <CardContent>
               <div className="space-y-4">
                 {recentQuotes.map((quote) => (
-                  <div key={quote.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div key={quote.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors">
                     <div>
                       <div className="font-medium">{quote.client}</div>
                       <div className="text-sm text-gray-600">{quote.project}</div>
@@ -161,7 +233,7 @@ const AdminDashboard = () => {
             <CardContent>
               <div className="space-y-4">
                 {activeProjects.map((project) => (
-                  <div key={project.id} className="p-3 border rounded-lg">
+                  <div key={project.id} className="p-3 border rounded-lg hover:bg-gray-50 transition-colors">
                     <div className="flex items-center justify-between mb-2">
                       <div className="font-medium">{project.name}</div>
                       <Badge 
@@ -172,7 +244,7 @@ const AdminDashboard = () => {
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
                       <div 
-                        className="bg-orange-500 h-2 rounded-full" 
+                        className="bg-orange-500 h-2 rounded-full transition-all duration-1000" 
                         style={{ width: `${project.progress}%` }}
                       ></div>
                     </div>
@@ -190,31 +262,6 @@ const AdminDashboard = () => {
               </div>
             </CardContent>
           </Card>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="mt-8">
-          <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button className="h-20 flex flex-col space-y-2" asChild>
-              <Link to="/admin/quotes">
-                <FileText className="w-6 h-6" />
-                <span>Review Quotes</span>
-              </Link>
-            </Button>
-            <Button variant="outline" className="h-20 flex flex-col space-y-2" asChild>
-              <Link to="/admin/invoices">
-                <DollarSign className="w-6 h-6" />
-                <span>Generate Invoice</span>
-              </Link>
-            </Button>
-            <Button variant="outline" className="h-20 flex flex-col space-y-2" asChild>
-              <Link to="/admin/projects">
-                <Building className="w-6 h-6" />
-                <span>New Project</span>
-              </Link>
-            </Button>
-          </div>
         </div>
       </div>
     </div>
