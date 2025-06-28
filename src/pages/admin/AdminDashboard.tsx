@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -153,17 +152,17 @@ const AdminDashboard = () => {
         {/* Admin Modules Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
           {adminModules.map((module, index) => (
-            <Card key={index} className={`cursor-pointer transition-all duration-200 ${module.color}`}>
-              <CardContent className="p-6" asChild>
-                <a href={module.path}>
+            <a key={index} href={module.path}>
+              <Card className={`cursor-pointer transition-all duration-200 ${module.color}`}>
+                <CardContent className="p-6">
                   <div className="text-center">
                     <module.icon className="w-12 h-12 mx-auto mb-4 text-gray-700" />
                     <h3 className="font-semibold text-gray-900 mb-2">{module.title}</h3>
                     <p className="text-sm text-gray-600 leading-relaxed">{module.description}</p>
                   </div>
-                </a>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </a>
           ))}
         </div>
 
