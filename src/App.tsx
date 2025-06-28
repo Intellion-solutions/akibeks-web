@@ -21,6 +21,8 @@ import AdminTemplates from "./pages/admin/AdminTemplates";
 import AdminReports from "./pages/admin/AdminReports";
 import AdminClients from "./pages/admin/AdminClients";
 import AdminUsers from "./pages/admin/AdminUsers";
+import AdminAnalytics from "./pages/admin/AdminAnalytics";
+import AdminBackup from "./pages/admin/AdminBackup";
 import NotFound from "./pages/NotFound";
 import Team from "./pages/Team";
 import Testimonials from "./pages/Testimonials";
@@ -71,6 +73,8 @@ const App = () => (
             <Route path="/admin/settings" element={<AdminSettings />} />
             <Route path="/admin/templates" element={<AdminTemplates />} />
             <Route path="/admin/reports" element={<AdminReports />} />
+            <Route path="/admin/analytics" element={<AdminAnalytics />} />
+            <Route path="/admin/backup" element={<AdminBackup />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

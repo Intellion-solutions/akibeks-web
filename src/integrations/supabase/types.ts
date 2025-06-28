@@ -627,6 +627,87 @@ export type Database = {
           },
         ]
       }
+      template_items: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string
+          id: string
+          item_number: number
+          quantity: number
+          template_id: string
+          unit: string | null
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          description: string
+          id?: string
+          item_number: number
+          quantity?: number
+          template_id: string
+          unit?: string | null
+          unit_price?: number
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string
+          id?: string
+          item_number?: number
+          quantity?: number
+          template_id?: string
+          unit?: string | null
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      template_settings: {
+        Row: {
+          created_at: string
+          grand_total: number | null
+          id: string
+          labor_charge: number | null
+          material_cost: number | null
+          notes: string | null
+          tax_amount: number | null
+          template_id: string
+          template_name: string
+          terms_conditions: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          grand_total?: number | null
+          id?: string
+          labor_charge?: number | null
+          material_cost?: number | null
+          notes?: string | null
+          tax_amount?: number | null
+          template_id: string
+          template_name: string
+          terms_conditions?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          grand_total?: number | null
+          id?: string
+          labor_charge?: number | null
+          material_cost?: number | null
+          notes?: string | null
+          tax_amount?: number | null
+          template_id?: string
+          template_name?: string
+          terms_conditions?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       testimonials: {
         Row: {
           client_name: string
