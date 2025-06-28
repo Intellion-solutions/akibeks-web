@@ -18,6 +18,8 @@ import AdminInvoices from "./pages/admin/AdminInvoices";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminTemplates from "./pages/admin/AdminTemplates";
 import AdminReports from "./pages/admin/AdminReports";
+import AdminClients from "./pages/admin/AdminClients";
+import AdminUsers from "./pages/admin/AdminUsers";
 import NotFound from "./pages/NotFound";
 import Team from "./pages/Team";
 import Testimonials from "./pages/Testimonials";
@@ -60,6 +62,8 @@ const App = () => (
           <Route path="/admin/projects" element={<AdminProjects />} />
           <Route path="/admin/quotes" element={<AdminQuotes />} />
           <Route path="/admin/invoices" element={<AdminInvoices />} />
+          <Route path="/admin/clients" element={<AdminClients />} />
+          <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/admin/settings" element={<AdminSettings />} />
           <Route path="/admin/templates" element={<AdminTemplates />} />
           <Route path="/admin/reports" element={<AdminReports />} />
