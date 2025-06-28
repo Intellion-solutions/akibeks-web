@@ -5,28 +5,58 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { ArrowRight, CheckCircle, Users, Calendar, FileText } from "lucide-react";
+import Logo from "@/components/Logo";
+import { 
+  ArrowRight, 
+  CheckCircle, 
+  Users, 
+  Calendar, 
+  FileText,
+  Award,
+  Shield,
+  Clock,
+  MapPin,
+  Phone,
+  Mail,
+  Star,
+  TrendingUp,
+  Wrench,
+  Building,
+  Hammer,
+  Lightbulb,
+  Target,
+  Globe,
+  HeartHandshake
+} from "lucide-react";
 
 const services = [
   {
-    title: "House Construction",
-    description: "Complete residential construction from foundation to finishing",
-    image: "/placeholder.svg"
+    title: "Residential Construction",
+    description: "Complete home construction from foundation to finishing with modern designs",
+    image: "/placeholder.svg",
+    icon: Building,
+    features: ["Custom Design", "Quality Materials", "Timely Delivery"]
   },
   {
-    title: "Civil Works",
-    description: "Infrastructure development and civil engineering projects",
-    image: "/placeholder.svg"
+    title: "Commercial Projects",
+    description: "Office buildings, retail spaces, and commercial infrastructure development",
+    image: "/placeholder.svg",
+    icon: Building,
+    features: ["Professional Standards", "Code Compliance", "Project Management"]
   },
   {
-    title: "Renovation",
-    description: "Transform existing spaces with modern upgrades",
-    image: "/placeholder.svg"
+    title: "Civil Engineering",
+    description: "Infrastructure development and civil engineering solutions",
+    image: "/placeholder.svg",
+    icon: Wrench,
+    features: ["Site Planning", "Structural Design", "Environmental Compliance"]
   },
   {
-    title: "Project Management",
-    description: "End-to-end project coordination and supervision",
-    image: "/placeholder.svg"
+    title: "Renovation & Remodeling",
+    description: "Transform existing spaces with modern upgrades and improvements",
+    image: "/placeholder.svg",
+    icon: Hammer,
+    features: ["Space Optimization", "Modern Upgrades", "Cost Effective"]
   }
 ];
 
@@ -34,20 +64,107 @@ const testimonials = [
   {
     name: "John Kimani",
     role: "Homeowner",
-    content: "BuildCorp delivered our dream home on time and within budget. Exceptional quality!",
-    rating: 5
+    company: "Private Client",
+    content: "AKIBEKS delivered our dream home on time and within budget. The attention to detail and quality of work exceeded our expectations. Highly professional team!",
+    rating: 5,
+    project: "3-Bedroom Villa"
   },
   {
     name: "Sarah Mwangi",
-    role: "Business Owner",
-    content: "Professional team, excellent communication, and outstanding results on our office complex.",
-    rating: 5
+    role: "Operations Manager",
+    company: "Tech Innovations Ltd",
+    content: "Outstanding work on our office complex. The team maintained excellent communication throughout the project and delivered exceptional results.",
+    rating: 5,
+    project: "Office Complex"
   },
   {
     name: "David Ochieng",
-    role: "Developer",
-    content: "Reliable partner for all our construction projects. Highly recommended!",
-    rating: 5
+    role: "Property Developer",
+    company: "Ochieng Properties",
+    content: "Reliable partner for all our construction projects. Their expertise in both residential and commercial construction is unmatched in Kenya.",
+    rating: 5,
+    project: "Mixed Development"
+  },
+  {
+    name: "Grace Wanjiku",
+    role: "Business Owner",
+    company: "Wanjiku Enterprises",
+    content: "The renovation of our retail space was completed perfectly. AKIBEKS understood our vision and brought it to life while staying within our budget.",
+    rating: 5,
+    project: "Retail Space Renovation"
+  }
+];
+
+const achievements = [
+  { number: "500+", label: "Projects Completed", icon: Target },
+  { number: "15+", label: "Years Experience", icon: Award },
+  { number: "50+", label: "Expert Team", icon: Users },
+  { number: "100%", label: "Client Satisfaction", icon: Star }
+];
+
+const whyChooseUs = [
+  {
+    icon: Shield,
+    title: "Licensed & Insured",
+    description: "Fully licensed by NCA and insured for your peace of mind"
+  },
+  {
+    icon: Award,
+    title: "Award Winning",
+    description: "Recognized for excellence in construction and engineering"
+  },
+  {
+    icon: Clock,
+    title: "On-Time Delivery",
+    description: "Committed to delivering projects on schedule, every time"
+  },
+  {
+    icon: HeartHandshake,
+    title: "Customer First",
+    description: "Your satisfaction is our top priority in everything we do"
+  },
+  {
+    icon: Globe,
+    title: "Sustainable Building",
+    description: "Eco-friendly construction practices for a better future"
+  },
+  {
+    icon: Lightbulb,
+    title: "Innovation",
+    description: "Latest construction technologies and innovative solutions"
+  }
+];
+
+const processSteps = [
+  {
+    step: "01",
+    title: "Consultation",
+    description: "Initial meeting to understand your vision and requirements"
+  },
+  {
+    step: "02",
+    title: "Design & Planning",
+    description: "Detailed architectural plans and project timeline development"
+  },
+  {
+    step: "03",
+    title: "Approval & Permits",
+    description: "Handling all necessary permits and regulatory approvals"
+  },
+  {
+    step: "04",
+    title: "Construction",
+    description: "Professional construction with regular progress updates"
+  },
+  {
+    step: "05",
+    title: "Quality Check",
+    description: "Thorough inspection and quality assurance testing"
+  },
+  {
+    step: "06",
+    title: "Handover",
+    description: "Final walkthrough and project completion handover"
   }
 ];
 
@@ -57,30 +174,50 @@ const Index = () => {
       <Navbar />
       
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-r from-blue-900 to-blue-800 text-white py-20">
-        <div className="absolute inset-0 bg-black opacity-50"></div>
+      <section className="relative bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 text-white py-20 overflow-hidden">
+        <div className="absolute inset-0 bg-black opacity-40"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-transparent"></div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              Building Excellence,<br />
-              <span className="text-orange-500">Delivering Dreams</span>
-            </h1>
-            <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
-              Kenya's premier construction company with 15+ years of experience in 
-              residential, commercial, and infrastructure projects
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-orange-500 hover:bg-orange-600" asChild>
-                <Link to="/request-quote">
-                  Get Free Quote <ArrowRight className="w-5 h-5 ml-2" />
-                </Link>
-              </Button>
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-900" asChild>
-                <Link to="/book-visit">
-                  <Calendar className="w-5 h-5 mr-2" />
-                  Book Site Visit
-                </Link>
-              </Button>
+          <div className="text-center mb-8">
+            <Logo variant="white" size="lg" />
+            <div className="mt-6">
+              <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
+                Building Excellence,<br />
+                <span className="text-orange-400">Engineering Dreams</span>
+              </h1>
+              <p className="text-xl md:text-2xl mb-8 max-w-4xl mx-auto leading-relaxed">
+                Kenya's premier construction and engineering company with 15+ years of experience in 
+                residential, commercial, and infrastructure projects. Licensed by NCA.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+                <Button size="lg" className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-8" asChild>
+                  <Link to="/request-quote">
+                    Get Free Quote <ArrowRight className="w-5 h-5 ml-2" />
+                  </Link>
+                </Button>
+                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-900 font-semibold px-8" asChild>
+                  <Link to="/book-visit">
+                    <Calendar className="w-5 h-5 mr-2" />
+                    Book Site Visit
+                  </Link>
+                </Button>
+              </div>
+              
+              {/* Quick Contact Info */}
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-6 text-sm opacity-90">
+                <div className="flex items-center gap-2">
+                  <Phone className="w-4 h-4" />
+                  <span>+254 710 245 118</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Mail className="w-4 h-4" />
+                  <span>info@akibeks.co.ke</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  <span>Nairobi, Kenya</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -89,28 +226,22 @@ const Index = () => {
       {/* Features Section */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="w-8 h-8 text-white" />
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Why Choose AKIBEKS?</h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Your trusted partner in construction and engineering excellence
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {whyChooseUs.map((feature, index) => (
+              <div key={index} className="text-center group hover:transform hover:scale-105 transition-all duration-300">
+                <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-orange-600 transition-colors">
+                  <feature.icon className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2 text-gray-900">{feature.title}</h3>
+                <p className="text-gray-600 leading-relaxed">{feature.description}</p>
               </div>
-              <h3 className="text-xl font-semibold mb-2">NCA Certified</h3>
-              <p className="text-gray-600">Fully licensed and certified by the National Construction Authority</p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Expert Team</h3>
-              <p className="text-gray-600">Skilled engineers, architects, and construction professionals</p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <FileText className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Full Service</h3>
-              <p className="text-gray-600">From planning to completion, we handle every aspect of construction</p>
-            </div>
+            ))}
           </div>
         </div>
       </section>
@@ -121,26 +252,36 @@ const Index = () => {
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Our Services</h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Comprehensive construction solutions tailored to your needs
+              Comprehensive construction and engineering solutions tailored to your needs
             </p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {services.map((service, index) => (
-              <Card key={index} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="w-full h-48 bg-gray-200 rounded-lg mb-4"></div>
-                  <CardTitle className="text-lg">{service.title}</CardTitle>
+              <Card key={index} className="hover:shadow-xl transition-all duration-300 hover:transform hover:scale-105 group">
+                <CardHeader className="text-center">
+                  <div className="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-4 flex items-center justify-center group-hover:from-orange-50 group-hover:to-orange-100 transition-all duration-300">
+                    <service.icon className="w-16 h-16 text-gray-400 group-hover:text-orange-500 transition-colors" />
+                  </div>
+                  <CardTitle className="text-lg group-hover:text-orange-600 transition-colors">{service.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription>{service.description}</CardDescription>
+                  <CardDescription className="mb-4 text-center">{service.description}</CardDescription>
+                  <div className="space-y-2">
+                    {service.features.map((feature, idx) => (
+                      <div key={idx} className="flex items-center justify-center text-sm text-gray-600">
+                        <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                        {feature}
+                      </div>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
             ))}
           </div>
           
           <div className="text-center mt-12">
-            <Button variant="outline" size="lg" asChild>
+            <Button variant="outline" size="lg" className="font-semibold" asChild>
               <Link to="/services">
                 View All Services <ArrowRight className="w-5 h-5 ml-2" />
               </Link>
@@ -149,26 +290,56 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Process Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Our Process</h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              A systematic approach to deliver exceptional results
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {processSteps.map((process, index) => (
+              <div key={index} className="relative">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0">
+                    <div className="w-12 h-12 bg-orange-500 text-white rounded-full flex items-center justify-center font-bold text-lg">
+                      {process.step}
+                    </div>
+                  </div>
+                  <div className="ml-4">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">{process.title}</h3>
+                    <p className="text-gray-600 leading-relaxed">{process.description}</p>
+                  </div>
+                </div>
+                {index < processSteps.length - 1 && (
+                  <div className="hidden lg:block absolute top-6 left-full w-full h-0.5 bg-orange-200 transform translate-x-4"></div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Stats Section */}
       <section className="py-16 bg-blue-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Our Achievements</h2>
+            <p className="text-xl opacity-90">Building Kenya's future, one project at a time</p>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
-            <div>
-              <div className="text-4xl font-bold text-orange-500 mb-2">500+</div>
-              <div className="text-xl">Projects Completed</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold text-orange-500 mb-2">15+</div>
-              <div className="text-xl">Years Experience</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold text-orange-500 mb-2">50+</div>
-              <div className="text-xl">Expert Team</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold text-orange-500 mb-2">100%</div>
-              <div className="text-xl">Client Satisfaction</div>
-            </div>
+            {achievements.map((stat, index) => (
+              <div key={index} className="group">
+                <div className="mb-4">
+                  <stat.icon className="w-12 h-12 mx-auto text-orange-400 group-hover:scale-110 transition-transform duration-300" />
+                </div>
+                <div className="text-4xl font-bold text-orange-400 mb-2">{stat.number}</div>
+                <div className="text-xl">{stat.label}</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -178,46 +349,83 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">What Our Clients Say</h2>
-            <p className="text-xl text-gray-600">Don't just take our word for it</p>
+            <p className="text-xl text-gray-600">Real experiences from satisfied customers</p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {testimonials.map((testimonial, index) => (
-              <Card key={index}>
+              <Card key={index} className="hover:shadow-lg transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex mb-4">
                     {[...Array(testimonial.rating)].map((_, i) => (
-                      <span key={i} className="text-yellow-400 text-xl">★</span>
+                      <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
                     ))}
                   </div>
-                  <p className="text-gray-600 mb-4">"{testimonial.content}"</p>
-                  <div>
-                    <div className="font-semibold">{testimonial.name}</div>
+                  <p className="text-gray-600 mb-4 italic">"{testimonial.content}"</p>
+                  <div className="border-t pt-4">
+                    <div className="font-semibold text-gray-900">{testimonial.name}</div>
                     <div className="text-sm text-gray-500">{testimonial.role}</div>
+                    <div className="text-sm text-gray-500">{testimonial.company}</div>
+                    <Badge variant="secondary" className="mt-2">
+                      {testimonial.project}
+                    </Badge>
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
+          
+          <div className="text-center mt-12">
+            <Button variant="outline" size="lg" asChild>
+              <Link to="/testimonials">
+                View All Testimonials <ArrowRight className="w-5 h-5 ml-2" />
+              </Link>
+            </Button>
+          </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-orange-500 text-white">
+      <section className="py-16 bg-gradient-to-r from-orange-500 to-orange-600 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="mb-8">
+            <Logo variant="white" size="md" />
+          </div>
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Start Your Project?</h2>
-          <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Get a free consultation and quote for your construction project today
+          <p className="text-xl mb-8 max-w-2xl mx-auto opacity-90">
+            Get a free consultation and quote for your construction project today. 
+            Join hundreds of satisfied clients who trust AKIBEKS Engineering.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="secondary" asChild>
+            <Button size="lg" variant="secondary" className="font-semibold px-8" asChild>
               <Link to="/request-quote">
-                Request Quote <ArrowRight className="w-5 h-5 ml-2" />
+                Request Free Quote <ArrowRight className="w-5 h-5 ml-2" />
               </Link>
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-orange-500" asChild>
-              <Link to="/contact">Contact Us</Link>
+            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-orange-500 font-semibold px-8" asChild>
+              <Link to="/contact">
+                <Phone className="w-5 h-5 mr-2" />
+                Contact Us Now
+              </Link>
             </Button>
+          </div>
+          
+          {/* Contact Info */}
+          <div className="mt-12 pt-8 border-t border-orange-400/30">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-8 text-sm opacity-90">
+              <div className="flex items-center gap-2">
+                <Phone className="w-4 h-4" />
+                <span>+254 710 245 118</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Mail className="w-4 h-4" />
+                <span>info@akibeks.co.ke</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4" />
+                <span>Nairobi, Kenya</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
