@@ -1,8 +1,12 @@
+
 import { Link } from "react-router-dom";
 import { Phone, Mail, MapPin, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
 import Logo from "./Logo";
+import { useAdmin } from "@/contexts/AdminContext";
 
 const Footer = () => {
+  const { companySettings } = useAdmin();
+
   return (
     <footer className="bg-gray-900 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -21,15 +25,15 @@ const Footer = () => {
             <div className="space-y-3 mb-6">
               <div className="flex items-center space-x-3 text-gray-300">
                 <Phone className="w-4 h-4 text-orange-400" />
-                <span>+254 710 245 118</span>
+                <span>{companySettings.company_phone || '+254 710 245 118'}</span>
               </div>
               <div className="flex items-center space-x-3 text-gray-300">
                 <Mail className="w-4 h-4 text-orange-400" />
-                <span>info@akibeks.co.ke</span>
+                <span>{companySettings.company_email || 'info@akibeks.co.ke'}</span>
               </div>
               <div className="flex items-center space-x-3 text-gray-300">
                 <MapPin className="w-4 h-4 text-orange-400" />
-                <span>Nairobi, Kenya</span>
+                <span>{companySettings.company_address || 'Nairobi, Kenya'}</span>
               </div>
             </div>
 
@@ -110,7 +114,7 @@ const Footer = () => {
         <div className="border-t border-gray-800 mt-8 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-300 text-sm">
-              © 2024 AKIBEKS Engineering Solutions. All rights reserved.
+              © 2024 {companySettings.company_name || 'AKIBEKS Engineering Solutions'}. All rights reserved.
             </p>
             <div className="flex items-center space-x-4 mt-4 md:mt-0 text-sm text-gray-300">
               <span>NCA Registered</span>

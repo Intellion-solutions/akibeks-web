@@ -8,38 +8,23 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Settings, Save, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdmin } from "@/contexts/AdminContext";
+import AdminLogin from "@/components/AdminLogin";
+import AdminHeader from "@/components/AdminHeader";
 
 const AdminSettings = () => {
   const { toast } = useToast();
+  const { isAuthenticated, companySettings, refreshSettings } = useAdmin();
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetchSettings();
-  }, []);
+    setSettings(companySettings);
+  }, [companySettings]);
 
-  const fetchSettings = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('company_settings')
-        .select('*');
-
-      if (error) throw error;
-      
-      const settingsObj: Record<string, string> = {};
-      data?.forEach(setting => {
-        settingsObj[setting.setting_key] = setting.setting_value || '';
-      });
-      setSettings(settingsObj);
-    } catch (error) {
-      console.error('Error fetching settings:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load settings",
-        variant: "destructive"
-      });
-    }
-  };
+  if (!isAuthenticated) {
+    return <AdminLogin />;
+  }
 
   const handleSave = async () => {
     setLoading(true);
@@ -55,9 +40,12 @@ const AdminSettings = () => {
 
       if (error) throw error;
 
+      // Refresh settings in context
+      await refreshSettings();
+
       toast({
         title: "Settings Saved",
-        description: "Company settings updated successfully",
+        description: "Company settings updated successfully and applied across the website",
       });
     } catch (error) {
       console.error('Error saving settings:', error);
@@ -73,32 +61,30 @@ const AdminSettings = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-                <Settings className="w-6 h-6 mr-2" />
-                Company Settings
-              </h1>
-              <p className="text-gray-600">Manage your company information and preferences</p>
-            </div>
-            <div className="flex space-x-3">
-              <Button variant="outline" onClick={fetchSettings}>
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Refresh
-              </Button>
-              <Button onClick={handleSave} disabled={loading}>
-                <Save className="w-4 h-4 mr-2" />
-                {loading ? "Saving..." : "Save Changes"}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <AdminHeader />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center">
+            <Settings className="w-6 h-6 mr-2" />
+            Company Settings
+          </h1>
+          <p className="text-gray-600">Manage your company information and preferences. Changes will be reflected across the website.</p>
+        </div>
+
+        <div className="flex justify-end mb-6">
+          <div className="flex space-x-3">
+            <Button variant="outline" onClick={refreshSettings}>
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Refresh
+            </Button>
+            <Button onClick={handleSave} disabled={loading}>
+              <Save className="w-4 h-4 mr-2" />
+              {loading ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
+        </div>
+
         <div className="space-y-6">
           {/* Company Information */}
           <Card>

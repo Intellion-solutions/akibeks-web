@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,8 +17,17 @@ import {
   UserCog,
   Building
 } from "lucide-react";
+import { useAdmin } from "@/contexts/AdminContext";
+import AdminLogin from "@/components/AdminLogin";
+import AdminHeader from "@/components/AdminHeader";
 
 const AdminDashboard = () => {
+  const { isAuthenticated } = useAdmin();
+
+  if (!isAuthenticated) {
+    return <AdminLogin />;
+  }
+
   const stats = [
     {
       title: "Active Projects",
@@ -117,20 +127,17 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-6">
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-              <LayoutDashboard className="w-6 h-6 mr-2" />
-              Admin Dashboard
-            </h1>
-            <p className="text-gray-600">Welcome back! Here's what's happening with your business.</p>
-          </div>
-        </div>
-      </div>
+      <AdminHeader />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center">
+            <LayoutDashboard className="w-6 h-6 mr-2" />
+            Admin Dashboard
+          </h1>
+          <p className="text-gray-600">Welcome back! Here's what's happening with your business.</p>
+        </div>
+
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {stats.map((stat, index) => (
