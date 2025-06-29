@@ -21,10 +21,11 @@ const AdminBackup = () => {
   const exportData = async () => {
     setLoading(true);
     try {
-      const tables = ['clients', 'projects', 'quotes', 'invoices', 'services', 'company_settings'];
+      // Define table names with proper typing
+      const tableNames = ['clients', 'projects', 'quotes', 'invoices', 'services', 'company_settings'] as const;
       const exportData: any = {};
 
-      for (const table of tables) {
+      for (const table of tableNames) {
         const { data, error } = await supabase.from(table).select('*');
         if (error) throw error;
         exportData[table] = data;

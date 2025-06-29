@@ -38,7 +38,7 @@ const AdminAnalytics = () => {
         supabase.from('invoices').select('total_amount')
       ]);
 
-      const totalRevenue = invoices.data?.reduce((sum, inv) => sum + (parseFloat(inv.total_amount) || 0), 0) || 0;
+      const totalRevenue = invoices.data?.reduce((sum, inv) => sum + (parseFloat(inv.total_amount.toString()) || 0), 0) || 0;
 
       setAnalytics({
         totalProjects: projects.count || 0,
