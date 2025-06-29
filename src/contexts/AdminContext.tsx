@@ -46,6 +46,7 @@ interface AdminContextType {
   logout: () => void;
   companySettings: CompanySettings;
   loadCompanySettings: () => Promise<void>;
+  updateCompanySettings: (settings: Partial<CompanySettings>) => Promise<void>;
 }
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
@@ -88,7 +89,7 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
           value = value === 'true';
         }
         
-        settingsObj[key] = value;
+        (settingsObj as any)[key] = value;
       });
 
       setCompanySettings(settingsObj);
@@ -97,6 +98,40 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
       toast({
         title: "Error",
         description: "Failed to load company settings",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const updateCompanySettings = async (settings: Partial<CompanySettings>) => {
+    try {
+      // Convert settings object to array format for database
+      const settingsArray = Object.entries(settings).map(([key, value]) => ({
+        setting_key: key,
+        setting_value: String(value),
+      }));
+
+      // Upsert each setting
+      for (const setting of settingsArray) {
+        const { error } = await supabase
+          .from('company_settings')
+          .upsert(setting, { onConflict: 'setting_key' });
+
+        if (error) throw error;
+      }
+
+      // Reload settings
+      await loadCompanySettings();
+
+      toast({
+        title: "Settings Updated",
+        description: "Company settings have been saved successfully.",
+      });
+    } catch (error) {
+      console.error('Error updating company settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update company settings",
         variant: "destructive"
       });
     }
@@ -134,7 +169,8 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
       login,
       logout,
       companySettings,
-      loadCompanySettings
+      loadCompanySettings,
+      updateCompanySettings
     }}>
       {children}
     </AdminContext.Provider>
