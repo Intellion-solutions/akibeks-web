@@ -6,6 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Logo from "@/components/Logo";
+import ScrollToTop from "@/components/ScrollToTop";
+import ProjectSlideshow from "@/components/ProjectSlideshow";
+import SEOHead from "@/components/SEOHead";
+import AnimatedCounter from "@/components/AnimatedCounter";
+import ServicesCarousel from "@/components/ServicesCarousel";
 import { 
   ArrowRight, 
   CheckCircle, 
@@ -26,7 +31,11 @@ import {
   Lightbulb,
   Target,
   Globe,
-  HeartHandshake
+  HeartHandshake,
+  PlayCircle,
+  Quote,
+  ThumbsUp,
+  Zap
 } from "lucide-react";
 
 const services = [
@@ -171,51 +180,78 @@ const processSteps = [
 const Index = () => {
   return (
     <div className="min-h-screen bg-white">
+      <SEOHead />
       <Navbar />
+      <ScrollToTop />
       
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 text-white py-20 overflow-hidden">
+      {/* Enhanced Hero Section */}
+      <section className="relative bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 text-white py-32 overflow-hidden">
         <div className="absolute inset-0 bg-black opacity-40"></div>
         <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-transparent"></div>
+        <div className="absolute inset-0">
+          <div className="absolute top-20 left-20 w-72 h-72 bg-orange-500/10 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-20 right-20 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        </div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8">
+          <div className="text-center mb-8 animate-fade-in">
             <Logo variant="white" size="lg" />
-            <div className="mt-6">
-              <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
+            <div className="mt-8">
+              <h1 className="text-5xl md:text-7xl font-bold mb-8 leading-tight">
                 Building Excellence,<br />
-                <span className="text-orange-400">Engineering Dreams</span>
+                <span className="text-orange-400 animate-pulse">Engineering Dreams</span>
               </h1>
-              <p className="text-xl md:text-2xl mb-8 max-w-4xl mx-auto leading-relaxed">
+              <p className="text-xl md:text-3xl mb-12 max-w-5xl mx-auto leading-relaxed opacity-90">
                 Kenya's premier construction and engineering company with 15+ years of experience in 
                 residential, commercial, and infrastructure projects. Licensed by NCA.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-                <Button size="lg" className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-8" asChild>
+              <div className="flex flex-col sm:flex-row gap-6 justify-center mb-12">
+                <Button size="lg" className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-10 py-4 text-lg transform hover:scale-105 transition-all duration-300 shadow-2xl" asChild>
                   <Link to="/request-quote">
-                    Get Free Quote <ArrowRight className="w-5 h-5 ml-2" />
+                    Get Free Quote <ArrowRight className="w-6 h-6 ml-2" />
                   </Link>
                 </Button>
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-900 font-semibold px-8" asChild>
+                <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-blue-900 font-semibold px-10 py-4 text-lg transform hover:scale-105 transition-all duration-300" asChild>
                   <Link to="/book-visit">
-                    <Calendar className="w-5 h-5 mr-2" />
+                    <Calendar className="w-6 h-6 mr-2" />
                     Book Site Visit
                   </Link>
                 </Button>
               </div>
               
-              {/* Quick Contact Info */}
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-6 text-sm opacity-90">
-                <div className="flex items-center gap-2">
-                  <Phone className="w-4 h-4" />
-                  <span>+254 710 245 118</span>
+              {/* Enhanced Contact Info */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 max-w-4xl mx-auto mb-8">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-8 text-sm">
+                  <div className="flex items-center gap-3 hover:text-orange-300 transition-colors">
+                    <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
+                      <Phone className="w-5 h-5" />
+                    </div>
+                    <span className="font-medium">+254 710 245 118</span>
+                  </div>
+                  <div className="flex items-center gap-3 hover:text-orange-300 transition-colors">
+                    <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
+                      <Mail className="w-5 h-5" />
+                    </div>
+                    <span className="font-medium">info@akibeks.co.ke</span>
+                  </div>
+                  <div className="flex items-center gap-3 hover:text-orange-300 transition-colors">
+                    <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
+                      <MapPin className="w-5 h-5" />
+                    </div>
+                    <span className="font-medium">Nairobi, Kenya</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4" />
-                  <span>info@akibeks.co.ke</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4" />
-                  <span>Nairobi, Kenya</span>
+              </div>
+
+              {/* Video CTA */}
+              <div className="flex items-center justify-center gap-4">
+                <Button variant="ghost" className="text-white hover:text-orange-300 flex items-center gap-2">
+                  <PlayCircle className="w-6 h-6" />
+                  Watch Our Story
+                </Button>
+                <span className="text-white/60">|</span>
+                <div className="flex items-center gap-2 text-white/80">
+                  <Star className="w-5 h-5 text-yellow-400 fill-current" />
+                  <span>4.9/5 Customer Rating</span>
                 </div>
               </div>
             </div>
@@ -223,22 +259,89 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-16 bg-gray-50">
+      {/* Project Slideshow Section */}
+      <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Why Choose AKIBEKS?</h2>
+          <div className="text-center mb-12 animate-fade-in">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">Featured Projects</h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Discover our latest construction achievements across Kenya
+            </p>
+          </div>
+          <ProjectSlideshow />
+        </div>
+      </section>
+
+      {/* Enhanced Stats Section */}
+      <section className="py-20 bg-blue-900 text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-800 to-purple-900"></div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6">Our Achievements</h2>
+            <p className="text-xl opacity-90">Building Kenya's future, one project at a time</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
+            <div className="group transform hover:scale-105 transition-all duration-300">
+              <div className="mb-6">
+                <Target className="w-16 h-16 mx-auto text-orange-400 group-hover:rotate-12 transition-transform duration-300" />
+              </div>
+              <AnimatedCounter end={500} suffix="+" />
+              <div className="text-xl mt-2">Projects Completed</div>
+            </div>
+            <div className="group transform hover:scale-105 transition-all duration-300">
+              <div className="mb-6">
+                <Award className="w-16 h-16 mx-auto text-orange-400 group-hover:rotate-12 transition-transform duration-300" />
+              </div>
+              <AnimatedCounter end={15} suffix="+" />
+              <div className="text-xl mt-2">Years Experience</div>
+            </div>
+            <div className="group transform hover:scale-105 transition-all duration-300">
+              <div className="mb-6">
+                <Users className="w-16 h-16 mx-auto text-orange-400 group-hover:rotate-12 transition-transform duration-300" />
+              </div>
+              <AnimatedCounter end={50} suffix="+" />
+              <div className="text-xl mt-2">Expert Team</div>
+            </div>
+            <div className="group transform hover:scale-105 transition-all duration-300">
+              <div className="mb-6">
+                <ThumbsUp className="w-16 h-16 mx-auto text-orange-400 group-hover:rotate-12 transition-transform duration-300" />
+              </div>
+              <AnimatedCounter end={100} suffix="%" />
+              <div className="text-xl mt-2">Client Satisfaction</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Enhanced Services Section */}
+      <section className="py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16 animate-fade-in">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">Our Services</h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Comprehensive construction and engineering solutions tailored to your needs
+            </p>
+          </div>
+          <ServicesCarousel />
+        </div>
+      </section>
+
+      {/* Why Choose Us Section */}
+      <section className="py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">Why Choose AKIBEKS?</h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Your trusted partner in construction and engineering excellence
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {whyChooseUs.map((feature, index) => (
-              <div key={index} className="text-center group hover:transform hover:scale-105 transition-all duration-300">
-                <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-orange-600 transition-colors">
-                  <feature.icon className="w-8 h-8 text-white" />
+              <div key={index} className="text-center group hover:transform hover:scale-105 transition-all duration-300 animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
+                <div className="w-20 h-20 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:shadow-xl transition-all duration-300">
+                  <feature.icon className="w-10 h-10 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2 text-gray-900">{feature.title}</h3>
+                <h3 className="text-xl font-semibold mb-4 text-gray-900 group-hover:text-orange-600 transition-colors">{feature.title}</h3>
                 <p className="text-gray-600 leading-relaxed">{feature.description}</p>
               </div>
             ))}
@@ -246,55 +349,11 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Services Section */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Our Services</h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Comprehensive construction and engineering solutions tailored to your needs
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {services.map((service, index) => (
-              <Card key={index} className="hover:shadow-xl transition-all duration-300 hover:transform hover:scale-105 group">
-                <CardHeader className="text-center">
-                  <div className="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-4 flex items-center justify-center group-hover:from-orange-50 group-hover:to-orange-100 transition-all duration-300">
-                    <service.icon className="w-16 h-16 text-gray-400 group-hover:text-orange-500 transition-colors" />
-                  </div>
-                  <CardTitle className="text-lg group-hover:text-orange-600 transition-colors">{service.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="mb-4 text-center">{service.description}</CardDescription>
-                  <div className="space-y-2">
-                    {service.features.map((feature, idx) => (
-                      <div key={idx} className="flex items-center justify-center text-sm text-gray-600">
-                        <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                        {feature}
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-          
-          <div className="text-center mt-12">
-            <Button variant="outline" size="lg" className="font-semibold" asChild>
-              <Link to="/services">
-                View All Services <ArrowRight className="w-5 h-5 ml-2" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-
       {/* Process Section */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Our Process</h2>
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">Our Process</h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               A systematic approach to deliver exceptional results
             </p>
@@ -302,71 +361,48 @@ const Index = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {processSteps.map((process, index) => (
-              <div key={index} className="relative">
-                <div className="flex items-start">
+              <div key={index} className="relative group animate-fade-in" style={{ animationDelay: `${index * 0.2}s` }}>
+                <div className="flex items-start p-6 bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 group-hover:transform group-hover:scale-105">
                   <div className="flex-shrink-0">
-                    <div className="w-12 h-12 bg-orange-500 text-white rounded-full flex items-center justify-center font-bold text-lg">
+                    <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-full flex items-center justify-center font-bold text-xl shadow-lg">
                       {process.step}
                     </div>
                   </div>
-                  <div className="ml-4">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">{process.title}</h3>
+                  <div className="ml-6">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-3 group-hover:text-orange-600 transition-colors">{process.title}</h3>
                     <p className="text-gray-600 leading-relaxed">{process.description}</p>
                   </div>
                 </div>
-                {index < processSteps.length - 1 && (
-                  <div className="hidden lg:block absolute top-6 left-full w-full h-0.5 bg-orange-200 transform translate-x-4"></div>
-                )}
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-16 bg-blue-900 text-white">
+      {/* Enhanced Testimonials Section */}
+      <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Our Achievements</h2>
-            <p className="text-xl opacity-90">Building Kenya's future, one project at a time</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
-            {achievements.map((stat, index) => (
-              <div key={index} className="group">
-                <div className="mb-4">
-                  <stat.icon className="w-12 h-12 mx-auto text-orange-400 group-hover:scale-110 transition-transform duration-300" />
-                </div>
-                <div className="text-4xl font-bold text-orange-400 mb-2">{stat.number}</div>
-                <div className="text-xl">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">What Our Clients Say</h2>
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">What Our Clients Say</h2>
             <p className="text-xl text-gray-600">Real experiences from satisfied customers</p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <Card key={index} className="hover:shadow-lg transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {testimonials.slice(0, 4).map((testimonial, index) => (
+              <Card key={index} className="hover:shadow-xl transition-all duration-300 group animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
+                <CardContent className="p-8">
+                  <div className="flex mb-6">
                     {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
+                      <Star key={i} className="w-6 h-6 text-yellow-400 fill-current" />
                     ))}
                   </div>
-                  <p className="text-gray-600 mb-4 italic">"{testimonial.content}"</p>
-                  <div className="border-t pt-4">
-                    <div className="font-semibold text-gray-900">{testimonial.name}</div>
-                    <div className="text-sm text-gray-500">{testimonial.role}</div>
-                    <div className="text-sm text-gray-500">{testimonial.company}</div>
-                    <Badge variant="secondary" className="mt-2">
+                  <Quote className="w-12 h-12 text-orange-500 mb-4 opacity-20" />
+                  <p className="text-gray-600 mb-6 italic text-lg leading-relaxed">"{testimonial.content}"</p>
+                  <div className="border-t pt-6">
+                    <div className="font-semibold text-gray-900 text-lg">{testimonial.name}</div>
+                    <div className="text-gray-500">{testimonial.role}</div>
+                    <div className="text-gray-500">{testimonial.company}</div>
+                    <Badge variant="secondary" className="mt-3 bg-orange-100 text-orange-800">
                       {testimonial.project}
                     </Badge>
                   </div>
@@ -376,54 +412,68 @@ const Index = () => {
           </div>
           
           <div className="text-center mt-12">
-            <Button variant="outline" size="lg" asChild>
+            <Button variant="outline" size="lg" className="group" asChild>
               <Link to="/testimonials">
-                View All Testimonials <ArrowRight className="w-5 h-5 ml-2" />
+                View All Testimonials 
+                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </Link>
             </Button>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-16 bg-gradient-to-r from-orange-500 to-orange-600 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="mb-8">
+      {/* Enhanced CTA Section */}
+      <section className="py-20 bg-gradient-to-r from-orange-500 via-orange-600 to-red-500 text-white relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="absolute top-10 left-10 w-64 h-64 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-10 right-10 w-80 h-80 bg-white/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        </div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="mb-8 animate-fade-in">
             <Logo variant="white" size="md" />
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Start Your Project?</h2>
-          <p className="text-xl mb-8 max-w-2xl mx-auto opacity-90">
+          <h2 className="text-4xl md:text-6xl font-bold mb-6">Ready to Start Your Project?</h2>
+          <p className="text-xl md:text-2xl mb-12 max-w-3xl mx-auto opacity-90 leading-relaxed">
             Get a free consultation and quote for your construction project today. 
             Join hundreds of satisfied clients who trust AKIBEKS Engineering.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="secondary" className="font-semibold px-8" asChild>
+          <div className="flex flex-col sm:flex-row gap-6 justify-center mb-12">
+            <Button size="lg" variant="secondary" className="font-semibold px-12 py-4 text-lg transform hover:scale-105 transition-all duration-300 shadow-2xl" asChild>
               <Link to="/request-quote">
-                Request Free Quote <ArrowRight className="w-5 h-5 ml-2" />
+                Request Free Quote <ArrowRight className="w-6 h-6 ml-2" />
               </Link>
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-orange-500 font-semibold px-8" asChild>
+            <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-orange-500 font-semibold px-12 py-4 text-lg transform hover:scale-105 transition-all duration-300" asChild>
               <Link to="/contact">
-                <Phone className="w-5 h-5 mr-2" />
+                <Phone className="w-6 h-6 mr-2" />
                 Contact Us Now
               </Link>
             </Button>
           </div>
           
-          {/* Contact Info */}
-          <div className="mt-12 pt-8 border-t border-orange-400/30">
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-8 text-sm opacity-90">
-              <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4" />
-                <span>+254 710 245 118</span>
+          {/* Enhanced Contact Info */}
+          <div className="mt-16 pt-8 border-t border-orange-400/30">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+              <div className="flex flex-col items-center gap-3 p-6 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/20 transition-all duration-300">
+                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                  <Phone className="w-6 h-6" />
+                </div>
+                <span className="font-medium">+254 710 245 118</span>
+                <span className="text-sm opacity-80">24/7 Support</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4" />
-                <span>info@akibeks.co.ke</span>
+              <div className="flex flex-col items-center gap-3 p-6 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/20 transition-all duration-300">
+                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                  <Mail className="w-6 h-6" />
+                </div>
+                <span className="font-medium">info@akibeks.co.ke</span>
+                <span className="text-sm opacity-80">Quick Response</span>
               </div>
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4" />
-                <span>Nairobi, Kenya</span>
+              <div className="flex flex-col items-center gap-3 p-6 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/20 transition-all duration-300">
+                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                  <MapPin className="w-6 h-6" />
+                </div>
+                <span className="font-medium">Nairobi, Kenya</span>
+                <span className="text-sm opacity-80">Multiple Locations</span>
               </div>
             </div>
           </div>
