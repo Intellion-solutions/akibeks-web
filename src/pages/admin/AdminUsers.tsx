@@ -94,7 +94,13 @@ const AdminUsers = () => {
     try {
       const { data, error } = await supabase
         .from('users')
-        .insert([newUser])
+        .insert([{
+          full_name: newUser.full_name,
+          email: newUser.email,
+          phone: newUser.phone,
+          role: newUser.role as "admin" | "manager" | "engineer" | "supervisor",
+          is_active: newUser.is_active
+        }])
         .select()
         .single();
 

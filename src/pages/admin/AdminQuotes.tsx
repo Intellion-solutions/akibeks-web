@@ -121,26 +121,30 @@ const AdminQuotes = () => {
       
       const { data: quote, error: quoteError } = await supabase
         .from('quotes')
-        .insert([{
+        .insert({
           client_id: newQuote.client_id,
           valid_until: newQuote.valid_until,
           terms: newQuote.terms,
           total_amount: totalAmount,
-          status: 'pending'
-        }])
+          status: 'pending' as const
+        })
         .select()
         .single();
 
       if (quoteError) throw quoteError;
 
-      // Insert quote items
-      const items = newQuote.items.map(item => ({
-        quote_id: quote.id,
-        service_id: item.service_id,
-        quantity: item.quantity,
-        unit_price: item.unit_price,
-        total_price: item.total_price
-      }));
+      // Insert quote items with proper description field
+      const items = newQuote.items.map(item => {
+        const service = services.find(s => s.id === item.service_id);
+        return {
+          quote_id: quote.id,
+          service_id: item.service_id,
+          description: service?.name || 'Service',
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          total_price: item.total_price
+        };
+      });
 
       const { error: itemsError } = await supabase
         .from('quote_items')
