@@ -25,15 +25,15 @@ const Footer = () => {
             <div className="space-y-3 mb-6">
               <div className="flex items-center space-x-3 text-gray-300">
                 <Phone className="w-4 h-4 text-orange-400" />
-                <span>{companySettings.company_phone || '+254 710 245 118'}</span>
+                <span>{companySettings.phone || '+254 710 245 118'}</span>
               </div>
               <div className="flex items-center space-x-3 text-gray-300">
                 <Mail className="w-4 h-4 text-orange-400" />
-                <span>{companySettings.company_email || 'info@akibeks.co.ke'}</span>
+                <span>{companySettings.email || 'info@akibeks.co.ke'}</span>
               </div>
               <div className="flex items-center space-x-3 text-gray-300">
                 <MapPin className="w-4 h-4 text-orange-400" />
-                <span>{companySettings.company_address || 'Nairobi, Kenya'}</span>
+                <span>{companySettings.address || 'Nairobi, Kenya'}</span>
               </div>
             </div>
 

@@ -78,7 +78,17 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
       // Convert array of settings to object
       const settingsObj: CompanySettings = {};
       data?.forEach((setting) => {
-        settingsObj[setting.setting_key as keyof CompanySettings] = setting.setting_value;
+        const key = setting.setting_key as keyof CompanySettings;
+        let value: any = setting.setting_value;
+        
+        // Convert string values to appropriate types
+        if (key === 'tax_rate' || key === 'session_timeout' || key === 'login_attempts') {
+          value = parseFloat(value) || 0;
+        } else if (['email_notifications', 'project_updates', 'payment_reminders', 'quote_expiry_alerts', 'system_maintenance', 'auto_archive', 'two_factor_auth', 'ip_restrictions', 'sidebar_collapsed', 'compact_mode', 'show_animations'].includes(key)) {
+          value = value === 'true';
+        }
+        
+        settingsObj[key] = value;
       });
 
       setCompanySettings(settingsObj);

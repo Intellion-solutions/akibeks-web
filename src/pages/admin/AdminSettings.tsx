@@ -96,32 +96,32 @@ const AdminSettings = () => {
           quote_prefix: companySettings.quote_prefix || "Q",
         },
         notifications: {
-          email_notifications: companySettings.email_notifications === 'true',
-          project_updates: companySettings.project_updates === 'true',
-          payment_reminders: companySettings.payment_reminders === 'true',
-          quote_expiry_alerts: companySettings.quote_expiry_alerts === 'true',
-          system_maintenance: companySettings.system_maintenance === 'true',
+          email_notifications: Boolean(companySettings.email_notifications),
+          project_updates: Boolean(companySettings.project_updates),
+          payment_reminders: Boolean(companySettings.payment_reminders),
+          quote_expiry_alerts: Boolean(companySettings.quote_expiry_alerts),
+          system_maintenance: Boolean(companySettings.system_maintenance),
         },
         system: {
           timezone: companySettings.timezone || "UTC",
           date_format: companySettings.date_format || "DD/MM/YYYY",
           language: companySettings.language || "en",
           backup_frequency: companySettings.backup_frequency || "daily",
-          auto_archive: companySettings.auto_archive === 'true',
+          auto_archive: Boolean(companySettings.auto_archive),
         },
         security: {
-          two_factor_auth: companySettings.two_factor_auth === 'true',
+          two_factor_auth: Boolean(companySettings.two_factor_auth),
           session_timeout: Number(companySettings.session_timeout) || 30,
           password_policy: companySettings.password_policy || "standard",
           login_attempts: Number(companySettings.login_attempts) || 3,
-          ip_restrictions: companySettings.ip_restrictions === 'true',
+          ip_restrictions: Boolean(companySettings.ip_restrictions),
         },
         ui: {
           theme: companySettings.theme || "light",
           primary_color: companySettings.primary_color || "#3b82f6",
-          sidebar_collapsed: companySettings.sidebar_collapsed === 'true',
-          compact_mode: companySettings.compact_mode === 'true',
-          show_animations: companySettings.show_animations === 'true',
+          sidebar_collapsed: Boolean(companySettings.sidebar_collapsed),
+          compact_mode: Boolean(companySettings.compact_mode),
+          show_animations: Boolean(companySettings.show_animations),
         }
       });
     }

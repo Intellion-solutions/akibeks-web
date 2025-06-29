@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Download, FileText, TrendingUp, Users, DollarSign, Calendar, BarChart3, PieChart, Activity } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart as RechartsPieChart, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart as RechartsPieChart, Cell, Pie } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/contexts/AdminContext";
 import AdminLogin from "@/components/AdminLogin";
@@ -37,12 +38,12 @@ const AdminReports = () => {
   const fetchReportData = async () => {
     setLoading(true);
     try {
-      // Example: Fetch revenue data
+      // Use invoices table instead of non-existent payments table
       const { data, error } = await supabase
-        .from('payments')
+        .from('invoices')
         .select('*')
-        .gte('created_at', reportFilters.startDate)
-        .lte('created_at', reportFilters.endDate);
+        .gte('created_at', reportFilters.startDate || '2020-01-01')
+        .lte('created_at', reportFilters.endDate || '2030-12-31');
 
       if (error) throw error;
       setReportData(data || []);
@@ -234,12 +235,18 @@ const AdminReports = () => {
                 <div className="h-80 flex items-center justify-center">
                   <ResponsiveContainer width="100%" height="100%">
                     <RechartsPieChart>
-                      <Pie dataKey="value" data={pieChartData} cx="50%" cy="50%" outerRadius={80} fill="#8884d8" label>
-                        {
-                          pieChartData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))
-                        }
+                      <Pie 
+                        dataKey="value" 
+                        data={pieChartData} 
+                        cx="50%" 
+                        cy="50%" 
+                        outerRadius={80} 
+                        fill="#8884d8" 
+                        label
+                      >
+                        {pieChartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
                       </Pie>
                       <Tooltip />
                     </RechartsPieChart>
