@@ -1,137 +1,435 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Eye, FileText, DollarSign, Calendar, User } from "lucide-react";
+import { Plus, Search, FileText, DollarSign, Calendar, Download, Send, Edit, Eye, Trash2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAdmin } from "@/contexts/AdminContext";
+import AdminLogin from "@/components/AdminLogin";
+import AdminHeader from "@/components/AdminHeader";
 
 const AdminQuotes = () => {
   const { toast } = useToast();
+  const { isAuthenticated, companySettings } = useAdmin();
+  const [quotes, setQuotes] = useState([]);
+  const [clients, setClients] = useState([]);
+  const [services, setServices] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
-  const [selectedQuote, setSelectedQuote] = useState<any>(null);
+  const [showCreateQuote, setShowCreateQuote] = useState(false);
+  const [selectedQuote, setSelectedQuote] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  const [quotes] = useState([
-    {
-      id: 1,
-      client: "John Doe",
-      email: "john@example.com",
-      phone: "+254 700 123 456",
-      projectType: "House Construction",
-      location: "Westlands, Nairobi",
-      budget: "3m-5m",
-      timeline: "3-6-months",
-      description: "3-bedroom house with modern design, swimming pool, and landscaping",
-      requirements: ["Architectural Plans", "Interior Design", "Swimming Pool"],
-      status: "pending",
-      submittedAt: "2024-01-15",
-      estimatedAmount: 4200000
-    },
-    {
-      id: 2,
-      client: "Jane Smith",
-      email: "jane@example.com",
-      phone: "+254 701 234 567",
-      projectType: "Commercial Building",
-      location: "Kilimani, Nairobi",
-      budget: "5m-10m",
-      timeline: "6-12-months",
-      description: "Office complex with 20 units, parking, and security systems",
-      requirements: ["Security Systems", "CCTV Installation"],
-      status: "approved",
-      submittedAt: "2024-01-10",
-      estimatedAmount: 8500000
-    },
-    {
-      id: 3,
-      client: "Mike Wilson",
-      email: "mike@example.com",
-      phone: "+254 702 345 678",
-      projectType: "Renovation",
-      location: "Karen, Nairobi",
-      budget: "1m-3m",
-      timeline: "1-3-months",
-      description: "Kitchen and bathroom renovation with modern fixtures",
-      requirements: ["Interior Design"],
-      status: "under_review",
-      submittedAt: "2024-01-12",
-      estimatedAmount: 1800000
-    },
-    {
-      id: 4,
-      client: "Sarah Mwangi",
-      email: "sarah@example.com",
-      phone: "+254 703 456 789",
-      projectType: "Civil Works",
-      location: "Kiambu",
-      budget: "over-10m",
-      timeline: "6-12-months",
-      description: "Road construction and drainage system for residential estate",
-      requirements: ["Landscaping"],
-      status: "rejected",
-      submittedAt: "2024-01-08",
-      estimatedAmount: 15000000
+  const [newQuote, setNewQuote] = useState({
+    client_id: "",
+    valid_until: "",
+    terms: "",
+    items: [{ service_id: "", quantity: 1, unit_price: 0, total_price: 0 }]
+  });
+
+  if (!isAuthenticated) {
+    return <AdminLogin />;
+  }
+
+  useEffect(() => {
+    fetchQuotes();
+    fetchClients();
+    fetchServices();
+  }, []);
+
+  const fetchQuotes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('quotes')
+        .select(`
+          *,
+          clients:client_id(full_name, company_name),
+          quote_items(*, services:service_id(name))
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setQuotes(data || []);
+    } catch (error) {
+      console.error('Error fetching quotes:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load quotes",
+        variant: "destructive"
+      });
     }
-  ]);
+  };
+
+  const fetchClients = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('id, full_name, company_name')
+        .order('full_name');
+
+      if (error) throw error;
+      setClients(data || []);
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+    }
+  };
+
+  const fetchServices = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('services')
+        .select('id, name, base_price')
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+      setServices(data || []);
+    } catch (error) {
+      console.error('Error fetching services:', error);
+    }
+  };
 
   const filteredQuotes = quotes.filter(quote => {
-    const matchesSearch = quote.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         quote.projectType.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         quote.location.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = quote.quote_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         quote.clients?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         quote.clients?.company_name?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === "all" || quote.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status) => {
     switch (status) {
-      case "pending": return "secondary";
       case "approved": return "default";
-      case "under_review": return "outline";
+      case "pending": return "secondary";
       case "rejected": return "destructive";
+      case "expired": return "outline";
       default: return "secondary";
     }
   };
 
-  const handleStatusUpdate = (quoteId: number, newStatus: string) => {
-    console.log(`Updating quote ${quoteId} to status: ${newStatus}`);
-    toast({
-      title: "Status Updated",
-      description: `Quote status changed to ${newStatus.replace("_", " ")}`,
-    });
+  const handleCreateQuote = async () => {
+    setLoading(true);
+    try {
+      const totalAmount = newQuote.items.reduce((sum, item) => sum + item.total_price, 0);
+      
+      const { data: quote, error: quoteError } = await supabase
+        .from('quotes')
+        .insert([{
+          client_id: newQuote.client_id,
+          valid_until: newQuote.valid_until,
+          terms: newQuote.terms,
+          total_amount: totalAmount,
+          status: 'pending'
+        }])
+        .select()
+        .single();
+
+      if (quoteError) throw quoteError;
+
+      // Insert quote items
+      const items = newQuote.items.map(item => ({
+        quote_id: quote.id,
+        service_id: item.service_id,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        total_price: item.total_price
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('quote_items')
+        .insert(items);
+
+      if (itemsError) throw itemsError;
+
+      toast({
+        title: "Quote Created",
+        description: "New quote has been generated successfully.",
+      });
+      
+      setShowCreateQuote(false);
+      setNewQuote({
+        client_id: "",
+        valid_until: "",
+        terms: "",
+        items: [{ service_id: "", quantity: 1, unit_price: 0, total_price: 0 }]
+      });
+      fetchQuotes();
+    } catch (error) {
+      console.error('Error creating quote:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create quote",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const generateQuote = (quote: any) => {
-    console.log("Generating formal quote for:", quote);
-    toast({
-      title: "Quote Generated",
-      description: "Formal quote document has been generated and sent to client.",
-    });
+  const addQuoteItem = () => {
+    setNewQuote(prev => ({
+      ...prev,
+      items: [...prev.items, { service_id: "", quantity: 1, unit_price: 0, total_price: 0 }]
+    }));
+  };
+
+  const updateQuoteItem = (index, field, value) => {
+    setNewQuote(prev => ({
+      ...prev,
+      items: prev.items.map((item, i) => {
+        if (i === index) {
+          const updatedItem = { ...item, [field]: value };
+          if (field === "quantity" || field === "unit_price") {
+            updatedItem.total_price = updatedItem.quantity * updatedItem.unit_price;
+          }
+          if (field === "service_id") {
+            const service = services.find(s => s.id === value);
+            if (service) {
+              updatedItem.unit_price = service.base_price || 0;
+              updatedItem.total_price = updatedItem.quantity * updatedItem.unit_price;
+            }
+          }
+          return updatedItem;
+        }
+        return item;
+      })
+    }));
+  };
+
+  const getTotalAmount = () => {
+    return newQuote.items.reduce((total, item) => total + item.total_price, 0);
+  };
+
+  const updateQuoteStatus = async (quoteId, newStatus) => {
+    try {
+      const { error } = await supabase
+        .from('quotes')
+        .update({ status: newStatus })
+        .eq('id', quoteId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Status Updated",
+        description: `Quote status changed to ${newStatus}`,
+      });
+      fetchQuotes();
+    } catch (error) {
+      console.error('Error updating quote status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update quote status",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Quote Management</h1>
-              <p className="text-gray-600">Review and manage client quote requests</p>
-            </div>
-            <Button asChild>
-              <a href="/admin">Back to Dashboard</a>
-            </Button>
-          </div>
-        </div>
-      </div>
+      <AdminHeader />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+            <FileText className="w-8 h-8 mr-3" />
+            Quote Management
+          </h1>
+          <p className="text-gray-600 mt-2">Create and manage project quotations</p>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Total Quotes</p>
+                  <p className="text-2xl font-bold">{quotes.length}</p>
+                </div>
+                <FileText className="w-8 h-8 text-blue-600" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Pending</p>
+                  <p className="text-2xl font-bold text-yellow-600">
+                    {quotes.filter(q => q.status === "pending").length}
+                  </p>
+                </div>
+                <Calendar className="w-8 h-8 text-yellow-600" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Approved</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {quotes.filter(q => q.status === "approved").length}
+                  </p>
+                </div>
+                <DollarSign className="w-8 h-8 text-green-600" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Total Value</p>
+                  <p className="text-2xl font-bold">
+                    {companySettings.currency_symbol || 'KSh'} {quotes.reduce((sum, q) => sum + (parseFloat(q.total_amount.toString()) || 0), 0).toLocaleString()}
+                  </p>
+                </div>
+                <DollarSign className="w-8 h-8 text-purple-600" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Create Quote Button */}
+        <div className="mb-6">
+          <Dialog open={showCreateQuote} onOpenChange={setShowCreateQuote}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                New Quote
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Create New Quote</DialogTitle>
+                <DialogDescription>
+                  Generate a new quotation for your client
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="client">Client</Label>
+                    <Select onValueChange={(value) => setNewQuote(prev => ({ ...prev, client_id: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select client" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {clients.map((client) => (
+                          <SelectItem key={client.id} value={client.id}>
+                            {client.full_name} {client.company_name && `(${client.company_name})`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="validUntil">Valid Until</Label>
+                    <Input
+                      id="validUntil"
+                      type="date"
+                      value={newQuote.valid_until}
+                      onChange={(e) => setNewQuote(prev => ({ ...prev, valid_until: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-4">
+                    <Label className="text-base font-medium">Quote Items</Label>
+                    <Button type="button" variant="outline" size="sm" onClick={addQuoteItem}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Item
+                    </Button>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {newQuote.items.map((item, index) => (
+                      <div key={index} className="grid grid-cols-12 gap-3 items-end">
+                        <div className="col-span-4">
+                          <Label htmlFor={`service-${index}`}>Service</Label>
+                          <Select onValueChange={(value) => updateQuoteItem(index, "service_id", value)}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select service" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {services.map((service) => (
+                                <SelectItem key={service.id} value={service.id}>
+                                  {service.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="col-span-2">
+                          <Label htmlFor={`qty-${index}`}>Quantity</Label>
+                          <Input
+                            id={`qty-${index}`}
+                            type="number"
+                            value={item.quantity}
+                            onChange={(e) => updateQuoteItem(index, "quantity", parseInt(e.target.value))}
+                          />
+                        </div>
+                        <div className="col-span-3">
+                          <Label htmlFor={`price-${index}`}>Unit Price ({companySettings.currency_symbol || 'KSh'})</Label>
+                          <Input
+                            id={`price-${index}`}
+                            type="number"
+                            value={item.unit_price}
+                            onChange={(e) => updateQuoteItem(index, "unit_price", parseFloat(e.target.value))}
+                          />
+                        </div>
+                        <div className="col-span-3">
+                          <Label>Total ({companySettings.currency_symbol || 'KSh'})</Label>
+                          <Input value={item.total_price.toLocaleString()} readOnly className="bg-gray-50" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="flex justify-end">
+                      <div className="text-lg font-semibold">
+                        Total: {companySettings.currency_symbol || 'KSh'} {getTotalAmount().toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="terms">Terms & Conditions</Label>
+                  <Textarea
+                    id="terms"
+                    value={newQuote.terms}
+                    onChange={(e) => setNewQuote(prev => ({ ...prev, terms: e.target.value }))}
+                    placeholder="Enter terms and conditions..."
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3">
+                  <Button variant="outline" onClick={() => setShowCreateQuote(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleCreateQuote} disabled={loading}>
+                    {loading ? "Creating..." : "Create Quote"}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+
         {/* Filters */}
         <Card className="mb-6">
           <CardContent className="p-6">
@@ -140,7 +438,7 @@ const AdminQuotes = () => {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
-                    placeholder="Search quotes by client, project type, or location..."
+                    placeholder="Search quotes by number, client name..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
@@ -154,9 +452,9 @@ const AdminQuotes = () => {
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="under_review">Under Review</SelectItem>
                   <SelectItem value="approved">Approved</SelectItem>
                   <SelectItem value="rejected">Rejected</SelectItem>
+                  <SelectItem value="expired">Expired</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -171,32 +469,40 @@ const AdminQuotes = () => {
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-semibold">{quote.client}</h3>
+                      <h3 className="text-lg font-semibold">{quote.quote_number}</h3>
                       <Badge variant={getStatusColor(quote.status)}>
-                        {quote.status.replace("_", " ")}
+                        {quote.status}
                       </Badge>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-gray-600">
-                      <div className="flex items-center gap-2">
-                        <FileText className="w-4 h-4" />
-                        <span>{quote.projectType}</span>
+                      <div>
+                        <span className="font-medium">Client:</span> {quote.clients?.full_name}
+                        {quote.clients?.company_name && ` (${quote.clients.company_name})`}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="w-4 h-4" />
-                        <span>KSh {quote.estimatedAmount.toLocaleString()}</span>
+                      <div>
+                        <span className="font-medium">Amount:</span> {companySettings.currency_symbol || 'KSh'} {parseFloat(quote.total_amount.toString()).toLocaleString()}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4" />
-                        <span>{quote.timeline}</span>
+                      <div>
+                        <span className="font-medium">Valid Until:</span> {quote.valid_until}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <User className="w-4 h-4" />
-                        <span>{quote.location}</span>
+                      <div>
+                        <span className="font-medium">Created:</span> {new Date(quote.created_at).toLocaleDateString()}
                       </div>
                     </div>
                     
-                    <p className="text-gray-600 mt-2 line-clamp-2">{quote.description}</p>
+                    {quote.quote_items && quote.quote_items.length > 0 && (
+                      <div className="mt-3">
+                        <span className="font-medium text-sm">Services:</span>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {quote.quote_items.map((item, index) => (
+                            <Badge key={index} variant="outline">
+                              {item.services?.name} (x{item.quantity})
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="flex flex-col sm:flex-row gap-2">
@@ -204,83 +510,79 @@ const AdminQuotes = () => {
                       <DialogTrigger asChild>
                         <Button variant="outline" size="sm" onClick={() => setSelectedQuote(quote)}>
                           <Eye className="w-4 h-4 mr-2" />
-                          View Details
+                          View
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="max-w-2xl">
                         <DialogHeader>
-                          <DialogTitle>Quote Request Details</DialogTitle>
-                          <DialogDescription>
-                            Review the complete quote request from {selectedQuote?.client}
-                          </DialogDescription>
+                          <DialogTitle>Quote Details - {selectedQuote?.quote_number}</DialogTitle>
                         </DialogHeader>
                         {selectedQuote && (
                           <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                               <div>
-                                <Label className="font-medium">Client Name</Label>
-                                <p className="text-sm text-gray-600">{selectedQuote.client}</p>
+                                <Label className="font-medium">Client</Label>
+                                <p className="text-sm text-gray-600">
+                                  {selectedQuote.clients?.full_name}
+                                  {selectedQuote.clients?.company_name && ` (${selectedQuote.clients.company_name})`}
+                                </p>
                               </div>
                               <div>
-                                <Label className="font-medium">Email</Label>
-                                <p className="text-sm text-gray-600">{selectedQuote.email}</p>
-                              </div>
-                              <div>
-                                <Label className="font-medium">Phone</Label>
-                                <p className="text-sm text-gray-600">{selectedQuote.phone}</p>
-                              </div>
-                              <div>
-                                <Label className="font-medium">Location</Label>
-                                <p className="text-sm text-gray-600">{selectedQuote.location}</p>
-                              </div>
-                              <div>
-                                <Label className="font-medium">Project Type</Label>
-                                <p className="text-sm text-gray-600">{selectedQuote.projectType}</p>
-                              </div>
-                              <div>
-                                <Label className="font-medium">Budget Range</Label>
-                                <p className="text-sm text-gray-600">{selectedQuote.budget}</p>
+                                <Label className="font-medium">Status</Label>
+                                <div className="mt-1">
+                                  <Badge variant={getStatusColor(selectedQuote.status)}>
+                                    {selectedQuote.status}
+                                  </Badge>
+                                </div>
                               </div>
                             </div>
                             
-                            <div>
-                              <Label className="font-medium">Project Description</Label>
-                              <p className="text-sm text-gray-600 mt-1">{selectedQuote.description}</p>
-                            </div>
-                            
-                            <div>
-                              <Label className="font-medium">Additional Requirements</Label>
-                              <div className="flex flex-wrap gap-2 mt-1">
-                                {selectedQuote.requirements.map((req: string) => (
-                                  <Badge key={req} variant="secondary">{req}</Badge>
-                                ))}
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <Label className="font-medium">Total Amount</Label>
+                                <p className="text-sm text-gray-600">
+                                  {companySettings.currency_symbol || 'KSh'} {parseFloat(selectedQuote.total_amount.toString()).toLocaleString()}
+                                </p>
+                              </div>
+                              <div>
+                                <Label className="font-medium">Valid Until</Label>
+                                <p className="text-sm text-gray-600">{selectedQuote.valid_until}</p>
                               </div>
                             </div>
-                            
+
+                            {selectedQuote.terms && (
+                              <div>
+                                <Label className="font-medium">Terms & Conditions</Label>
+                                <p className="text-sm text-gray-600 mt-1">{selectedQuote.terms}</p>
+                              </div>
+                            )}
+
                             <div className="flex gap-2 pt-4">
-                              <Select onValueChange={(value) => handleStatusUpdate(selectedQuote.id, value)}>
-                                <SelectTrigger className="w-48">
-                                  <SelectValue placeholder="Update status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="pending">Pending</SelectItem>
-                                  <SelectItem value="under_review">Under Review</SelectItem>
-                                  <SelectItem value="approved">Approved</SelectItem>
-                                  <SelectItem value="rejected">Rejected</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <Button onClick={() => generateQuote(selectedQuote)}>
-                                Generate Quote
-                              </Button>
+                              {selectedQuote.status === 'pending' && (
+                                <>
+                                  <Button size="sm" onClick={() => updateQuoteStatus(selectedQuote.id, 'approved')}>
+                                    Approve
+                                  </Button>
+                                  <Button variant="destructive" size="sm" onClick={() => updateQuoteStatus(selectedQuote.id, 'rejected')}>
+                                    Reject
+                                  </Button>
+                                </>
+                              )}
                             </div>
                           </div>
                         )}
                       </DialogContent>
                     </Dialog>
                     
-                    {quote.status === "approved" && (
-                      <Button size="sm" onClick={() => generateQuote(quote)}>
-                        Generate Quote
+                    <Button variant="outline" size="sm">
+                      <Download className="w-4 h-4 mr-2" />
+                      PDF
+                    </Button>
+                    
+                    {quote.status !== "rejected" && (
+                      <Button size="sm">
+                        <Send className="w-4 h-4 mr-2" />
+                        Send
                       </Button>
                     )}
                   </div>
@@ -298,7 +600,7 @@ const AdminQuotes = () => {
               <p className="text-gray-600">
                 {searchTerm || filterStatus !== "all" 
                   ? "Try adjusting your search or filter criteria"
-                  : "No quote requests have been submitted yet"
+                  : "No quotes have been created yet"
                 }
               </p>
             </CardContent>

@@ -5,48 +5,188 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Settings, Save, RefreshCw, Upload, Building, FileText, DollarSign, User } from "lucide-react";
+import { Settings, Building, Mail, Bell, Shield, Palette, Globe, Upload, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/contexts/AdminContext";
 import AdminLogin from "@/components/AdminLogin";
 import AdminHeader from "@/components/AdminHeader";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const AdminSettings = () => {
   const { toast } = useToast();
-  const { isAuthenticated, companySettings, refreshSettings } = useAdmin();
-  const [settings, setSettings] = useState<Record<string, string>>({});
+  const { isAuthenticated, companySettings, loadCompanySettings } = useAdmin();
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    setSettings(companySettings);
-  }, [companySettings]);
+  const [settings, setSettings] = useState({
+    company: {
+      company_name: "",
+      address: "",
+      phone: "",
+      email: "",
+      website: "",
+      tax_id: "",
+      registration_number: "",
+      logo_url: "",
+      description: ""
+    },
+    financial: {
+      currency_symbol: "KSh",
+      tax_rate: "16",
+      payment_terms: "30",
+      invoice_prefix: "INV",
+      quote_prefix: "QTE"
+    },
+    notifications: {
+      email_notifications: true,
+      project_updates: true,
+      payment_reminders: true,
+      quote_expiry_alerts: true,
+      system_maintenance: false
+    },
+    system: {
+      timezone: "Africa/Nairobi",
+      date_format: "DD/MM/YYYY",
+      language: "en",
+      backup_frequency: "daily",
+      auto_archive: true
+    },
+    security: {
+      two_factor_auth: false,
+      session_timeout: "60",
+      password_policy: "medium",
+      login_attempts: "5",
+      ip_restrictions: false
+    },
+    appearance: {
+      theme: "light",
+      primary_color: "#f97316",
+      sidebar_collapsed: false,
+      compact_mode: false,
+      show_animations: true
+    }
+  });
 
   if (!isAuthenticated) {
     return <AdminLogin />;
   }
 
-  const handleSave = async () => {
-    setLoading(true);
-    try {
-      const updates = Object.entries(settings).map(([key, value]) => ({
-        setting_key: key,
-        setting_value: value || ''
-      }));
+  useEffect(() => {
+    loadSettings();
+  }, []);
 
-      const { error } = await supabase
+  const loadSettings = async () => {
+    try {
+      const { data, error } = await supabase
         .from('company_settings')
-        .upsert(updates);
+        .select('*');
 
       if (error) throw error;
 
-      await refreshSettings();
+      // Convert array to object for easier access
+      const settingsObj = {};
+      data?.forEach(setting => {
+        settingsObj[setting.setting_key] = setting.setting_value;
+      });
+
+      // Update state with loaded settings
+      setSettings(prev => ({
+        company: {
+          ...prev.company,
+          company_name: settingsObj.company_name || "",
+          address: settingsObj.address || "",
+          phone: settingsObj.phone || "",
+          email: settingsObj.email || "",
+          website: settingsObj.website || "",
+          tax_id: settingsObj.tax_id || "",
+          registration_number: settingsObj.registration_number || "",
+          logo_url: settingsObj.logo_url || "",
+          description: settingsObj.description || ""
+        },
+        financial: {
+          ...prev.financial,
+          currency_symbol: settingsObj.currency_symbol || "KSh",
+          tax_rate: settingsObj.tax_rate || "16",
+          payment_terms: settingsObj.payment_terms || "30",
+          invoice_prefix: settingsObj.invoice_prefix || "INV",
+          quote_prefix: settingsObj.quote_prefix || "QTE"
+        },
+        notifications: {
+          ...prev.notifications,
+          email_notifications: settingsObj.email_notifications === "true",
+          project_updates: settingsObj.project_updates === "true",
+          payment_reminders: settingsObj.payment_reminders === "true",
+          quote_expiry_alerts: settingsObj.quote_expiry_alerts === "true",
+          system_maintenance: settingsObj.system_maintenance === "true"
+        },
+        system: {
+          ...prev.system,
+          timezone: settingsObj.timezone || "Africa/Nairobi",
+          date_format: settingsObj.date_format || "DD/MM/YYYY",
+          language: settingsObj.language || "en",
+          backup_frequency: settingsObj.backup_frequency || "daily",
+          auto_archive: settingsObj.auto_archive === "true"
+        },
+        security: {
+          ...prev.security,
+          two_factor_auth: settingsObj.two_factor_auth === "true",
+          session_timeout: settingsObj.session_timeout || "60",
+          password_policy: settingsObj.password_policy || "medium",
+          login_attempts: settingsObj.login_attempts || "5",
+          ip_restrictions: settingsObj.ip_restrictions === "true"
+        },
+        appearance: {
+          ...prev.appearance,
+          theme: settingsObj.theme || "light",
+          primary_color: settingsObj.primary_color || "#f97316",
+          sidebar_collapsed: settingsObj.sidebar_collapsed === "true",
+          compact_mode: settingsObj.compact_mode === "true",
+          show_animations: settingsObj.show_animations === "true"
+        }
+      }));
+    } catch (error) {
+      console.error('Error loading settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load settings",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const saveSettings = async (category) => {
+    setLoading(true);
+    try {
+      const settingsToSave = settings[category];
+      const updates = [];
+
+      Object.entries(settingsToSave).forEach(([key, value]) => {
+        updates.push({
+          setting_key: key,
+          setting_value: typeof value === 'boolean' ? value.toString() : value.toString(),
+          description: `${category} setting for ${key}`
+        });
+      });
+
+      // Upsert settings
+      const { error } = await supabase
+        .from('company_settings')
+        .upsert(updates, { 
+          onConflict: 'setting_key',
+          ignoreDuplicates: false 
+        });
+
+      if (error) throw error;
 
       toast({
         title: "Settings Saved",
-        description: "Company settings updated successfully and applied across the website",
+        description: `${category} settings have been updated successfully.`,
       });
+
+      // Reload company settings context
+      loadCompanySettings();
     } catch (error) {
       console.error('Error saving settings:', error);
       toast({
@@ -59,379 +199,632 @@ const AdminSettings = () => {
     }
   };
 
-  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // In a real app, you'd upload to storage and get the URL
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        setSettings(prev => ({ ...prev, company_logo: result }));
-      };
-      reader.readAsDataURL(file);
-    }
+  const updateSetting = (category, key, value) => {
+    setSettings(prev => ({
+      ...prev,
+      [category]: {
+        ...prev[category],
+        [key]: value
+      }
+    }));
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <AdminHeader />
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 flex items-center">
             <Settings className="w-8 h-8 mr-3" />
-            Company Settings
+            System Settings
           </h1>
-          <p className="text-gray-600 mt-2">Manage your company information, branding, and document preferences</p>
-        </div>
-
-        <div className="flex justify-end mb-6">
-          <div className="flex space-x-3">
-            <Button variant="outline" onClick={refreshSettings}>
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh
-            </Button>
-            <Button onClick={handleSave} disabled={loading} className="bg-orange-500 hover:bg-orange-600">
-              <Save className="w-4 h-4 mr-2" />
-              {loading ? "Saving..." : "Save All Changes"}
-            </Button>
-          </div>
+          <p className="text-gray-600 mt-2">Configure your company settings and system preferences</p>
         </div>
 
         <Tabs defaultValue="company" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="company" className="flex items-center gap-2">
               <Building className="w-4 h-4" />
               Company
             </TabsTrigger>
-            <TabsTrigger value="branding" className="flex items-center gap-2">
-              <Upload className="w-4 h-4" />
-              Branding
-            </TabsTrigger>
             <TabsTrigger value="financial" className="flex items-center gap-2">
-              <DollarSign className="w-4 h-4" />
+              <span>💰</span>
               Financial
             </TabsTrigger>
-            <TabsTrigger value="documents" className="flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              Documents
+            <TabsTrigger value="notifications" className="flex items-center gap-2">
+              <Bell className="w-4 h-4" />
+              Notifications
             </TabsTrigger>
-            <TabsTrigger value="signatures" className="flex items-center gap-2">
-              <User className="w-4 h-4" />
-              Signatures
+            <TabsTrigger value="system" className="flex items-center gap-2">
+              <Globe className="w-4 h-4" />
+              System
+            </TabsTrigger>
+            <TabsTrigger value="security" className="flex items-center gap-2">
+              <Shield className="w-4 h-4" />
+              Security
+            </TabsTrigger>
+            <TabsTrigger value="appearance" className="flex items-center gap-2">
+              <Palette className="w-4 h-4" />
+              Appearance
             </TabsTrigger>
           </TabsList>
 
-          {/* Company Information Tab */}
+          {/* Company Settings */}
           <TabsContent value="company">
             <Card>
               <CardHeader>
-                <CardTitle>Company Information</CardTitle>
-                <CardDescription>Basic company details and contact information</CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                  <Building className="w-5 h-5" />
+                  Company Information
+                </CardTitle>
+                <CardDescription>
+                  Update your company details and branding
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <Label htmlFor="company_name">Company Name</Label>
+                    <Label htmlFor="companyName">Company Name</Label>
                     <Input
-                      id="company_name"
-                      value={settings.company_name || ''}
-                      onChange={(e) => setSettings(prev => ({ ...prev, company_name: e.target.value }))}
+                      id="companyName"
+                      value={settings.company.company_name}
+                      onChange={(e) => updateSetting('company', 'company_name', e.target.value)}
+                      placeholder="Enter company name"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="company_tagline">Company Tagline</Label>
+                    <Label htmlFor="email">Company Email</Label>
                     <Input
-                      id="company_tagline"
-                      value={settings.company_tagline || ''}
-                      onChange={(e) => setSettings(prev => ({ ...prev, company_tagline: e.target.value }))}
-                      placeholder="e.g., Building Excellence Since 2009"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="company_email">Company Email</Label>
-                    <Input
-                      id="company_email"
+                      id="email"
                       type="email"
-                      value={settings.company_email || ''}
-                      onChange={(e) => setSettings(prev => ({ ...prev, company_email: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="company_phone">Company Phone</Label>
-                    <Input
-                      id="company_phone"
-                      value={settings.company_phone || ''}
-                      onChange={(e) => setSettings(prev => ({ ...prev, company_phone: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="whatsapp_number">WhatsApp Number</Label>
-                    <Input
-                      id="whatsapp_number"
-                      value={settings.whatsapp_number || ''}
-                      onChange={(e) => setSettings(prev => ({ ...prev, whatsapp_number: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="company_website">Website</Label>
-                    <Input
-                      id="company_website"
-                      value={settings.company_website || ''}
-                      onChange={(e) => setSettings(prev => ({ ...prev, company_website: e.target.value }))}
-                      placeholder="www.yourcompany.com"
+                      value={settings.company.email}
+                      onChange={(e) => updateSetting('company', 'email', e.target.value)}
+                      placeholder="Enter company email"
                     />
                   </div>
                 </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <Label htmlFor="phone">Phone Number</Label>
+                    <Input
+                      id="phone"
+                      value={settings.company.phone}
+                      onChange={(e) => updateSetting('company', 'phone', e.target.value)}
+                      placeholder="Enter phone number"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="website">Website</Label>
+                    <Input
+                      id="website"
+                      value={settings.company.website}
+                      onChange={(e) => updateSetting('company', 'website', e.target.value)}
+                      placeholder="Enter website URL"
+                    />
+                  </div>
+                </div>
+
                 <div>
-                  <Label htmlFor="company_address">Company Address</Label>
+                  <Label htmlFor="address">Address</Label>
                   <Textarea
-                    id="company_address"
-                    value={settings.company_address || ''}
-                    onChange={(e) => setSettings(prev => ({ ...prev, company_address: e.target.value }))}
+                    id="address"
+                    value={settings.company.address}
+                    onChange={(e) => updateSetting('company', 'address', e.target.value)}
+                    placeholder="Enter company address"
                     rows={3}
                   />
                 </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <Label htmlFor="company_registration">Registration Number</Label>
+                    <Label htmlFor="taxId">Tax ID</Label>
                     <Input
-                      id="company_registration"
-                      value={settings.company_registration || ''}
-                      onChange={(e) => setSettings(prev => ({ ...prev, company_registration: e.target.value }))}
-                      placeholder="e.g., NCA/REG/2009/001"
+                      id="taxId"
+                      value={settings.company.tax_id}
+                      onChange={(e) => updateSetting('company', 'tax_id', e.target.value)}
+                      placeholder="Enter tax ID"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="company_license">License Information</Label>
+                    <Label htmlFor="regNumber">Registration Number</Label>
                     <Input
-                      id="company_license"
-                      value={settings.company_license || ''}
-                      onChange={(e) => setSettings(prev => ({ ...prev, company_license: e.target.value }))}
-                      placeholder="e.g., NCA License No. 12345"
+                      id="regNumber"
+                      value={settings.company.registration_number}
+                      onChange={(e) => updateSetting('company', 'registration_number', e.target.value)}
+                      placeholder="Enter registration number"
                     />
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
-          {/* Branding Tab */}
-          <TabsContent value="branding">
-            <Card>
-              <CardHeader>
-                <CardTitle>Branding & Visual Identity</CardTitle>
-                <CardDescription>Manage your company logo and visual elements</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
                 <div>
-                  <Label htmlFor="company_logo">Company Logo</Label>
-                  <div className="mt-2 space-y-4">
-                    {settings.company_logo && (
-                      <div className="flex items-center space-x-4">
-                        <img 
-                          src={settings.company_logo} 
-                          alt="Company Logo" 
-                          className="w-20 h-20 object-contain border rounded-lg"
-                        />
-                        <div>
-                          <p className="text-sm text-gray-600">Current logo</p>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => setSettings(prev => ({ ...prev, company_logo: '' }))}
-                          >
-                            Remove Logo
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                    <div>
-                      <Input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleLogoUpload}
-                        className="w-full"
-                      />
-                      <p className="text-sm text-gray-500 mt-1">Upload a PNG, JPG, or SVG file (recommended: 200x200px)</p>
-                    </div>
+                  <Label htmlFor="description">Company Description</Label>
+                  <Textarea
+                    id="description"
+                    value={settings.company.description}
+                    onChange={(e) => updateSetting('company', 'description', e.target.value)}
+                    placeholder="Enter company description"
+                    rows={4}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="logo">Company Logo</Label>
+                  <div className="flex items-center gap-4 mt-2">
+                    <Button variant="outline">
+                      <Upload className="w-4 h-4 mr-2" />
+                      Upload Logo
+                    </Button>
+                    <span className="text-sm text-gray-500">
+                      Recommended size: 200x60px, PNG or JPG
+                    </span>
                   </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <Button onClick={() => saveSettings('company')} disabled={loading}>
+                    <Save className="w-4 h-4 mr-2" />
+                    {loading ? "Saving..." : "Save Changes"}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* Financial Tab */}
+          {/* Financial Settings */}
           <TabsContent value="financial">
             <Card>
               <CardHeader>
-                <CardTitle>Financial Settings</CardTitle>
-                <CardDescription>Configure pricing, taxes, and banking information</CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                  💰 Financial Settings
+                </CardTitle>
+                <CardDescription>
+                  Configure financial and invoicing preferences
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <Label htmlFor="currency_symbol">Currency Symbol</Label>
-                    <Input
-                      id="currency_symbol"
-                      value={settings.currency_symbol || ''}
-                      onChange={(e) => setSettings(prev => ({ ...prev, currency_symbol: e.target.value }))}
-                      placeholder="KSh"
-                    />
+                    <Label htmlFor="currency">Currency Symbol</Label>
+                    <Select
+                      value={settings.financial.currency_symbol}
+                      onValueChange={(value) => updateSetting('financial', 'currency_symbol', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select currency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="KSh">KSh (Kenyan Shilling)</SelectItem>
+                        <SelectItem value="$">$ (US Dollar)</SelectItem>
+                        <SelectItem value="€">€ (Euro)</SelectItem>
+                        <SelectItem value="£">£ (British Pound)</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
-                    <Label htmlFor="tax_rate">Tax Rate (%)</Label>
+                    <Label htmlFor="taxRate">Default Tax Rate (%)</Label>
                     <Input
-                      id="tax_rate"
+                      id="taxRate"
                       type="number"
-                      step="0.1"
-                      value={settings.tax_rate || ''}
-                      onChange={(e) => setSettings(prev => ({ ...prev, tax_rate: e.target.value }))}
+                      value={settings.financial.tax_rate}
+                      onChange={(e) => updateSetting('financial', 'tax_rate', e.target.value)}
                       placeholder="16"
                     />
                   </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <Label htmlFor="labor_charge_rate">Labor Charge Rate (%)</Label>
+                    <Label htmlFor="paymentTerms">Default Payment Terms (days)</Label>
                     <Input
-                      id="labor_charge_rate"
+                      id="paymentTerms"
                       type="number"
-                      step="0.1"
-                      value={settings.labor_charge_rate || ''}
-                      onChange={(e) => setSettings(prev => ({ ...prev, labor_charge_rate: e.target.value }))}
-                      placeholder="36.5"
+                      value={settings.financial.payment_terms}
+                      onChange={(e) => updateSetting('financial', 'payment_terms', e.target.value)}
+                      placeholder="30"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="invoicePrefix">Invoice Number Prefix</Label>
+                    <Input
+                      id="invoicePrefix"
+                      value={settings.financial.invoice_prefix}
+                      onChange={(e) => updateSetting('financial', 'invoice_prefix', e.target.value)}
+                      placeholder="INV"
                     />
                   </div>
                 </div>
-                
+
+                <div>
+                  <Label htmlFor="quotePrefix">Quote Number Prefix</Label>
+                  <Input
+                    id="quotePrefix"
+                    value={settings.financial.quote_prefix}
+                    onChange={(e) => updateSetting('financial', 'quote_prefix', e.target.value)}
+                    placeholder="QTE"
+                  />
+                </div>
+
+                <div className="flex justify-end">
+                  <Button onClick={() => saveSettings('financial')} disabled={loading}>
+                    <Save className="w-4 h-4 mr-2" />
+                    {loading ? "Saving..." : "Save Changes"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Notification Settings */}
+          <TabsContent value="notifications">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bell className="w-5 h-5" />
+                  Notification Preferences
+                </CardTitle>
+                <CardDescription>
+                  Configure when and how you receive notifications
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Banking Information</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="flex items-center justify-between">
                     <div>
-                      <Label htmlFor="bank_name">Bank Name</Label>
-                      <Input
-                        id="bank_name"
-                        value={settings.bank_name || ''}
-                        onChange={(e) => setSettings(prev => ({ ...prev, bank_name: e.target.value }))}
-                      />
+                      <Label htmlFor="emailNotifications">Email Notifications</Label>
+                      <p className="text-sm text-gray-500">Receive notifications via email</p>
                     </div>
-                    <div>
-                      <Label htmlFor="bank_account">Account Number</Label>
-                      <Input
-                        id="bank_account"
-                        value={settings.bank_account || ''}
-                        onChange={(e) => setSettings(prev => ({ ...prev, bank_account: e.target.value }))}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="bank_branch">Branch</Label>
-                      <Input
-                        id="bank_branch"
-                        value={settings.bank_branch || ''}
-                        onChange={(e) => setSettings(prev => ({ ...prev, bank_branch: e.target.value }))}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="swift_code">SWIFT Code</Label>
-                      <Input
-                        id="swift_code"
-                        value={settings.swift_code || ''}
-                        onChange={(e) => setSettings(prev => ({ ...prev, swift_code: e.target.value }))}
-                      />
-                    </div>
+                    <Switch
+                      id="emailNotifications"
+                      checked={settings.notifications.email_notifications}
+                      onCheckedChange={(checked) => updateSetting('notifications', 'email_notifications', checked)}
+                    />
                   </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="projectUpdates">Project Updates</Label>
+                      <p className="text-sm text-gray-500">Get notified about project status changes</p>
+                    </div>
+                    <Switch
+                      id="projectUpdates"
+                      checked={settings.notifications.project_updates}
+                      onCheckedChange={(checked) => updateSetting('notifications', 'project_updates', checked)}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="paymentReminders">Payment Reminders</Label>
+                      <p className="text-sm text-gray-500">Reminders for overdue invoices</p>
+                    </div>
+                    <Switch
+                      id="paymentReminders"
+                      checked={settings.notifications.payment_reminders}
+                      onCheckedChange={(checked) => updateSetting('notifications', 'payment_reminders', checked)}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="quoteExpiry">Quote Expiry Alerts</Label>
+                      <p className="text-sm text-gray-500">Alerts when quotes are about to expire</p>
+                    </div>
+                    <Switch
+                      id="quoteExpiry"
+                      checked={settings.notifications.quote_expiry_alerts}
+                      onCheckedChange={(checked) => updateSetting('notifications', 'quote_expiry_alerts', checked)}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="systemMaintenance">System Maintenance</Label>
+                      <p className="text-sm text-gray-500">Notifications about system updates</p>
+                    </div>
+                    <Switch
+                      id="systemMaintenance"
+                      checked={settings.notifications.system_maintenance}
+                      onCheckedChange={(checked) => updateSetting('notifications', 'system_maintenance', checked)}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <Button onClick={() => saveSettings('notifications')} disabled={loading}>
+                    <Save className="w-4 h-4 mr-2" />
+                    {loading ? "Saving..." : "Save Changes"}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* Documents Tab */}
-          <TabsContent value="documents">
+          {/* System Settings */}
+          <TabsContent value="system">
             <Card>
               <CardHeader>
-                <CardTitle>Document Settings</CardTitle>
-                <CardDescription>Default terms and conditions for quotes and invoices</CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                  <Globe className="w-5 h-5" />
+                  System Configuration
+                </CardTitle>
+                <CardDescription>
+                  Configure system-wide settings and preferences
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div>
-                  <Label htmlFor="default_quote_terms">Default Quote Terms</Label>
-                  <Textarea
-                    id="default_quote_terms"
-                    value={settings.default_quote_terms || ''}
-                    onChange={(e) => setSettings(prev => ({ ...prev, default_quote_terms: e.target.value }))}
-                    rows={4}
-                    placeholder="Enter default terms and conditions for quotes..."
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="default_payment_terms">Default Payment Terms</Label>
-                  <Textarea
-                    id="default_payment_terms"
-                    value={settings.default_payment_terms || ''}
-                    onChange={(e) => setSettings(prev => ({ ...prev, default_payment_terms: e.target.value }))}
-                    rows={3}
-                    placeholder="Enter default payment terms..."
-                  />
-                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <Label htmlFor="business_hours">Business Hours</Label>
-                    <Input
-                      id="business_hours"
-                      value={settings.business_hours || ''}
-                      onChange={(e) => setSettings(prev => ({ ...prev, business_hours: e.target.value }))}
-                      placeholder="Mon-Fri: 8AM-6PM"
-                    />
+                    <Label htmlFor="timezone">Timezone</Label>
+                    <Select
+                      value={settings.system.timezone}
+                      onValueChange={(value) => updateSetting('system', 'timezone', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select timezone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Africa/Nairobi">Africa/Nairobi (EAT)</SelectItem>
+                        <SelectItem value="UTC">UTC</SelectItem>
+                        <SelectItem value="America/New_York">America/New_York (EST)</SelectItem>
+                        <SelectItem value="Europe/London">Europe/London (GMT)</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
-                    <Label htmlFor="emergency_contact">Emergency Contact</Label>
-                    <Input
-                      id="emergency_contact"
-                      value={settings.emergency_contact || ''}
-                      onChange={(e) => setSettings(prev => ({ ...prev, emergency_contact: e.target.value }))}
-                    />
+                    <Label htmlFor="dateFormat">Date Format</Label>
+                    <Select
+                      value={settings.system.date_format}
+                      onValueChange={(value) => updateSetting('system', 'date_format', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select date format" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="DD/MM/YYYY">DD/MM/YYYY</SelectItem>
+                        <SelectItem value="MM/DD/YYYY">MM/DD/YYYY</SelectItem>
+                        <SelectItem value="YYYY-MM-DD">YYYY-MM-DD</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-                <div>
-                  <Label htmlFor="footer_text">Document Footer Text</Label>
-                  <Textarea
-                    id="footer_text"
-                    value={settings.footer_text || ''}
-                    onChange={(e) => setSettings(prev => ({ ...prev, footer_text: e.target.value }))}
-                    rows={2}
-                    placeholder="Default footer text for documents"
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <Label htmlFor="language">Language</Label>
+                    <Select
+                      value={settings.system.language}
+                      onValueChange={(value) => updateSetting('system', 'language', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select language" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="en">English</SelectItem>
+                        <SelectItem value="sw">Swahili</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="backupFreq">Backup Frequency</Label>
+                    <Select
+                      value={settings.system.backup_frequency}
+                      onValueChange={(value) => updateSetting('system', 'backup_frequency', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select backup frequency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="daily">Daily</SelectItem>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="autoArchive">Auto Archive Completed Projects</Label>
+                    <p className="text-sm text-gray-500">Automatically archive projects after completion</p>
+                  </div>
+                  <Switch
+                    id="autoArchive"
+                    checked={settings.system.auto_archive}
+                    onCheckedChange={(checked) => updateSetting('system', 'auto_archive', checked)}
                   />
+                </div>
+
+                <div className="flex justify-end">
+                  <Button onClick={() => saveSettings('system')} disabled={loading}>
+                    <Save className="w-4 h-4 mr-2" />
+                    {loading ? "Saving..." : "Save Changes"}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* Signatures Tab */}
-          <TabsContent value="signatures">
+          {/* Security Settings */}
+          <TabsContent value="security">
             <Card>
               <CardHeader>
-                <CardTitle>Digital Signatures</CardTitle>
-                <CardDescription>Configure default signature information for documents</CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="w-5 h-5" />
+                  Security Settings
+                </CardTitle>
+                <CardDescription>
+                  Configure security and access control settings
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="twoFactor">Two-Factor Authentication</Label>
+                    <p className="text-sm text-gray-500">Add an extra layer of security to your account</p>
+                  </div>
+                  <Switch
+                    id="twoFactor"
+                    checked={settings.security.two_factor_auth}
+                    onCheckedChange={(checked) => updateSetting('security', 'two_factor_auth', checked)}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <Label htmlFor="sessionTimeout">Session Timeout (minutes)</Label>
+                    <Input
+                      id="sessionTimeout"
+                      type="number"
+                      value={settings.security.session_timeout}
+                      onChange={(e) => updateSetting('security', 'session_timeout', e.target.value)}
+                      placeholder="60"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="loginAttempts">Max Login Attempts</Label>
+                    <Input
+                      id="loginAttempts"
+                      type="number"
+                      value={settings.security.login_attempts}
+                      onChange={(e) => updateSetting('security', 'login_attempts', e.target.value)}
+                      placeholder="5"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="passwordPolicy">Password Policy</Label>
+                  <Select
+                    value={settings.security.password_policy}
+                    onValueChange={(value) => updateSetting('security', 'password_policy', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select password policy" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low (8+ characters)</SelectItem>
+                      <SelectItem value="medium">Medium (8+ chars, numbers)</SelectItem>
+                      <SelectItem value="high">High (8+ chars, numbers, symbols)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="ipRestrictions">IP Address Restrictions</Label>
+                    <p className="text-sm text-gray-500">Restrict access to specific IP addresses</p>
+                  </div>
+                  <Switch
+                    id="ipRestrictions"
+                    checked={settings.security.ip_restrictions}
+                    onCheckedChange={(checked) => updateSetting('security', 'ip_restrictions', checked)}
+                  />
+                </div>
+
+                <div className="flex justify-end">
+                  <Button onClick={() => saveSettings('security')} disabled={loading}>
+                    <Save className="w-4 h-4 mr-2" />
+                    {loading ? "Saving..." : "Save Changes"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Appearance Settings */}
+          <TabsContent value="appearance">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Palette className="w-5 h-5" />
+                  Appearance Settings
+                </CardTitle>
+                <CardDescription>
+                  Customize the look and feel of your admin panel
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <Label htmlFor="signature_name">Signature Name</Label>
-                    <Input
-                      id="signature_name"
-                      value={settings.signature_name || ''}
-                      onChange={(e) => setSettings(prev => ({ ...prev, signature_name: e.target.value }))}
-                      placeholder="John Kiprotich"
-                    />
+                    <Label htmlFor="theme">Theme</Label>
+                    <Select
+                      value={settings.appearance.theme}
+                      onValueChange={(value) => updateSetting('appearance', 'theme', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select theme" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="light">Light</SelectItem>
+                        <SelectItem value="dark">Dark</SelectItem>
+                        <SelectItem value="auto">Auto (System)</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
-                    <Label htmlFor="signature_title">Signature Title</Label>
-                    <Input
-                      id="signature_title"
-                      value={settings.signature_title || ''}
-                      onChange={(e) => setSettings(prev => ({ ...prev, signature_title: e.target.value }))}
-                      placeholder="Project Manager"
+                    <Label htmlFor="primaryColor">Primary Color</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        id="primaryColor"
+                        type="color"
+                        value={settings.appearance.primary_color}
+                        onChange={(e) => updateSetting('appearance', 'primary_color', e.target.value)}
+                        className="w-16 h-10"
+                      />
+                      <Input
+                        value={settings.appearance.primary_color}
+                        onChange={(e) => updateSetting('appearance', 'primary_color', e.target.value)}
+                        placeholder="#f97316"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="sidebarCollapsed">Collapsed Sidebar by Default</Label>
+                      <p className="text-sm text-gray-500">Start with a collapsed sidebar</p>
+                    </div>
+                    <Switch
+                      id="sidebarCollapsed"
+                      checked={settings.appearance.sidebar_collapsed}
+                      onCheckedChange={(checked) => updateSetting('appearance', 'sidebar_collapsed', checked)}
                     />
                   </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="compactMode">Compact Mode</Label>
+                      <p className="text-sm text-gray-500">Reduce spacing for more content</p>
+                    </div>
+                    <Switch
+                      id="compactMode"
+                      checked={settings.appearance.compact_mode}
+                      onCheckedChange={(checked) => updateSetting('appearance', 'compact_mode', checked)}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="showAnimations">Show Animations</Label>
+                      <p className="text-sm text-gray-500">Enable smooth transitions and animations</p>
+                    </div>
+                    <Switch
+                      id="showAnimations"
+                      checked={settings.appearance.show_animations}
+                      onCheckedChange={(checked) => updateSetting('appearance', 'show_animations', checked)}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <Button onClick={() => saveSettings('appearance')} disabled={loading}>
+                    <Save className="w-4 h-4 mr-2" />
+                    {loading ? "Saving..." : "Save Changes"}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
