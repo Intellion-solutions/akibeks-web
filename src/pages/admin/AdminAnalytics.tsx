@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, TrendingUp, TrendingDown, DollarSign, Users, Building, Target, BarChart3, PieChart, LineChart, Filter, Download, RefreshCw } from "lucide-react";
-import { LineChart as RechartsLineChart, Line, AreaChart, Area, BarChart, Bar, PieChart as RechartsPieChart, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart as RechartsLineChart, Line, AreaChart, Area, BarChart, Bar, PieChart as RechartsPieChart, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Pie } from 'recharts';
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/contexts/AdminContext";
 import AdminLogin from "@/components/AdminLogin";
@@ -57,7 +56,7 @@ const AdminAnalytics = () => {
       // Process analytics data
       const processedAnalytics = {
         revenue: {
-          total: invoices?.reduce((sum, inv) => sum + parseFloat(inv.total_amount || 0), 0) || 0,
+          total: invoices?.reduce((sum, inv) => sum + parseFloat(inv.total_amount?.toString() || '0'), 0) || 0,
           growth: 12.5,
           trend: generateTrendData('revenue')
         },
@@ -80,9 +79,9 @@ const AdminAnalytics = () => {
         },
         quotes: {
           total: quotes?.length || 0,
-          accepted: quotes?.filter(q => q.status === 'accepted').length || 0,
+          accepted: quotes?.filter(q => q.status === 'approved').length || 0,
           pending: quotes?.filter(q => q.status === 'pending').length || 0,
-          conversion: quotes?.length > 0 ? (quotes.filter(q => q.status === 'accepted').length / quotes.length * 100) : 0
+          conversion: quotes?.length > 0 ? (quotes.filter(q => q.status === 'approved').length / quotes.length * 100) : 0
         }
       };
 

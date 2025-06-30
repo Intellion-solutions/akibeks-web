@@ -7,8 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Star, Quote, Search, Filter, Users, Award, ThumbsUp, TrendingUp } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Star, Quote, Search, Filter, Users, Award, ThumbsUp, TrendingUp, MessageSquare, ArrowRight, Calendar, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Link } from "react-router-dom";
 
 interface Testimonial {
   id: string;
@@ -29,6 +31,7 @@ const Testimonials = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRating, setFilterRating] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
+  const [activeTab, setActiveTab] = useState("all");
 
   useEffect(() => {
     fetchTestimonials();
@@ -77,7 +80,11 @@ const Testimonials = () => {
       
       const matchesRating = filterRating === "all" || testimonial.rating.toString() === filterRating;
       
-      return matchesSearch && matchesRating;
+      const matchesTab = activeTab === "all" || 
+                        (activeTab === "featured" && testimonial.is_featured) ||
+                        (activeTab === "recent" && new Date(testimonial.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
+      
+      return matchesSearch && matchesRating && matchesTab;
     })
     .sort((a, b) => {
       switch (sortBy) {
@@ -104,6 +111,13 @@ const Testimonials = () => {
   
   const fiveStarCount = testimonials.filter(t => t.rating === 5).length;
   const totalTestimonials = testimonials.length;
+  const satisfactionRate = totalTestimonials > 0 ? Math.round((fiveStarCount / totalTestimonials) * 100) : 0;
+
+  const ratingBreakdown = [5, 4, 3, 2, 1].map(rating => ({
+    stars: rating,
+    count: testimonials.filter(t => t.rating === rating).length,
+    percentage: totalTestimonials > 0 ? Math.round((testimonials.filter(t => t.rating === rating).length / totalTestimonials) * 100) : 0
+  }));
 
   return (
     <div className="min-h-screen bg-white">
@@ -126,7 +140,7 @@ const Testimonials = () => {
             </p>
             
             {/* Statistics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 max-w-4xl mx-auto mb-8">
               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 transform hover:scale-105 transition-all duration-300">
                 <div className="flex items-center justify-center mb-3">
                   <Users className="w-8 h-8 text-orange-400" />
@@ -155,65 +169,118 @@ const Testimonials = () => {
                 <div className="flex items-center justify-center mb-3">
                   <TrendingUp className="w-8 h-8 text-blue-400" />
                 </div>
-                <div className="text-3xl font-bold">{Math.round((fiveStarCount / totalTestimonials) * 100)}%</div>
+                <div className="text-3xl font-bold">{satisfactionRate}%</div>
                 <div className="text-sm opacity-80">Satisfaction Rate</div>
               </div>
+            </div>
+
+            {/* CTA Button */}
+            <Link to="/submit-testimonial">
+              <Button size="lg" className="bg-orange-500 hover:bg-orange-600 transform hover:scale-105 transition-all duration-300">
+                <MessageSquare className="w-5 h-5 mr-2" />
+                Share Your Experience
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Rating Breakdown Section */}
+      <section className="py-12 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-6">Rating Breakdown</h2>
+              <div className="space-y-4">
+                {ratingBreakdown.map((item) => (
+                  <div key={item.stars} className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-1 w-20">
+                      <span className="text-sm font-medium">{item.stars}</span>
+                      <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                    </div>
+                    <div className="flex-1 bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-yellow-400 h-2 rounded-full" 
+                        style={{ width: `${item.percentage}%` }}
+                      ></div>
+                    </div>
+                    <span className="text-sm text-gray-600 w-12">{item.count}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div className="text-center">
+              <div className="text-6xl font-bold text-gray-900 mb-2">{averageRating}</div>
+              <div className="flex items-center justify-center mb-2">
+                {renderStars(Math.round(parseFloat(averageRating)))}
+              </div>
+              <p className="text-gray-600">Based on {totalTestimonials} reviews</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Search and Filter Section */}
-      <section className="py-12 bg-gray-50 border-b">
+      <section className="py-12 bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="flex flex-col sm:flex-row gap-4 flex-1">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <Input
-                  placeholder="Search testimonials, clients, or projects..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 h-12"
-                />
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <TabsList className="grid grid-cols-3 w-full max-w-md mx-auto">
+              <TabsTrigger value="all">All Reviews</TabsTrigger>
+              <TabsTrigger value="featured">Featured</TabsTrigger>
+              <TabsTrigger value="recent">Recent</TabsTrigger>
+            </TabsList>
+
+            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+              <div className="flex flex-col sm:flex-row gap-4 flex-1">
+                <div className="relative flex-1 max-w-md">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <Input
+                    placeholder="Search testimonials, clients, or projects..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 h-12"
+                  />
+                </div>
+                
+                <Select value={filterRating} onValueChange={setFilterRating}>
+                  <SelectTrigger className="w-40 h-12">
+                    <SelectValue placeholder="All Ratings" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Ratings</SelectItem>
+                    <SelectItem value="5">5 Stars</SelectItem>
+                    <SelectItem value="4">4 Stars</SelectItem>
+                    <SelectItem value="3">3 Stars</SelectItem>
+                    <SelectItem value="2">2 Stars</SelectItem>
+                    <SelectItem value="1">1 Star</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-40 h-12">
+                    <SelectValue placeholder="Sort By" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="newest">Newest First</SelectItem>
+                    <SelectItem value="oldest">Oldest First</SelectItem>
+                    <SelectItem value="highest-rating">Highest Rating</SelectItem>
+                    <SelectItem value="lowest-rating">Lowest Rating</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               
-              <Select value={filterRating} onValueChange={setFilterRating}>
-                <SelectTrigger className="w-40 h-12">
-                  <SelectValue placeholder="All Ratings" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Ratings</SelectItem>
-                  <SelectItem value="5">5 Stars</SelectItem>
-                  <SelectItem value="4">4 Stars</SelectItem>
-                  <SelectItem value="3">3 Stars</SelectItem>
-                  <SelectItem value="2">2 Stars</SelectItem>
-                  <SelectItem value="1">1 Star</SelectItem>
-                </SelectContent>
-              </Select>
-              
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-40 h-12">
-                  <SelectValue placeholder="Sort By" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="newest">Newest First</SelectItem>
-                  <SelectItem value="oldest">Oldest First</SelectItem>
-                  <SelectItem value="highest-rating">Highest Rating</SelectItem>
-                  <SelectItem value="lowest-rating">Lowest Rating</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="text-sm text-gray-600">
+                Showing {filteredTestimonials.length} of {totalTestimonials} testimonials
+              </div>
             </div>
-            
-            <div className="text-sm text-gray-600">
-              Showing {filteredTestimonials.length} of {totalTestimonials} testimonials
-            </div>
-          </div>
+          </Tabs>
         </div>
       </section>
 
       {/* Featured Testimonials */}
-      {featuredTestimonials.length > 0 && (
+      {featuredTestimonials.length > 0 && activeTab !== 'recent' && (
         <section className="py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
@@ -222,13 +289,15 @@ const Testimonials = () => {
             </div>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {featuredTestimonials.map((testimonial, index) => (
+              {featuredTestimonials.slice(0, 4).map((testimonial, index) => (
                 <Card key={testimonial.id} className="hover:shadow-2xl transition-all duration-500 hover:scale-105 bg-gradient-to-br from-blue-50 to-orange-50 border-2 border-orange-200 animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div>
                         <CardTitle className="text-xl text-gray-900">{testimonial.client_name}</CardTitle>
-                        <CardDescription className="text-gray-600">{testimonial.client_role}</CardDescription>
+                        <CardDescription className="text-gray-600 flex items-center mt-1">
+                          <span>{testimonial.client_role}</span>
+                        </CardDescription>
                       </div>
                       <Badge variant="secondary" className="bg-orange-100 text-orange-800 font-semibold">
                         Featured
@@ -251,7 +320,8 @@ const Testimonials = () => {
                           <span className="ml-1">{testimonial.projects.title}</span>
                         </p>
                       )}
-                      <p className="text-xs text-gray-400">
+                      <p className="text-xs text-gray-400 flex items-center">
+                        <Calendar className="w-3 h-3 mr-1" />
                         {new Date(testimonial.created_at).toLocaleDateString('en-US', { 
                           year: 'numeric', 
                           month: 'long', 
@@ -272,7 +342,9 @@ const Testimonials = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              All Client Reviews
+              {activeTab === 'featured' ? 'Featured Client Reviews' : 
+               activeTab === 'recent' ? 'Recent Client Reviews' : 
+               'All Client Reviews'}
             </h2>
             <p className="text-xl text-gray-600">Every voice matters to us</p>
           </div>
@@ -282,9 +354,11 @@ const Testimonials = () => {
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
               <div className="text-lg text-gray-600">Loading testimonials...</div>
             </div>
-          ) : regularTestimonials.length > 0 ? (
+          ) : filteredTestimonials.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {regularTestimonials.map((testimonial, index) => (
+              {(activeTab === 'featured' ? featuredTestimonials : 
+                activeTab === 'all' ? regularTestimonials : 
+                filteredTestimonials).map((testimonial, index) => (
                 <Card key={testimonial.id} className="hover:shadow-xl transition-all duration-300 hover:-translate-y-2 bg-white animate-fade-in" style={{ animationDelay: `${index * 0.05}s` }}>
                   <CardHeader>
                     <div className="flex items-center justify-between">
@@ -292,6 +366,11 @@ const Testimonials = () => {
                         <CardTitle className="text-lg text-gray-900">{testimonial.client_name}</CardTitle>
                         <CardDescription className="text-gray-600">{testimonial.client_role}</CardDescription>
                       </div>
+                      {testimonial.is_featured && activeTab === 'all' && (
+                        <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                          Featured
+                        </Badge>
+                      )}
                     </div>
                     <div className="flex items-center space-x-1 mt-2">
                       {renderStars(testimonial.rating)}
@@ -309,7 +388,8 @@ const Testimonials = () => {
                           <span className="font-medium">Project:</span> {testimonial.projects.title}
                         </p>
                       )}
-                      <p className="text-xs text-gray-400">
+                      <p className="text-xs text-gray-400 flex items-center">
+                        <Calendar className="w-3 h-3 mr-1" />
                         {new Date(testimonial.created_at).toLocaleDateString()}
                       </p>
                     </div>
@@ -322,12 +402,18 @@ const Testimonials = () => {
               <CardContent className="p-12 text-center">
                 <ThumbsUp className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No testimonials found</h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 mb-6">
                   {searchTerm || filterRating !== "all" 
                     ? "Try adjusting your search criteria or filters"
                     : "No testimonials available at the moment"
                   }
                 </p>
+                <Link to="/submit-testimonial">
+                  <Button className="bg-blue-600 hover:bg-blue-700">
+                    <MessageSquare className="w-4 h-4 mr-2" />
+                    Be the First to Share
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
           )}
@@ -343,12 +429,16 @@ const Testimonials = () => {
             Let's build your dream project together.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-8 py-4 text-lg transform hover:scale-105 transition-all duration-300">
-              Get Your Free Quote
-            </Button>
-            <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-blue-900 font-semibold px-8 py-4 text-lg transform hover:scale-105 transition-all duration-300">
-              View Our Projects
-            </Button>
+            <Link to="/request-quote">
+              <Button size="lg" className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-8 py-4 text-lg transform hover:scale-105 transition-all duration-300">
+                Get Your Free Quote
+              </Button>
+            </Link>
+            <Link to="/projects">
+              <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-blue-900 font-semibold px-8 py-4 text-lg transform hover:scale-105 transition-all duration-300">
+                View Our Projects
+              </Button>
+            </Link>
           </div>
         </div>
       </section>

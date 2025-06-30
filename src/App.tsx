@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -23,9 +24,11 @@ import AdminClients from "./pages/admin/AdminClients";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminBackup from "./pages/admin/AdminBackup";
+import AdminTestimonials from "./pages/admin/AdminTestimonials";
 import NotFound from "./pages/NotFound";
 import Team from "./pages/Team";
 import Testimonials from "./pages/Testimonials";
+import SubmitTestimonial from "./pages/SubmitTestimonial";
 import Gallery from "./pages/Gallery";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
@@ -35,6 +38,8 @@ import Portfolio from "./pages/Portfolio";
 import Pricing from "./pages/Pricing";
 import ServiceDetail from "./pages/ServiceDetail";
 import Features from "./pages/Features";
+import Resources from "./pages/Resources";
+import Consulting from "./pages/Services/Consulting";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +56,7 @@ const App = () => (
               <Route path="/about" element={<About />} />
               <Route path="/services" element={<Services />} />
               <Route path="/services/:id" element={<ServiceDetail />} />
+              <Route path="/services/consulting" element={<Consulting />} />
               <Route path="/projects" element={<Projects />} />
               <Route path="/portfolio" element={<Portfolio />} />
               <Route path="/contact" element={<Contact />} />
@@ -58,6 +64,7 @@ const App = () => (
               <Route path="/book-visit" element={<BookVisit />} />
               <Route path="/team" element={<Team />} />
               <Route path="/testimonials" element={<Testimonials />} />
+              <Route path="/submit-testimonial" element={<SubmitTestimonial />} />
               <Route path="/gallery" element={<Gallery />} />
               <Route path="/blog" element={<Blog />} />
               <Route path="/blog/:slug" element={<BlogPost />} />
@@ -65,12 +72,14 @@ const App = () => (
               <Route path="/faq" element={<FAQ />} />
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/features" element={<Features />} />
+              <Route path="/resources" element={<Resources />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/projects" element={<AdminProjects />} />
               <Route path="/admin/quotes" element={<AdminQuotes />} />
               <Route path="/admin/invoices" element={<AdminInvoices />} />
               <Route path="/admin/clients" element={<AdminClients />} />
               <Route path="/admin/users" element={<AdminUsers />} />
+              <Route path="/admin/testimonials" element={<AdminTestimonials />} />
               <Route path="/admin/settings" element={<AdminSettings />} />
               <Route path="/admin/templates" element={<AdminTemplates />} />
               <Route path="/admin/reports" element={<AdminReports />} />
