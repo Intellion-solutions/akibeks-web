@@ -9,21 +9,15 @@ interface LogoProps {
 
 const Logo = ({ variant = "default", size = "md", showText = true }: LogoProps) => {
   const sizeClasses = {
-    sm: "w-6 h-6 text-sm",
-    md: "w-10 h-10 text-xl",
-    lg: "w-16 h-16 text-3xl"
+    sm: "w-8 h-8",
+    md: "w-12 h-12",
+    lg: "w-20 h-20"
   };
 
   const textSizeClasses = {
     sm: "text-sm",
     md: "text-xl",
     lg: "text-3xl"
-  };
-
-  const colorClasses = {
-    default: "bg-orange-500 text-white",
-    white: "bg-white text-orange-500",
-    compact: "bg-orange-500 text-white"
   };
 
   const textColorClasses = {
@@ -33,14 +27,23 @@ const Logo = ({ variant = "default", size = "md", showText = true }: LogoProps) 
   };
 
   return (
-    <div className="flex items-center space-x-2">
-      <div className={`${sizeClasses[size]} ${colorClasses[variant]} rounded-lg flex items-center justify-center`}>
-        <Building2 className={`${size === 'sm' ? 'w-4 h-4' : size === 'md' ? 'w-6 h-6' : 'w-10 h-10'}`} />
+    <div className="flex items-center space-x-3">
+      <div className={`${sizeClasses[size]} flex-shrink-0`}>
+        <img 
+          src="/lovable-uploads/36449ecf-a66d-4784-8ffb-6eb18390ec8f.png" 
+          alt="AKIBEKS Engineering Solutions"
+          className="w-full h-full object-contain"
+        />
       </div>
       {showText && (
-        <span className={`font-bold ${textSizeClasses[size]} ${textColorClasses[variant]}`}>
-          AKIBEKS Engineering
-        </span>
+        <div className="flex flex-col">
+          <span className={`font-bold ${textSizeClasses[size]} ${textColorClasses[variant]} leading-tight`}>
+            AKIBEKS
+          </span>
+          <span className={`font-medium text-blue-600 ${size === 'sm' ? 'text-xs' : size === 'md' ? 'text-sm' : 'text-lg'} leading-tight`}>
+            ENGINEERING SOLUTIONS
+          </span>
+        </div>
       )}
     </div>
   );
