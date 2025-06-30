@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,6 +36,7 @@ interface Template {
   notes: string;
   created_at: string;
   updated_at: string;
+  items?: TemplateItem[]; // Make items optional since we fetch them separately
 }
 
 interface FilterState {

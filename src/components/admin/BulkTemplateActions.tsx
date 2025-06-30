@@ -6,7 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Download, Copy, Trash2, CheckSquare, Square, FileDown } from "lucide-react";
+import { Download, Copy, Trash2, CheckSquare, Square, FileDown, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Template {
@@ -247,7 +247,9 @@ const BulkTemplateActions = ({
               <Checkbox
                 checked={isAllSelected}
                 ref={(el) => {
-                  if (el) el.indeterminate = isPartiallySelected;
+                  if (el && el instanceof HTMLInputElement) {
+                    el.indeterminate = isPartiallySelected;
+                  }
                 }}
                 onCheckedChange={handleSelectAll}
               />
