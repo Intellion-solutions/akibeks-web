@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, Print, Send, Eye } from "lucide-react";
+import { Download, Printer, Send, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import InvoicePDF from './InvoicePDF';
@@ -73,7 +73,7 @@ const InvoiceViewer: React.FC<InvoiceViewerProps> = ({ invoiceId, open, onOpenCh
           quantity: parseFloat(item.quantity.toString()),
           unit_price: parseFloat(item.unit_price.toString()),
           total_price: parseFloat(item.total_price.toString()),
-          section: item.section || 'General'
+          section: 'General' // Default section since it doesn't exist in the database yet
         })) || [],
         subtotal: parseFloat(invoice.total_amount.toString()) || 0,
         tax_rate: 16, // Kenya VAT rate
@@ -175,7 +175,7 @@ const InvoiceViewer: React.FC<InvoiceViewerProps> = ({ invoiceId, open, onOpenCh
             </DialogTitle>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={handlePrint}>
-                <Print className="w-4 h-4 mr-2" />
+                <Printer className="w-4 h-4 mr-2" />
                 Print
               </Button>
               <Button variant="outline" size="sm" onClick={handleDownload}>

@@ -124,7 +124,7 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice, company }) => {
       {/* Items Table */}
       <div className="mb-8">
         {Object.entries(groupedItems).map(([sectionName, sectionItems], sectionIndex) => (
-          <div key={sectionName} className={`${sectionIndex > 0 ? 'mt-8 page-break-before' : ''}`}>
+          <div key={sectionName} className={`${sectionIndex > 0 ? 'mt-8 print:break-before-page' : ''}`}>
             {Object.keys(groupedItems).length > 1 && (
               <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-3 rounded-t-lg">
                 <h3 className="font-bold text-lg">{sectionName}</h3>
@@ -237,14 +237,6 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice, company }) => {
           </p>
         </div>
       </div>
-
-      <style jsx>{`
-        @media print {
-          .page-break-before {
-            page-break-before: always;
-          }
-        }
-      `}</style>
     </div>
   );
 };
