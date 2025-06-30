@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,28 @@ interface Template {
   items?: TemplateItem[]; // Make items optional since we fetch them separately
 }
 
+// Template interface for TemplateEditor - matches what it expects
+interface EditableTemplate {
+  id?: string;
+  template_id: string;
+  template_name: string;
+  material_cost: number;
+  labor_charge: number;
+  tax_amount: number;
+  grand_total: number;
+  terms_conditions: string;
+  notes: string;
+  items: {
+    id?: string;
+    item_number: number;
+    description: string;
+    unit: string;
+    quantity: number;
+    unit_price: number;
+    amount: number;
+  }[];
+}
+
 interface FilterState {
   search: string;
   sortBy: string;
@@ -54,7 +77,7 @@ const AdminTemplates = () => {
   const [templateItems, setTemplateItems] = useState<TemplateItem[]>([]);
   const [selectedTemplates, setSelectedTemplates] = useState<string[]>([]);
   const [showCreateTemplate, setShowCreateTemplate] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
+  const [editingTemplate, setEditingTemplate] = useState<EditableTemplate | null>(null);
   const [loading, setLoading] = useState(false);
 
   const [filters, setFilters] = useState<FilterState>({
@@ -261,7 +284,7 @@ const AdminTemplates = () => {
 
   const handleEditTemplate = (template: Template) => {
     const items = getTemplateItems(template.template_id);
-    const templateWithItems = {
+    const templateWithItems: EditableTemplate = {
       ...template,
       items: items.map(item => ({
         id: item.id,
