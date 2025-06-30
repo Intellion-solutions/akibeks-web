@@ -1,361 +1,389 @@
 
+import { useState } from "react";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import Logo from "@/components/Logo";
-import { Link } from "react-router-dom";
-import { 
-  Shield, 
-  Award, 
-  Clock, 
-  HeartHandshake, 
-  Globe, 
-  Lightbulb,
-  Users,
-  Building,
-  Wrench,
-  Calculator,
-  FileText,
-  Calendar,
-  Phone,
-  Mail,
-  Camera,
-  Star,
-  TrendingUp,
-  CheckCircle,
-  Target,
-  Zap,
-  Settings,
-  Database,
-  BarChart,
-  Smartphone,
-  Wifi,
-  Lock
-} from "lucide-react";
-
-const features = [
-  {
-    category: "Core Services",
-    items: [
-      {
-        icon: Building,
-        title: "Residential Construction",
-        description: "Complete home construction from foundation to finishing with modern architectural designs.",
-        highlights: ["Custom Design", "Quality Materials", "Timely Delivery", "NCA Certified"]
-      },
-      {
-        icon: Building,
-        title: "Commercial Projects", 
-        description: "Office buildings, retail spaces, and commercial infrastructure development.",
-        highlights: ["Professional Standards", "Code Compliance", "Project Management", "Licensed"]
-      },
-      {
-        icon: Wrench,
-        title: "Civil Engineering",
-        description: "Infrastructure development and comprehensive civil engineering solutions.",
-        highlights: ["Site Planning", "Structural Design", "Environmental Compliance", "Expert Team"]
-      }
-    ]
-  },
-  {
-    category: "Technology & Innovation",
-    items: [
-      {
-        icon: Smartphone,
-        title: "Mobile-First Design",
-        description: "Fully responsive website that works perfectly on all devices and screen sizes.",
-        highlights: ["Responsive Design", "Touch Optimized", "Fast Loading", "Cross-Platform"]
-      },
-      {
-        icon: Database,
-        title: "Advanced Admin Panel",
-        description: "Comprehensive management system for projects, clients, quotes, and invoices.",
-        highlights: ["Project Tracking", "Client Management", "Financial Reports", "User Roles"]
-      },
-      {
-        icon: FileText,
-        title: "Document Templates",
-        description: "Professional templates for quotes, invoices, receipts, and delivery notes.",
-        highlights: ["Professional Design", "Customizable", "PDF Export", "Brand Consistent"]
-      }
-    ]
-  },
-  {
-    category: "Client Experience",
-    items: [
-      {
-        icon: Calculator,
-        title: "Online Quote Request",
-        description: "Easy-to-use form for clients to request detailed project quotations.",
-        highlights: ["Instant Submission", "Detailed Forms", "File Uploads", "Quick Response"]
-      },
-      {
-        icon: Calendar,
-        title: "Site Visit Booking",
-        description: "Convenient online booking system for site visits and consultations.",
-        highlights: ["Calendar Integration", "Time Slots", "Confirmation Emails", "Reminders"]
-      },
-      {
-        icon: Phone,
-        title: "Multi-Channel Contact",
-        description: "Multiple ways to reach us including phone, email, and contact forms.",
-        highlights: ["24/7 Support", "Quick Response", "Professional Service", "Local Presence"]
-      }
-    ]
-  },
-  {
-    category: "Quality Assurance",
-    items: [
-      {
-        icon: Shield,
-        title: "Licensed & Insured",
-        description: "Fully licensed by NCA and comprehensively insured for your peace of mind.",
-        highlights: ["NCA Registered", "Full Insurance", "Legal Compliance", "Professional Standards"]
-      },
-      {
-        icon: Award,
-        title: "ISO Certified",
-        description: "International quality standards certification ensuring excellence in all projects.",
-        highlights: ["Quality Management", "Process Excellence", "Continuous Improvement", "Global Standards"]
-      },
-      {
-        icon: CheckCircle,
-        title: "Quality Control",
-        description: "Rigorous quality checks at every stage of construction and project delivery.",
-        highlights: ["Stage Inspections", "Material Testing", "Progress Monitoring", "Final Validation"]
-      }
-    ]
-  },
-  {
-    category: "Sustainability",
-    items: [
-      {
-        icon: Globe,
-        title: "Eco-Friendly Practices",
-        description: "Sustainable construction methods and environmentally responsible building practices.",
-        highlights: ["Green Materials", "Energy Efficient", "Waste Reduction", "Environmental Care"]
-      },
-      {
-        icon: Lightbulb,
-        title: "Innovation Focus",
-        description: "Latest construction technologies and innovative building solutions.",
-        highlights: ["Modern Techniques", "Smart Building", "Technology Integration", "Future-Ready"]
-      },
-      {
-        icon: Target,
-        title: "Precision Engineering",
-        description: "Accurate measurements, precise planning, and exact implementation.",
-        highlights: ["Detailed Planning", "Accurate Estimates", "Precise Execution", "Perfect Results"]
-      }
-    ]
-  },
-  {
-    category: "Customer Service",
-    items: [
-      {
-        icon: HeartHandshake,
-        title: "Customer-Centric",
-        description: "Your satisfaction is our top priority with personalized service approach.",
-        highlights: ["Personal Attention", "Custom Solutions", "Regular Updates", "100% Satisfaction"]
-      },
-      {
-        icon: Clock,
-        title: "On-Time Delivery",
-        description: "Committed to delivering all projects on schedule with transparent timelines.",
-        highlights: ["Timeline Adherence", "Progress Tracking", "Milestone Updates", "Reliable Delivery"]
-      },
-      {
-        icon: TrendingUp,
-        title: "Continuous Improvement",
-        description: "Always striving to improve our services and exceed client expectations.",
-        highlights: ["Feedback Integration", "Service Enhancement", "Skill Development", "Best Practices"]
-      }
-    ]
-  }
-];
-
-const stats = [
-  { number: "500+", label: "Projects Completed", icon: Target },
-  { number: "15+", label: "Years Experience", icon: Award },
-  { number: "50+", label: "Expert Team", icon: Users },
-  { number: "100%", label: "Client Satisfaction", icon: Star }
-];
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CheckCircle, Star, ArrowRight, Zap, Shield, Users, Briefcase, Building2, Hammer, Wrench, Clock, DollarSign, Award, Target, Lightbulb, Phone } from "lucide-react";
+import SEOHead from "@/components/SEOHead";
 
 const Features = () => {
-  return (
-    <div className="min-h-screen bg-white">
-      <Navbar />
-      
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-r from-blue-900 to-blue-800 text-white py-16">
-        <div className="absolute inset-0 bg-black opacity-40"></div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <Logo variant="white" size="lg" />
-          <h1 className="text-4xl md:text-5xl font-bold mb-6 mt-8">
-            Comprehensive Features & <span className="text-orange-400">Capabilities</span>
-          </h1>
-          <p className="text-xl md:text-2xl mb-8 max-w-4xl mx-auto">
-            Discover all the advanced features and services that make AKIBEKS Engineering 
-            your ideal partner for construction and engineering projects
-          </p>
-          
-          {/* Quick Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-12">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center">
-                <stat.icon className="w-8 h-8 mx-auto mb-2 text-orange-400" />
-                <div className="text-2xl md:text-3xl font-bold text-orange-400">{stat.number}</div>
-                <div className="text-sm opacity-90">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+  const [activeTab, setActiveTab] = useState("construction");
 
-      {/* Features Sections */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {features.map((category, categoryIndex) => (
-            <div key={categoryIndex} className="mb-16">
-              <div className="text-center mb-12">
-                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                  {category.category}
-                </h2>
-                <div className="w-24 h-1 bg-orange-500 mx-auto"></div>
-              </div>
+  const constructionFeatures = [
+    {
+      icon: Building2,
+      title: "Residential Construction",
+      description: "Complete home building services from foundation to finishing",
+      highlights: ["Custom home design", "Energy-efficient construction", "Modern amenities", "Quality materials"],
+      image: "https://images.unsplash.com/photo-1572120360610-d971b9d7767c?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      icon: Briefcase,
+      title: "Commercial Projects",
+      description: "Large-scale commercial and industrial construction solutions",
+      highlights: ["Office complexes", "Retail spaces", "Warehouses", "Industrial facilities"],
+      image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      icon: Hammer,
+      title: "Infrastructure Development",
+      description: "Critical infrastructure projects for communities and businesses",
+      highlights: ["Road construction", "Bridge building", "Water systems", "Utilities installation"],
+      image: "https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=800&q=80"
+    }
+  ];
+
+  const engineeringFeatures = [
+    {
+      icon: Target,
+      title: "Structural Engineering",
+      description: "Advanced structural design and analysis for safe, durable buildings",
+      highlights: ["Seismic design", "Load analysis", "Material optimization", "Safety compliance"],
+      premium: true
+    },
+    {
+      icon: Lightbulb,
+      title: "MEP Engineering",
+      description: "Mechanical, Electrical, and Plumbing systems design",
+      highlights: ["HVAC systems", "Electrical design", "Plumbing layouts", "Fire safety systems"],
+      premium: true
+    },
+    {
+      icon: Wrench,
+      title: "Civil Engineering",
+      description: "Comprehensive civil engineering for infrastructure projects",
+      highlights: ["Site development", "Drainage systems", "Transportation planning", "Environmental impact"],
+      premium: false
+    }
+  ];
+
+  const serviceFeatures = [
+    {
+      icon: Clock,
+      title: "24/7 Support",
+      description: "Round-the-clock customer support and emergency services",
+      color: "text-blue-600"
+    },
+    {
+      icon: Shield,
+      title: "Quality Assurance",
+      description: "Rigorous quality control and testing at every stage",
+      color: "text-green-600"
+    },
+    {
+      icon: DollarSign,
+      title: "Transparent Pricing",
+      description: "Clear, upfront pricing with no hidden costs",
+      color: "text-purple-600"
+    },
+    {
+      icon: Award,
+      title: "Certified Professionals",
+      description: "Licensed engineers and certified construction professionals",
+      color: "text-orange-600"
+    },
+    {
+      icon: Users,
+      title: "Dedicated Team",
+      description: "Experienced project managers and skilled craftspeople",
+      color: "text-teal-600"
+    },
+    {
+      icon: Zap,
+      title: "Fast Delivery",
+      description: "Efficient project execution with on-time delivery",
+      color: "text-red-600"
+    }
+  ];
+
+  const technologyFeatures = [
+    {
+      title: "3D Modeling & Visualization",
+      description: "Advanced 3D modeling software for accurate project visualization",
+      benefits: ["Better client understanding", "Reduced errors", "Faster approvals", "Cost savings"]
+    },
+    {
+      title: "Project Management Software",
+      description: "State-of-the-art project tracking and management systems",
+      benefits: ["Real-time updates", "Resource optimization", "Timeline tracking", "Budget monitoring"]
+    },
+    {
+      title: "Quality Control Systems",
+      description: "Digital quality assurance and inspection tools",
+      benefits: ["Consistent quality", "Documentation", "Compliance tracking", "Issue resolution"]
+    },
+    {
+      title: "Environmental Monitoring",
+      description: "Advanced environmental impact assessment and monitoring",
+      benefits: ["Sustainable practices", "Regulatory compliance", "Impact minimization", "Green building"]
+    }
+  ];
+
+  return (
+    <>
+      <SEOHead 
+        title="Features & Services - Comprehensive Construction & Engineering Solutions"
+        description="Explore our comprehensive range of construction and engineering features including residential, commercial, infrastructure projects, and advanced technology solutions."
+        keywords="construction features, engineering services, residential construction, commercial projects, infrastructure development, Kenya construction"
+      />
+      
+      <div className="min-h-screen bg-white">
+        <Navbar />
+        
+        {/* Hero Section */}
+        <section className="bg-gradient-to-r from-blue-900 via-blue-800 to-purple-900 text-white py-24 relative overflow-hidden">
+          <div className="absolute inset-0">
+            <div className="absolute top-20 left-20 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute bottom-20 right-20 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+          </div>
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center">
+              <h1 className="text-5xl md:text-7xl font-bold mb-8 animate-fade-in">
+                Powerful <span className="text-orange-400">Features</span>
+              </h1>
+              <p className="text-xl md:text-2xl max-w-4xl mx-auto mb-12 opacity-90 animate-fade-in">
+                Discover our comprehensive suite of construction and engineering features 
+                designed to deliver exceptional results for every project
+              </p>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {category.items.map((feature, index) => (
-                  <Card key={index} className="hover:shadow-xl transition-all duration-300 hover:transform hover:scale-105 group">
-                    <CardHeader className="text-center">
-                      <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-orange-600 transition-colors">
-                        <feature.icon className="w-8 h-8 text-white" />
-                      </div>
-                      <CardTitle className="text-xl group-hover:text-orange-600 transition-colors">
-                        {feature.title}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className="text-center mb-6 text-gray-600 leading-relaxed">
-                        {feature.description}
-                      </CardDescription>
-                      
-                      {/* Feature Highlights */}
-                      <div className="space-y-2">
-                        {feature.highlights.map((highlight, idx) => (
-                          <div key={idx} className="flex items-center text-sm">
-                            <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                            <span className="text-gray-600">{highlight}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button size="lg" className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-8 py-4 text-lg transform hover:scale-105 transition-all duration-300">
+                  Explore Features
+                </Button>
+                <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-blue-900 font-semibold px-8 py-4 text-lg transform hover:scale-105 transition-all duration-300">
+                  Request Demo
+                </Button>
               </div>
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Technology Features */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Advanced Technology Features
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Cutting-edge tools and systems that enhance our service delivery
-            </p>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              {
-                icon: Wifi,
-                title: "Real-time Updates",
-                description: "Live project progress tracking and instant notifications"
-              },
-              {
-                icon: Lock,
-                title: "Secure Platform",
-                description: "Enterprise-grade security for all client data and documents"
-              },
-              {
-                icon: BarChart,
-                title: "Analytics Dashboard",
-                description: "Comprehensive reporting and business intelligence tools"
-              },
-              {
-                icon: Zap,
-                title: "Fast Performance",
-                description: "Optimized for speed with lightning-fast loading times"
-              },
-              {
-                icon: Settings,
-                title: "Customizable",
-                description: "Tailored solutions to meet specific client requirements"
-              },
-              {
-                icon: Database,
-                title: "Data Management",
-                description: "Robust database systems for reliable data storage"
-              },
-              {
-                icon: FileText,
-                title: "Document Control",
-                description: "Version control and document management systems"
-              },
-              {
-                icon: Users,
-                title: "Collaborative Tools",
-                description: "Team collaboration features for better project coordination"
-              }
-            ].map((tech, index) => (
-              <div key={index} className="text-center group">
-                <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-600 transition-colors">
-                  <tech.icon className="w-8 h-8 text-white" />
+        </section>
+
+        {/* Main Features */}
+        <section className="py-20 bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-bold text-gray-900 mb-4">
+                Our Core Features
+              </h2>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                From residential homes to large infrastructure projects, we offer comprehensive solutions
+              </p>
+            </div>
+
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-4 max-w-2xl mx-auto mb-12">
+                <TabsTrigger value="construction">Construction</TabsTrigger>
+                <TabsTrigger value="engineering">Engineering</TabsTrigger>
+                <TabsTrigger value="services">Services</TabsTrigger>
+                <TabsTrigger value="technology">Technology</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="construction" className="space-y-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  {constructionFeatures.map((feature, index) => (
+                    <Card key={index} className="hover:shadow-2xl transition-all duration-500 group overflow-hidden">
+                      <div className="relative h-48 overflow-hidden">
+                        <img 
+                          src={feature.image} 
+                          alt={feature.title}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                        <div className="absolute bottom-4 left-4">
+                          <feature.icon className="w-8 h-8 text-white" />
+                        </div>
+                      </div>
+                      <CardContent className="p-6">
+                        <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
+                        <p className="text-gray-600 mb-4">{feature.description}</p>
+                        <div className="space-y-2">
+                          {feature.highlights.map((highlight, idx) => (
+                            <div key={idx} className="flex items-center text-sm">
+                              <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                              {highlight}
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-                <h3 className="text-lg font-semibold mb-2 text-gray-900">{tech.title}</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">{tech.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+              </TabsContent>
 
-      {/* Call to Action */}
-      <section className="py-16 bg-gradient-to-r from-orange-500 to-orange-600 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <Logo variant="white" size="md" />
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 mt-6">
-            Experience All These Features Today
-          </h2>
-          <p className="text-xl mb-8 max-w-3xl mx-auto opacity-90">
-            Join hundreds of satisfied clients who have experienced the excellence of 
-            AKIBEKS Engineering Solutions. Start your project with us today.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="secondary" className="font-semibold px-8" asChild>
-              <Link to="/request-quote">
-                Get Free Quote
-              </Link>
-            </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-orange-500 font-semibold px-8" asChild>
-              <Link to="/contact">
-                Contact Us Now
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </section>
+              <TabsContent value="engineering" className="space-y-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  {engineeringFeatures.map((feature, index) => (
+                    <Card key={index} className="hover:shadow-2xl transition-all duration-500 relative">
+                      {feature.premium && (
+                        <div className="absolute top-4 right-4">
+                          <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
+                            Premium
+                          </Badge>
+                        </div>
+                      )}
+                      <CardHeader>
+                        <div className="flex items-center space-x-3">
+                          <div className="p-3 bg-blue-100 rounded-lg">
+                            <feature.icon className="w-6 h-6 text-blue-600" />
+                          </div>
+                          <div>
+                            <CardTitle className="text-xl">{feature.title}</CardTitle>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-gray-600 mb-4">{feature.description}</p>
+                        <div className="space-y-2">
+                          {feature.highlights.map((highlight, idx) => (
+                            <div key={idx} className="flex items-center text-sm">
+                              <Star className="w-4 h-4 text-yellow-500 mr-2" />
+                              {highlight}
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </TabsContent>
 
-      <Footer />
-    </div>
+              <TabsContent value="services" className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {serviceFeatures.map((feature, index) => (
+                    <Card key={index} className="hover:shadow-lg transition-all duration-300 group">
+                      <CardContent className="p-6">
+                        <div className="flex items-start space-x-4">
+                          <div className={`p-3 rounded-lg bg-gray-100 group-hover:bg-gradient-to-r group-hover:from-blue-500 group-hover:to-purple-500 transition-all duration-300`}>
+                            <feature.icon className={`w-6 h-6 ${feature.color} group-hover:text-white transition-colors duration-300`} />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
+                            <p className="text-gray-600 text-sm">{feature.description}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="technology" className="space-y-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {technologyFeatures.map((feature, index) => (
+                    <Card key={index} className="hover:shadow-xl transition-all duration-300">
+                      <CardHeader>
+                        <CardTitle className="text-xl flex items-center">
+                          <Zap className="w-6 h-6 mr-3 text-blue-600" />
+                          {feature.title}
+                        </CardTitle>
+                        <CardDescription>{feature.description}</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-2 gap-3">
+                          {feature.benefits.map((benefit, idx) => (
+                            <div key={idx} className="flex items-center p-2 bg-green-50 rounded-lg">
+                              <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                              <span className="text-sm font-medium">{benefit}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </section>
+
+        {/* Feature Comparison */}
+        <section className="py-20 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-bold text-gray-900 mb-4">
+                Why Choose Our Features?
+              </h2>
+              <p className="text-xl text-gray-600">
+                See how our features compare to industry standards
+              </p>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full bg-white shadow-lg rounded-lg overflow-hidden">
+                <thead className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+                  <tr>
+                    <th className="px-6 py-4 text-left">Feature</th>
+                    <th className="px-6 py-4 text-center">Industry Standard</th>
+                    <th className="px-6 py-4 text-center">Our Solution</th>
+                    <th className="px-6 py-4 text-center">Advantage</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-6 py-4 font-medium">Project Timeline</td>
+                    <td className="px-6 py-4 text-center">6-12 months</td>
+                    <td className="px-6 py-4 text-center font-semibold text-green-600">4-8 months</td>
+                    <td className="px-6 py-4 text-center">
+                      <Badge className="bg-green-100 text-green-800">30% Faster</Badge>
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-6 py-4 font-medium">Quality Assurance</td>
+                    <td className="px-6 py-4 text-center">Basic inspections</td>
+                    <td className="px-6 py-4 text-center font-semibold text-green-600">Advanced QA System</td>
+                    <td className="px-6 py-4 text-center">
+                      <Badge className="bg-blue-100 text-blue-800">Superior Quality</Badge>
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-6 py-4 font-medium">Cost Efficiency</td>
+                    <td className="px-6 py-4 text-center">Standard pricing</td>
+                    <td className="px-6 py-4 text-center font-semibold text-green-600">15% Cost Savings</td>
+                    <td className="px-6 py-4 text-center">
+                      <Badge className="bg-purple-100 text-purple-800">Value Leader</Badge>
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-6 py-4 font-medium">Customer Support</td>
+                    <td className="px-6 py-4 text-center">Business hours</td>
+                    <td className="px-6 py-4 text-center font-semibold text-green-600">24/7 Support</td>
+                    <td className="px-6 py-4 text-center">
+                      <Badge className="bg-orange-100 text-orange-800">Always Available</Badge>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="py-20 bg-gradient-to-r from-blue-900 to-purple-900 text-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6">Ready to Experience Our Features?</h2>
+            <p className="text-xl mb-8 max-w-3xl mx-auto opacity-90">
+              Get started with our comprehensive construction and engineering solutions today.
+              Contact us for a personalized consultation.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-8 py-4 text-lg transform hover:scale-105 transition-all duration-300">
+                <Phone className="w-5 h-5 mr-2" />
+                Schedule Consultation
+              </Button>
+              <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-blue-900 font-semibold px-8 py-4 text-lg transform hover:scale-105 transition-all duration-300">
+                <ArrowRight className="w-5 h-5 mr-2" />
+                View Projects
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        <Footer />
+      </div>
+    </>
   );
 };
 
