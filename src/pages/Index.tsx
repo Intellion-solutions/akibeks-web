@@ -184,7 +184,7 @@ const Index = () => {
       <Navbar />
       <ScrollToTop />
       
-      {/* Enhanced Hero Section */}
+      {/* Enhanced Hero Section with Bigger Logo */}
       <section className="relative bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 text-white py-32 overflow-hidden">
         <div className="absolute inset-0 bg-black opacity-40"></div>
         <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-transparent"></div>
@@ -194,23 +194,45 @@ const Index = () => {
         </div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 animate-fade-in">
-            <Logo variant="white" size="lg" />
-            <div className="mt-8">
-              <h1 className="text-5xl md:text-7xl font-bold mb-8 leading-tight">
+            {/* Enhanced Logo Section */}
+            <div className="mb-12">
+              <div className="flex justify-center mb-8">
+                <div className="w-48 h-48 md:w-64 md:h-64 lg:w-80 lg:h-80 flex-shrink-0 transform hover:scale-105 transition-transform duration-500">
+                  <img 
+                    src="/lovable-uploads/36449ecf-a66d-4784-8ffb-6eb18390ec8f.png" 
+                    alt="AKIBEKS Engineering Solutions"
+                    className="w-full h-full object-contain drop-shadow-2xl"
+                  />
+                </div>
+              </div>
+              <div className="space-y-4">
+                <h1 className="text-6xl md:text-8xl font-bold bg-gradient-to-r from-white to-orange-200 bg-clip-text text-transparent leading-tight">
+                  AKIBEKS
+                </h1>
+                <div className="text-2xl md:text-4xl font-semibold text-orange-400 tracking-widest">
+                  ENGINEERING SOLUTIONS
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-16">
+              <h2 className="text-4xl md:text-6xl font-bold mb-8 leading-tight">
                 Building Excellence,<br />
                 <span className="text-orange-400 animate-pulse">Engineering Dreams</span>
-              </h1>
-              <p className="text-xl md:text-3xl mb-12 max-w-5xl mx-auto leading-relaxed opacity-90">
+              </h2>
+              <p className="text-xl md:text-2xl mb-12 max-w-5xl mx-auto leading-relaxed opacity-90">
                 Kenya's premier construction and engineering company with 15+ years of experience in 
                 residential, commercial, and infrastructure projects. Licensed by NCA.
               </p>
-              <div className="flex flex-col sm:flex-row gap-6 justify-center mb-12">
-                <Button size="lg" className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-10 py-4 text-lg transform hover:scale-105 transition-all duration-300 shadow-2xl" asChild>
+              
+              {/* Enhanced CTA Buttons */}
+              <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
+                <Button size="lg" className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold px-12 py-6 text-xl transform hover:scale-105 transition-all duration-300 shadow-2xl rounded-full" asChild>
                   <Link to="/request-quote">
                     Get Free Quote <ArrowRight className="w-6 h-6 ml-2" />
                   </Link>
                 </Button>
-                <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-blue-900 font-semibold px-10 py-4 text-lg transform hover:scale-105 transition-all duration-300" asChild>
+                <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-blue-900 font-semibold px-12 py-6 text-xl transform hover:scale-105 transition-all duration-300 rounded-full backdrop-blur-sm" asChild>
                   <Link to="/book-visit">
                     <Calendar className="w-6 h-6 mr-2" />
                     Book Site Visit
@@ -218,40 +240,59 @@ const Index = () => {
                 </Button>
               </div>
               
-              {/* Enhanced Contact Info */}
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 max-w-4xl mx-auto mb-8">
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-8 text-sm">
-                  <div className="flex items-center gap-3 hover:text-orange-300 transition-colors">
-                    <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
-                      <Phone className="w-5 h-5" />
+              {/* Enhanced Contact Info Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto mb-8">
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 hover:bg-white/20 transition-all duration-300 transform hover:scale-105">
+                  <div className="flex items-center justify-center gap-4">
+                    <div className="w-14 h-14 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center shadow-lg">
+                      <Phone className="w-7 h-7" />
                     </div>
-                    <span className="font-medium">+254 710 245 118</span>
+                    <div className="text-left">
+                      <div className="font-bold text-lg">Call Us</div>
+                      <div className="text-orange-200">+254 710 245 118</div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3 hover:text-orange-300 transition-colors">
-                    <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
-                      <Mail className="w-5 h-5" />
+                </div>
+                
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 hover:bg-white/20 transition-all duration-300 transform hover:scale-105">
+                  <div className="flex items-center justify-center gap-4">
+                    <div className="w-14 h-14 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center shadow-lg">
+                      <Mail className="w-7 h-7" />
                     </div>
-                    <span className="font-medium">info@akibeks.co.ke</span>
+                    <div className="text-left">
+                      <div className="font-bold text-lg">Email Us</div>
+                      <div className="text-orange-200">info@akibeks.co.ke</div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3 hover:text-orange-300 transition-colors">
-                    <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
-                      <MapPin className="w-5 h-5" />
+                </div>
+                
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 hover:bg-white/20 transition-all duration-300 transform hover:scale-105">
+                  <div className="flex items-center justify-center gap-4">
+                    <div className="w-14 h-14 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center shadow-lg">
+                      <MapPin className="w-7 h-7" />
                     </div>
-                    <span className="font-medium">Nairobi, Kenya</span>
+                    <div className="text-left">
+                      <div className="font-bold text-lg">Visit Us</div>
+                      <div className="text-orange-200">Nairobi, Kenya</div>
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Video CTA */}
-              <div className="flex items-center justify-center gap-4">
-                <Button variant="ghost" className="text-white hover:text-orange-300 flex items-center gap-2">
-                  <PlayCircle className="w-6 h-6" />
+              <div className="flex items-center justify-center gap-6 flex-wrap">
+                <Button variant="ghost" className="text-white hover:text-orange-300 flex items-center gap-2 text-lg">
+                  <PlayCircle className="w-8 h-8" />
                   Watch Our Story
                 </Button>
-                <span className="text-white/60">|</span>
-                <div className="flex items-center gap-2 text-white/80">
-                  <Star className="w-5 h-5 text-yellow-400 fill-current" />
-                  <span>4.9/5 Customer Rating</span>
+                <div className="hidden sm:block w-px h-8 bg-white/30"></div>
+                <div className="flex items-center gap-3 text-white/90">
+                  <div className="flex">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="w-6 h-6 text-yellow-400 fill-current" />
+                    ))}
+                  </div>
+                  <span className="text-lg font-medium">4.9/5 Customer Rating</span>
                 </div>
               </div>
             </div>
