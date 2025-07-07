@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -7,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "react-router-dom";
-import { MapPin, Calendar, ArrowRight, DollarSign, Clock } from "lucide-react";
+import { MapPin, Calendar, ArrowRight, DollarSign, Clock, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Project {
@@ -112,9 +111,15 @@ const Projects = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-4xl md:text-6xl font-bold mb-6">Our Projects</h1>
-            <p className="text-xl md:text-2xl max-w-3xl mx-auto">
+            <p className="text-xl md:text-2xl max-w-3xl mx-auto mb-8">
               Explore our portfolio of successful engineering projects across Kenya
             </p>
+            <Button size="lg" asChild className="bg-orange-500 hover:bg-orange-600">
+              <Link to="/create-project">
+                <Plus className="w-5 h-5 mr-2" />
+                Start Your Project
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
