@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -151,16 +152,17 @@ const AdminInvoices = () => {
 
       const totalAmount = getTotalAmount();
       
-      // Create invoice
+      // Create invoice with invoice_number as empty string to trigger auto-generation
       const { data: invoice, error: invoiceError } = await supabase
         .from('invoices')
         .insert({
+          invoice_number: '', // This will trigger the auto-generation function
           client_id: newInvoice.clientId,
           total_amount: totalAmount,
           due_date: newInvoice.dueDate || null,
           payment_terms: newInvoice.paymentTerms,
           notes: newInvoice.notes,
-          status: 'draft'
+          status: 'draft' as const
         })
         .select()
         .single();
