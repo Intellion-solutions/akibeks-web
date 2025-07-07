@@ -20,7 +20,18 @@ const AdminInventory = () => {
   const [inventory, setInventory] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
-  const [selectedItem, setSelectedItem] = useState(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  // Form state
+  const [formData, setFormData] = useState({
+    name: "",
+    category: "",
+    quantity: 0,
+    unit: "units",
+    min_stock: 0,
+    cost_per_unit: 0,
+    status: "in_stock"
+  });
 
   if (!isAuthenticated) {
     return <AdminLogin />;
@@ -33,15 +44,13 @@ const AdminInventory = () => {
   const fetchInventory = async () => {
     try {
       setLoading(true);
-      // Mock data since we don't have inventory table yet
-      const mockInventory = [
-        { id: 1, name: "Steel Rebar", category: "Construction Materials", quantity: 150, unit: "tons", min_stock: 20, cost_per_unit: 45000, status: "in_stock" },
-        { id: 2, name: "Cement", category: "Construction Materials", quantity: 8, unit: "bags", min_stock: 50, cost_per_unit: 850, status: "low_stock" },
-        { id: 3, name: "Concrete Mixer", category: "Equipment", quantity: 3, unit: "units", min_stock: 2, cost_per_unit: 150000, status: "in_stock" },
-        { id: 4, name: "Safety Helmets", category: "Safety Equipment", quantity: 45, unit: "pieces", min_stock: 20, cost_per_unit: 1200, status: "in_stock" },
-        { id: 5, name: "Surveying Equipment", category: "Tools", quantity: 1, unit: "set", min_stock: 2, cost_per_unit: 85000, status: "out_of_stock" }
-      ];
-      setInventory(mockInventory);
+      const { data, error } = await supabase
+        .from('inventory')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setInventory(data || []);
     } catch (error) {
       console.error('Error fetching inventory:', error);
       toast({
@@ -54,10 +63,56 @@ const AdminInventory = () => {
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const { error } = await supabase
+        .from('inventory')
+        .insert([formData]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Inventory item added successfully"
+      });
+      
+      setIsDialogOpen(false);
+      setFormData({
+        name: "",
+        category: "",
+        quantity: 0,
+        unit: "units",
+        min_stock: 0,
+        cost_per_unit: 0,
+        status: "in_stock"
+      });
+      fetchInventory();
+    } catch (error) {
+      console.error('Error adding inventory item:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add inventory item",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const updateInventoryStatus = (items: any[]) => {
+    return items.map(item => ({
+      ...item,
+      status: item.quantity <= item.min_stock 
+        ? (item.quantity === 0 ? 'out_of_stock' : 'low_stock')
+        : 'in_stock'
+    }));
+  };
+
   const filteredInventory = inventory.filter((item: any) =>
     item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.category?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const updatedInventory = updateInventoryStatus(filteredInventory);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -69,7 +124,7 @@ const AdminInventory = () => {
   };
 
   const totalValue = inventory.reduce((sum: number, item: any) => sum + (item.quantity * item.cost_per_unit), 0);
-  const lowStockItems = inventory.filter((item: any) => item.quantity <= item.min_stock).length;
+  const lowStockItems = updatedInventory.filter((item: any) => item.quantity <= item.min_stock).length;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -84,10 +139,103 @@ const AdminInventory = () => {
             </h1>
             <p className="text-gray-600 mt-2">Track materials, equipment, and supplies</p>
           </div>
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            Add Item
-          </Button>
+          
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Item
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add Inventory Item</DialogTitle>
+                <DialogDescription>
+                  Add a new item to your inventory
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <Label htmlFor="name">Item Name</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    placeholder="Enter item name"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="category">Category</Label>
+                  <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Construction Materials">Construction Materials</SelectItem>
+                      <SelectItem value="Equipment">Equipment</SelectItem>
+                      <SelectItem value="Tools">Tools</SelectItem>
+                      <SelectItem value="Safety Equipment">Safety Equipment</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="quantity">Quantity</Label>
+                    <Input
+                      id="quantity"
+                      type="number"
+                      value={formData.quantity}
+                      onChange={(e) => setFormData({...formData, quantity: parseInt(e.target.value) || 0})}
+                      min="0"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="unit">Unit</Label>
+                    <Input
+                      id="unit"
+                      value={formData.unit}
+                      onChange={(e) => setFormData({...formData, unit: e.target.value})}
+                      placeholder="e.g., pieces, tons"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="min_stock">Minimum Stock</Label>
+                    <Input
+                      id="min_stock"
+                      type="number"
+                      value={formData.min_stock}
+                      onChange={(e) => setFormData({...formData, min_stock: parseInt(e.target.value) || 0})}
+                      min="0"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="cost_per_unit">Cost per Unit (KSh)</Label>
+                    <Input
+                      id="cost_per_unit"
+                      type="number"
+                      value={formData.cost_per_unit}
+                      onChange={(e) => setFormData({...formData, cost_per_unit: parseFloat(e.target.value) || 0})}
+                      min="0"
+                      step="0.01"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit">Add Item</Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Stats Cards */}
@@ -134,7 +282,9 @@ const AdminInventory = () => {
                 <Package className="w-8 h-8 text-purple-600" />
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Categories</p>
-                  <p className="text-2xl font-bold text-gray-900">4</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {new Set(inventory.map((item: any) => item.category)).size}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -154,69 +304,52 @@ const AdminInventory = () => {
                   className="pl-10"
                 />
               </div>
-              <Select>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Filter by category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  <SelectItem value="materials">Construction Materials</SelectItem>
-                  <SelectItem value="equipment">Equipment</SelectItem>
-                  <SelectItem value="tools">Tools</SelectItem>
-                  <SelectItem value="safety">Safety Equipment</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </CardContent>
         </Card>
 
         {/* Inventory Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredInventory.map((item: any) => (
-            <Card key={item.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">{item.name}</CardTitle>
-                  <Badge className={getStatusColor(item.status)}>
-                    {item.status.replace('_', ' ')}
-                  </Badge>
-                </div>
-                <CardDescription>{item.category}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-gray-600">Quantity</p>
-                    <p className="font-semibold">{item.quantity} {item.unit}</p>
+        {loading ? (
+          <div className="text-center py-8">Loading...</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {updatedInventory.map((item: any) => (
+              <Card key={item.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg">{item.name}</CardTitle>
+                    <Badge className={getStatusColor(item.status)}>
+                      {item.status.replace('_', ' ')}
+                    </Badge>
                   </div>
-                  <div>
-                    <p className="text-gray-600">Min Stock</p>
-                    <p className="font-semibold">{item.min_stock} {item.unit}</p>
+                  <CardDescription>{item.category}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-600">Quantity</p>
+                      <p className="font-semibold">{item.quantity} {item.unit}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Min Stock</p>
+                      <p className="font-semibold">{item.min_stock} {item.unit}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Unit Cost</p>
+                      <p className="font-semibold">KSh {item.cost_per_unit.toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Total Value</p>
+                      <p className="font-semibold">KSh {(item.quantity * item.cost_per_unit).toLocaleString()}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-gray-600">Unit Cost</p>
-                    <p className="font-semibold">KSh {item.cost_per_unit.toLocaleString()}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Total Value</p>
-                    <p className="font-semibold">KSh {(item.quantity * item.cost_per_unit).toLocaleString()}</p>
-                  </div>
-                </div>
-                
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="flex-1">
-                    Edit
-                  </Button>
-                  <Button variant="outline" size="sm" className="flex-1">
-                    Restock
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
-        {filteredInventory.length === 0 && (
+        {updatedInventory.length === 0 && !loading && (
           <Card>
             <CardContent className="p-12 text-center">
               <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />

@@ -1,232 +1,274 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Link } from "react-router-dom";
-import { ArrowRight, Home, Building, Wrench, Zap, Droplets, Calculator, Users, Settings } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-
-interface Service {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  base_price: number;
-  unit: string;
-}
+import SEOHead from "@/components/SEOHead";
+import ServiceRequestForm from "@/components/ServiceRequestForm";
+import { 
+  Building2, 
+  Wrench, 
+  Zap, 
+  Droplets, 
+  HardHat, 
+  ClipboardCheck,
+  ArrowRight,
+  CheckCircle,
+  Star
+} from "lucide-react";
 
 const Services = () => {
-  const [services, setServices] = useState<Service[]>([]);
-  const [filteredServices, setFilteredServices] = useState<Service[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [loading, setLoading] = useState(true);
+  const [showRequestForm, setShowRequestForm] = useState(false);
 
-  useEffect(() => {
-    fetchServices();
-  }, []);
-
-  useEffect(() => {
-    if (selectedCategory === "all") {
-      setFilteredServices(services);
-    } else {
-      setFilteredServices(services.filter(service => service.category === selectedCategory));
+  const services = [
+    {
+      icon: <Building2 className="w-8 h-8" />,
+      title: "Construction Services",
+      description: "Complete building construction from foundation to finishing, including residential, commercial, and industrial projects.",
+      features: ["New Construction", "Foundation Work", "Structural Work", "Finishing"],
+      price: "From KSh 25,000/sqm",
+      popular: true
+    },
+    {
+      icon: <Wrench className="w-8 h-8" />,
+      title: "Renovation & Remodeling",
+      description: "Transform existing spaces with modern designs and improved functionality.",
+      features: ["Interior Renovation", "Exterior Upgrades", "Kitchen & Bathroom", "Space Optimization"],
+      price: "From KSh 15,000/sqm",
+      popular: false
+    },
+    {
+      icon: <Zap className="w-8 h-8" />,
+      title: "Electrical Services",
+      description: "Professional electrical installation, maintenance, and safety inspections.",
+      features: ["Wiring Installation", "Panel Upgrades", "Safety Inspections", "Smart Home Setup"],
+      price: "From KSh 5,000",
+      popular: false
+    },
+    {
+      icon: <Droplets className="w-8 h-8" />,
+      title: "Plumbing Services",
+      description: "Complete plumbing solutions for residential and commercial properties.",
+      features: ["Pipe Installation", "Water Systems", "Drainage Solutions", "Emergency Repairs"],
+      price: "From KSh 3,000",
+      popular: false
+    },
+    {
+      icon: <HardHat className="w-8 h-8" />,
+      title: "Civil Engineering",
+      description: "Structural design, site surveys, and engineering consultations.",
+      features: ["Structural Design", "Site Surveys", "Soil Testing", "Engineering Reports"],
+      price: "From KSh 50,000",
+      popular: false
+    },
+    {
+      icon: <ClipboardCheck className="w-8 h-8" />,
+      title: "Project Management",
+      description: "End-to-end project management ensuring timely completion within budget.",
+      features: ["Project Planning", "Timeline Management", "Quality Control", "Budget Management"],
+      price: "5-10% of project cost",
+      popular: true
     }
-  }, [services, selectedCategory]);
+  ];
 
-  const fetchServices = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('services')
-        .select('*')
-        .eq('is_active', true)
-        .order('category', { ascending: true });
-
-      if (error) throw error;
-      setServices(data || []);
-    } catch (error) {
-      console.error('Error fetching services:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'construction':
-        return <Building className="w-8 h-8 text-orange-500" />;
-      case 'renovation':
-        return <Home className="w-8 h-8 text-orange-500" />;
-      case 'plumbing':
-        return <Droplets className="w-8 h-8 text-orange-500" />;
-      case 'electrical':
-        return <Zap className="w-8 h-8 text-orange-500" />;
-      case 'civil_works':
-        return <Wrench className="w-8 h-8 text-orange-500" />;
-      case 'project_management':
-        return <Users className="w-8 h-8 text-orange-500" />;
-      default:
-        return <Settings className="w-8 h-8 text-orange-500" />;
-    }
-  };
-
-  const formatCategoryName = (category: string) => {
-    return category.split('_').map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ');
-  };
-
-  const formatPrice = (price: number, unit: string) => {
-    return `From KSh ${price.toLocaleString()}/${unit}`;
-  };
-
-  const categories = [
-    { value: "all", label: "All Services" },
-    { value: "construction", label: "Construction" },
-    { value: "renovation", label: "Renovation" },
-    { value: "plumbing", label: "Plumbing" },
-    { value: "electrical", label: "Electrical" },
-    { value: "civil_works", label: "Civil Works" },
-    { value: "project_management", label: "Project Management" }
+  const benefits = [
+    "Licensed and Insured Professionals",
+    "Quality Materials and Workmanship",
+    "Transparent Pricing",
+    "Timely Project Completion",
+    "24/7 Customer Support",
+    "Warranty on All Work"
   ];
 
   return (
-    <div className="min-h-screen bg-white">
-      <Navbar />
-      
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-blue-900 to-blue-800 text-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">Our Services</h1>
-            <p className="text-xl md:text-2xl max-w-3xl mx-auto">
-              Comprehensive engineering solutions tailored to your specific needs
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Filter Section */}
-      <section className="py-8 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-center">
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-64">
-                <SelectValue placeholder="Filter by Category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category.value} value={category.value}>
-                    {category.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </section>
-
-      {/* Services Grid */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {loading ? (
-            <div className="text-center py-12">
-              <div className="text-lg">Loading services...</div>
+    <>
+      <SEOHead 
+        title="Professional Construction Services | AKIBEKS Engineering"
+        description="Comprehensive construction, renovation, electrical, plumbing, and civil engineering services. Licensed professionals delivering quality results on time and within budget."
+        keywords="construction services, renovation, electrical, plumbing, civil engineering, project management, Kenya construction"
+      />
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        
+        {/* Hero Section */}
+        <section className="bg-gradient-to-br from-blue-900 to-blue-700 text-white py-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center">
+              <h1 className="text-4xl md:text-6xl font-bold mb-6">
+                Professional Construction Services
+              </h1>
+              <p className="text-xl md:text-2xl mb-8 text-blue-100 max-w-3xl mx-auto">
+                From concept to completion, we deliver exceptional construction solutions 
+                tailored to your needs and budget.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button 
+                  size="lg" 
+                  className="bg-white text-blue-900 hover:bg-blue-50"
+                  onClick={() => setShowRequestForm(true)}
+                >
+                  Get Free Quote
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="border-white text-white hover:bg-white hover:text-blue-900"
+                >
+                  View Portfolio
+                </Button>
+              </div>
             </div>
-          ) : (
+          </div>
+        </section>
+
+        {/* Services Grid */}
+        <section className="py-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                Our Services
+              </h2>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                Comprehensive construction solutions delivered by experienced professionals
+              </p>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredServices.map((service) => (
-                <Card key={service.id} className="hover:shadow-lg transition-shadow h-full">
+              {services.map((service, index) => (
+                <Card key={index} className="relative hover:shadow-xl transition-shadow duration-300">
+                  {service.popular && (
+                    <Badge className="absolute -top-2 -right-2 bg-orange-500">
+                      <Star className="w-3 h-3 mr-1" />
+                      Popular
+                    </Badge>
+                  )}
                   <CardHeader>
-                    <div className="flex justify-center mb-4">
-                      {getCategoryIcon(service.category)}
+                    <div className="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 mb-4">
+                      {service.icon}
                     </div>
-                    <CardTitle className="text-xl text-center">{service.name}</CardTitle>
-                    <CardDescription className="text-center">{service.description}</CardDescription>
+                    <CardTitle className="text-xl mb-2">{service.title}</CardTitle>
+                    <CardDescription className="text-gray-600">
+                      {service.description}
+                    </CardDescription>
                   </CardHeader>
-                  <CardContent className="flex-1 flex flex-col">
-                    <div className="flex-1 mb-4">
-                      <Badge variant="secondary" className="mb-2">
-                        {formatCategoryName(service.category)}
-                      </Badge>
-                    </div>
-                    <div className="mt-auto">
-                      <div className="text-lg font-semibold text-orange-600 mb-4">
-                        {formatPrice(service.base_price, service.unit)}
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="font-semibold mb-2">Key Features:</h4>
+                        <ul className="space-y-1">
+                          {service.features.map((feature, idx) => (
+                            <li key={idx} className="flex items-center text-sm text-gray-600">
+                              <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
+                              {feature}
+                            </li>
+                          ))}
+                        </ul>
                       </div>
-                      <Button className="w-full" variant="outline" asChild>
-                        <Link to="/request-quote">
-                          Get Quote <ArrowRight className="w-4 h-4 ml-2" />
-                        </Link>
-                      </Button>
+                      <div className="border-t pt-4">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-lg text-blue-600">
+                            {service.price}
+                          </span>
+                          <Button 
+                            onClick={() => setShowRequestForm(true)}
+                            className="bg-blue-600 hover:bg-blue-700"
+                          >
+                            Get Quote
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
-          )}
-        </div>
-      </section>
-
-      {/* Why Choose Us */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Why Choose AKIBEKS?</h2>
-            <p className="text-xl text-gray-600">Experience the difference of working with professionals</p>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-white">15+</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Years of Experience</h3>
-              <p className="text-gray-600">Proven track record in delivering quality engineering projects</p>
+        </section>
+
+        {/* Why Choose Us */}
+        <section className="bg-white py-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                Why Choose AKIBEKS?
+              </h2>
+              <p className="text-xl text-gray-600">
+                We're committed to delivering exceptional results that exceed expectations
+              </p>
             </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-white">500+</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Projects Completed</h3>
-              <p className="text-gray-600">Successfully delivered projects across Kenya</p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-white">24/7</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Customer Support</h3>
-              <p className="text-gray-600">Round-the-clock support for all your engineering needs</p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {benefits.map((benefit, index) => (
+                <div key={index} className="flex items-center space-x-3">
+                  <CheckCircle className="w-6 h-6 text-green-500 flex-shrink-0" />
+                  <span className="text-gray-700 font-medium">{benefit}</span>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* CTA Section */}
-      <section className="py-16 bg-orange-500 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Start Your Project?</h2>
-          <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Get a free consultation and detailed quote for your engineering project
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="secondary" asChild>
-              <Link to="/request-quote">
-                Request Quote <ArrowRight className="w-5 h-5 ml-2" />
-              </Link>
-            </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-orange-500" asChild>
-              <Link to="/contact">Contact Us</Link>
-            </Button>
+        {/* Service Request Form */}
+        {showRequestForm && (
+          <section className="py-20 bg-gray-50">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center mb-12">
+                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                  Request Our Services
+                </h2>
+                <p className="text-xl text-gray-600">
+                  Get a personalized quote for your project
+                </p>
+              </div>
+              
+              <ServiceRequestForm />
+              
+              <div className="text-center mt-8">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowRequestForm(false)}
+                >
+                  Hide Form
+                </Button>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* CTA Section */}
+        <section className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Ready to Start Your Project?
+            </h2>
+            <p className="text-xl mb-8 text-blue-100">
+              Contact us today for a free consultation and detailed quote
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button 
+                size="lg" 
+                className="bg-white text-blue-600 hover:bg-blue-50"
+                onClick={() => setShowRequestForm(true)}
+              >
+                Get Free Quote
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="border-white text-white hover:bg-white hover:text-blue-600"
+              >
+                Call +254 700 000 000
+              </Button>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <Footer />
-    </div>
+        <Footer />
+      </div>
+    </>
   );
 };
 
