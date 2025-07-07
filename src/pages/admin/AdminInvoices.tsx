@@ -34,6 +34,14 @@ interface Invoice {
   };
 }
 
+interface Client {
+  id: string;
+  full_name: string;
+  company_name?: string;
+  email?: string;
+  phone: string;
+}
+
 const AdminInvoices = () => {
   const { toast } = useToast();
   const { isAuthenticated, companySettings } = useAdmin();
@@ -41,17 +49,17 @@ const AdminInvoices = () => {
   const [filterStatus, setFilterStatus] = useState("all");
   const [showCreateInvoice, setShowCreateInvoice] = useState(false);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [showInvoiceViewer, setShowInvoiceViewer] = useState(false);
 
   const [newInvoice, setNewInvoice] = useState({
-    clientName: "",
-    projectName: "",
-    amount: "",
+    clientId: "",
     dueDate: "",
-    description: "",
-    items: [{ description: "", quantity: 1, rate: 0, amount: 0 }]
+    paymentTerms: "Net 30",
+    notes: "",
+    items: [{ description: "", quantity: 1, unit_price: 0, total_price: 0 }]
   });
 
   if (!isAuthenticated) {
@@ -60,6 +68,7 @@ const AdminInvoices = () => {
 
   useEffect(() => {
     fetchInvoices();
+    fetchClients();
   }, []);
 
   const fetchInvoices = async () => {
@@ -92,6 +101,20 @@ const AdminInvoices = () => {
     }
   };
 
+  const fetchClients = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('*')
+        .order('full_name');
+
+      if (error) throw error;
+      setClients(data || []);
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+    }
+  };
+
   const filteredInvoices = invoices.filter(invoice => {
     const clientName = invoice.clients?.company_name || invoice.clients?.full_name || '';
     const matchesSearch = clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -115,28 +138,89 @@ const AdminInvoices = () => {
     setShowInvoiceViewer(true);
   };
 
-  const handleCreateInvoice = () => {
-    console.log("Creating new invoice:", newInvoice);
-    toast({
-      title: "Invoice Created",
-      description: "New invoice has been generated successfully.",
-    });
-    setShowCreateInvoice(false);
-    setNewInvoice({
-      clientName: "",
-      projectName: "",
-      amount: "",
-      dueDate: "",
-      description: "",
-      items: [{ description: "", quantity: 1, rate: 0, amount: 0 }]
-    });
+  const handleCreateInvoice = async () => {
+    try {
+      if (!newInvoice.clientId || newInvoice.items.length === 0) {
+        toast({
+          title: "Error",
+          description: "Please select a client and add at least one item",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const totalAmount = getTotalAmount();
+      
+      // Create invoice
+      const { data: invoice, error: invoiceError } = await supabase
+        .from('invoices')
+        .insert({
+          client_id: newInvoice.clientId,
+          total_amount: totalAmount,
+          due_date: newInvoice.dueDate || null,
+          payment_terms: newInvoice.paymentTerms,
+          notes: newInvoice.notes,
+          status: 'draft'
+        })
+        .select()
+        .single();
+
+      if (invoiceError) throw invoiceError;
+
+      // Create invoice items
+      const itemsToInsert = newInvoice.items.map(item => ({
+        invoice_id: invoice.id,
+        description: item.description,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        total_price: item.total_price
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('invoice_items')
+        .insert(itemsToInsert);
+
+      if (itemsError) throw itemsError;
+
+      toast({
+        title: "Invoice Created",
+        description: "New invoice has been generated successfully.",
+      });
+
+      setShowCreateInvoice(false);
+      setNewInvoice({
+        clientId: "",
+        dueDate: "",
+        paymentTerms: "Net 30",
+        notes: "",
+        items: [{ description: "", quantity: 1, unit_price: 0, total_price: 0 }]
+      });
+      
+      await fetchInvoices();
+    } catch (error) {
+      console.error('Error creating invoice:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create invoice",
+        variant: "destructive"
+      });
+    }
   };
 
   const addInvoiceItem = () => {
     setNewInvoice(prev => ({
       ...prev,
-      items: [...prev.items, { description: "", quantity: 1, rate: 0, amount: 0 }]
+      items: [...prev.items, { description: "", quantity: 1, unit_price: 0, total_price: 0 }]
     }));
+  };
+
+  const removeInvoiceItem = (index: number) => {
+    if (newInvoice.items.length > 1) {
+      setNewInvoice(prev => ({
+        ...prev,
+        items: prev.items.filter((_, i) => i !== index)
+      }));
+    }
   };
 
   const updateInvoiceItem = (index: number, field: string, value: any) => {
@@ -145,8 +229,8 @@ const AdminInvoices = () => {
       items: prev.items.map((item, i) => {
         if (i === index) {
           const updatedItem = { ...item, [field]: value };
-          if (field === "quantity" || field === "rate") {
-            updatedItem.amount = updatedItem.quantity * updatedItem.rate;
+          if (field === "quantity" || field === "unit_price") {
+            updatedItem.total_price = updatedItem.quantity * updatedItem.unit_price;
           }
           return updatedItem;
         }
@@ -156,7 +240,7 @@ const AdminInvoices = () => {
   };
 
   const getTotalAmount = () => {
-    return newInvoice.items.reduce((total, item) => total + item.amount, 0);
+    return newInvoice.items.reduce((total, item) => total + item.total_price, 0);
   };
 
   const currencySymbol = companySettings.currency_symbol || 'KSh';
@@ -240,7 +324,7 @@ const AdminInvoices = () => {
                 New Invoice
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-4xl">
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Create New Invoice</DialogTitle>
                 <DialogDescription>
@@ -250,36 +334,50 @@ const AdminInvoices = () => {
               <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="clientName">Client Name</Label>
-                    <Input
-                      id="clientName"
-                      value={newInvoice.clientName}
-                      onChange={(e) => setNewInvoice(prev => ({ ...prev, clientName: e.target.value }))}
-                    />
+                    <Label htmlFor="clientId">Client *</Label>
+                    <Select value={newInvoice.clientId} onValueChange={(value) => setNewInvoice(prev => ({ ...prev, clientId: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a client" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {clients.map(client => (
+                          <SelectItem key={client.id} value={client.id}>
+                            {client.company_name || client.full_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
-                    <Label htmlFor="projectName">Project Name</Label>
+                    <Label htmlFor="dueDate">Due Date</Label>
                     <Input
-                      id="projectName"
-                      value={newInvoice.projectName}
-                      onChange={(e) => setNewInvoice(prev => ({ ...prev, projectName: e.target.value }))}
+                      id="dueDate"
+                      type="date"
+                      value={newInvoice.dueDate}
+                      onChange={(e) => setNewInvoice(prev => ({ ...prev, dueDate: e.target.value }))}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="dueDate">Due Date</Label>
-                  <Input
-                    id="dueDate"
-                    type="date"
-                    value={newInvoice.dueDate}
-                    onChange={(e) => setNewInvoice(prev => ({ ...prev, dueDate: e.target.value }))}
-                  />
+                  <Label htmlFor="paymentTerms">Payment Terms</Label>
+                  <Select value={newInvoice.paymentTerms} onValueChange={(value) => setNewInvoice(prev => ({ ...prev, paymentTerms: value }))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Net 15">Net 15</SelectItem>
+                      <SelectItem value="Net 30">Net 30</SelectItem>
+                      <SelectItem value="Net 45">Net 45</SelectItem>
+                      <SelectItem value="Net 60">Net 60</SelectItem>
+                      <SelectItem value="Due on Receipt">Due on Receipt</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
                   <div className="flex justify-between items-center mb-4">
-                    <Label className="text-base font-medium">Invoice Items</Label>
+                    <Label className="text-base font-medium">Invoice Items *</Label>
                     <Button type="button" variant="outline" size="sm" onClick={addInvoiceItem}>
                       <Plus className="w-4 h-4 mr-2" />
                       Add Item
@@ -304,21 +402,36 @@ const AdminInvoices = () => {
                             id={`item-qty-${index}`}
                             type="number"
                             value={item.quantity}
-                            onChange={(e) => updateInvoiceItem(index, "quantity", parseInt(e.target.value))}
+                            onChange={(e) => updateInvoiceItem(index, "quantity", parseFloat(e.target.value) || 0)}
+                            min="0"
+                            step="0.01"
                           />
                         </div>
                         <div className="col-span-2">
-                          <Label htmlFor={`item-rate-${index}`}>Rate (KSh)</Label>
+                          <Label htmlFor={`item-rate-${index}`}>Rate ({currencySymbol})</Label>
                           <Input
                             id={`item-rate-${index}`}
                             type="number"
-                            value={item.rate}
-                            onChange={(e) => updateInvoiceItem(index, "rate", parseFloat(e.target.value))}
+                            value={item.unit_price}
+                            onChange={(e) => updateInvoiceItem(index, "unit_price", parseFloat(e.target.value) || 0)}
+                            min="0"
+                            step="0.01"
                           />
                         </div>
-                        <div className="col-span-3">
-                          <Label>Amount (KSh)</Label>
-                          <Input value={item.amount.toLocaleString()} readOnly className="bg-gray-50" />
+                        <div className="col-span-2">
+                          <Label>Amount ({currencySymbol})</Label>
+                          <Input value={item.total_price.toLocaleString()} readOnly className="bg-gray-50" />
+                        </div>
+                        <div className="col-span-1">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => removeInvoiceItem(index)}
+                            disabled={newInvoice.items.length === 1}
+                          >
+                            ×
+                          </Button>
                         </div>
                       </div>
                     ))}
@@ -327,19 +440,20 @@ const AdminInvoices = () => {
                   <div className="mt-4 pt-4 border-t">
                     <div className="flex justify-end">
                       <div className="text-lg font-semibold">
-                        Total: KSh {getTotalAmount().toLocaleString()}
+                        Total: {currencySymbol} {getTotalAmount().toLocaleString()}
                       </div>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="description">Notes/Description</Label>
+                  <Label htmlFor="notes">Notes/Terms</Label>
                   <Textarea
-                    id="description"
-                    value={newInvoice.description}
-                    onChange={(e) => setNewInvoice(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Additional notes or payment terms..."
+                    id="notes"
+                    value={newInvoice.notes}
+                    onChange={(e) => setNewInvoice(prev => ({ ...prev, notes: e.target.value }))}
+                    placeholder="Additional notes, payment instructions, or terms..."
+                    rows={3}
                   />
                 </div>
 
@@ -409,7 +523,7 @@ const AdminInvoices = () => {
                         <span className="font-medium">Amount:</span> {currencySymbol} {parseFloat(invoice.total_amount.toString()).toLocaleString()}
                       </div>
                       <div>
-                        <span className="font-medium">Due:</span> {new Date(invoice.due_date).toLocaleDateString()}
+                        <span className="font-medium">Due:</span> {invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : 'Not set'}
                       </div>
                       <div>
                         <span className="font-medium">Created:</span> {new Date(invoice.created_at).toLocaleDateString()}

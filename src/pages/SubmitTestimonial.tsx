@@ -1,17 +1,17 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import SEOHead from "@/components/SEOHead";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Star, MessageSquare, ThumbsUp, Send } from "lucide-react";
+import { Star, MessageSquare, ThumbsUp, Send, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -34,6 +34,7 @@ const SubmitTestimonial = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedRating, setSelectedRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<TestimonialFormData>({
@@ -65,6 +66,7 @@ const SubmitTestimonial = () => {
         description: "Your testimonial has been submitted and is pending approval. We appreciate your feedback!",
       });
 
+      setIsSubmitted(true);
       form.reset();
       setSelectedRating(0);
     } catch (error) {
@@ -106,11 +108,72 @@ const SubmitTestimonial = () => {
     "Engineering Consultation",
     "Project Management",
     "Structural Design",
+    "Plumbing Services",
+    "Electrical Services",
+    "Interior Design",
+    "Landscaping",
     "Other"
   ];
 
+  if (isSubmitted) {
+    return (
+      <div className="min-h-screen bg-white">
+        <SEOHead 
+          title="Thank You - Testimonial Submitted"
+          description="Thank you for submitting your testimonial to AKIBEKS Engineering Solutions. Your feedback is valuable to us."
+        />
+        <Navbar />
+        
+        <section className="py-20">
+          <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div className="bg-green-50 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
+              <CheckCircle className="w-10 h-10 text-green-600" />
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">Thank You!</h1>
+            <p className="text-lg text-gray-600 mb-6">
+              Your testimonial has been successfully submitted and is now pending review. 
+              We appreciate you taking the time to share your experience with AKIBEKS Engineering Solutions.
+            </p>
+            <div className="space-y-4 text-left bg-gray-50 p-6 rounded-lg mb-8">
+              <h3 className="font-semibold text-gray-900">What happens next?</h3>
+              <ul className="space-y-2 text-gray-600">
+                <li className="flex items-start">
+                  <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  Our team will review your testimonial for authenticity and content quality
+                </li>
+                <li className="flex items-start">
+                  <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  Once approved, it will be published on our website and testimonials page
+                </li>
+                <li className="flex items-start">
+                  <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  You may receive a follow-up email thanking you for your feedback
+                </li>
+              </ul>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button onClick={() => setIsSubmitted(false)} variant="outline">
+                Submit Another Testimonial
+              </Button>
+              <Button onClick={() => window.location.href = '/'}>
+                Return to Homepage
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white">
+      <SEOHead 
+        title="Submit Your Testimonial - Share Your Experience"
+        description="Share your experience with AKIBEKS Engineering Solutions. Help others discover our exceptional construction and engineering services by submitting your testimonial."
+        keywords="AKIBEKS testimonial, construction review, engineering services review, customer feedback, client testimonial, construction company review Kenya"
+      />
       <Navbar />
       
       {/* Hero Section */}
@@ -305,7 +368,7 @@ const SubmitTestimonial = () => {
                       <Button type="submit" disabled={isSubmitting} className="w-full" size="lg">
                         {isSubmitting ? (
                           <>
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-fully animate-spin mr-2" />
                             Submitting Testimonial...
                           </>
                         ) : (
@@ -323,7 +386,6 @@ const SubmitTestimonial = () => {
 
             {/* Sidebar */}
             <div className="space-y-6">
-              {/* Why Share */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
@@ -351,7 +413,6 @@ const SubmitTestimonial = () => {
                 </CardContent>
               </Card>
 
-              {/* Process */}
               <Card>
                 <CardHeader>
                   <CardTitle>Review Process</CardTitle>
@@ -374,7 +435,6 @@ const SubmitTestimonial = () => {
                 </CardContent>
               </Card>
 
-              {/* Contact Info */}
               <Card>
                 <CardHeader>
                   <CardTitle>Need Help?</CardTitle>
@@ -385,7 +445,7 @@ const SubmitTestimonial = () => {
                   </p>
                   <div className="space-y-2 text-sm">
                     <p><strong>Email:</strong> info@akibeks.co.ke</p>
-                    <p><strong>Phone:</strong> +254 700 000 000</p>
+                    <p><strong>Phone:</strong> +254 710 245 118</p>
                   </div>
                 </CardContent>
               </Card>
