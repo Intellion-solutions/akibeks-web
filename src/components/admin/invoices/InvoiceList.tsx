@@ -8,7 +8,7 @@ interface InvoiceListProps {
   invoices: any[];
   currencySymbol: string;
   handleViewInvoice: (invoiceId: string) => void;
-  getStatusColor: (status: string) => string;
+  getStatusColor: (status: string) => "default" | "destructive" | "outline" | "secondary";
 }
 
 const InvoiceList = ({ invoices, currencySymbol, handleViewInvoice, getStatusColor }: InvoiceListProps) => {

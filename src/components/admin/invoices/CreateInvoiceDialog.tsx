@@ -9,13 +9,25 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 
+interface Template {
+  id: string;
+  template_name: string;
+  template_type: string;
+}
+
+interface Client {
+  id: string;
+  company_name?: string;
+  full_name: string;
+}
+
 interface CreateInvoiceDialogProps {
   showCreateInvoice: boolean;
   setShowCreateInvoice: (show: boolean) => void;
   newInvoice: any;
   setNewInvoice: (invoice: any) => void;
-  clients: any[];
-  templates: any[];
+  clients: Client[];
+  templates: Template[];
   handleCreateInvoice: () => void;
   addInvoiceItem: () => void;
   removeInvoiceItem: (index: number) => void;
@@ -150,8 +162,8 @@ const CreateInvoiceDialog = ({
             
             <div className="space-y-6">
               {/* Group items by section */}
-              {[...new Set(newInvoice.items.map(item => item.section))].map((sectionName) => {
-                const sectionItems = newInvoice.items.filter(item => item.section === sectionName);
+              {Array.from(new Set(newInvoice.items.map((item: any) => item.section))).map((sectionName: string) => {
+                const sectionItems = newInvoice.items.filter((item: any) => item.section === sectionName);
                 const sectionSubtotal = getSectionSubtotal(sectionName);
                 const sectionLaborCharge = getSectionLaborCharge(sectionName);
                 
@@ -165,8 +177,8 @@ const CreateInvoiceDialog = ({
                     </div>
                     
                     <div className="space-y-4">
-                      {sectionItems.map((item, globalIndex) => {
-                        const itemIndex = newInvoice.items.findIndex(i => i === item);
+                      {sectionItems.map((item: any, globalIndex: number) => {
+                        const itemIndex = newInvoice.items.findIndex((i: any) => i === item);
                         return (
                           <div key={itemIndex} className="grid grid-cols-12 gap-3 items-end bg-gray-50 p-3 rounded">
                             <div className="col-span-4">
