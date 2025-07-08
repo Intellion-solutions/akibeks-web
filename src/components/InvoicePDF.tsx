@@ -74,6 +74,21 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice, company }) => {
     });
   };
 
+  // Calculate section totals
+  const calculateSectionSubtotal = (items: InvoiceItem[]) => {
+    return items.reduce((sum, item) => sum + item.material_cost * item.quantity, 0);
+  };
+
+  const calculateSectionLaborCharge = (sectionSubtotal: number, laborPercentage: number = 36) => {
+    return sectionSubtotal * (laborPercentage / 100);
+  };
+
+  const calculateSectionTotal = (items: InvoiceItem[]) => {
+    const subtotal = calculateSectionSubtotal(items);
+    const laborCharge = calculateSectionLaborCharge(subtotal);
+    return subtotal + laborCharge;
+  };
+
   // Get template colors based on template type
   const getTemplateColors = () => {
     switch (invoice.template_type) {
@@ -192,61 +207,81 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice, company }) => {
           </div>
         </div>
 
-        {/* Items Table */}
+        {/* Items by Section */}
         <div className="mb-8">
-          {Object.entries(groupedItems).map(([sectionName, sectionItems], sectionIndex) => (
-            <div key={sectionName} className={`${sectionIndex > 0 ? 'mt-8 print:break-before-page' : ''}`}>
-              {Object.keys(groupedItems).length > 1 && (
-                <div className={`bg-gradient-to-r ${colors.gradient} text-white p-3 rounded-t-lg`}>
-                  <h3 className="font-bold text-lg">{sectionName}</h3>
-                </div>
-              )}
-              
-              <div className={`border ${Object.keys(groupedItems).length > 1 ? 'border-t-0 rounded-b-lg' : 'rounded-lg'} overflow-hidden shadow-lg`}>
-                {/* Enhanced Table Header */}
-                <div className={`bg-gradient-to-r ${colors.gradient} text-white p-4`}>
-                  <div className="grid grid-cols-12 gap-4 font-medium">
-                    <div className="col-span-3">Description</div>
-                    <div className="col-span-1 text-center">Qty</div>
-                    <div className="col-span-2 text-center">Material Cost</div>
-                    <div className="col-span-2 text-center">Labor (36.5%)</div>
-                    <div className="col-span-2 text-center">Unit Total</div>
-                    <div className="col-span-2 text-right">Line Total</div>
-                  </div>
+          {Object.entries(groupedItems).map(([sectionName, sectionItems], sectionIndex) => {
+            const sectionSubtotal = calculateSectionSubtotal(sectionItems);
+            const sectionLaborCharge = calculateSectionLaborCharge(sectionSubtotal);
+            const sectionTotal = sectionSubtotal + sectionLaborCharge;
+
+            return (
+              <div key={sectionName} className={`${sectionIndex > 0 ? 'mt-8 print:break-before-page' : ''}`}>
+                <div className={`bg-gradient-to-r ${colors.gradient} text-white p-4 rounded-t-lg shadow-lg`}>
+                  <h3 className="font-bold text-xl flex items-center">
+                    <span className="mr-3">📋</span>
+                    {sectionName}
+                  </h3>
                 </div>
                 
-                {/* Enhanced Table Body */}
-                <div className="bg-white">
-                  {sectionItems.map((item, index) => (
-                    <div key={item.id} className={`grid grid-cols-12 gap-4 p-4 hover:bg-gray-50 ${index < sectionItems.length - 1 ? 'border-b border-gray-200' : ''}`}>
-                      <div className="col-span-3">
-                        <p className="font-medium text-gray-900">{item.description}</p>
+                <div className="border border-t-0 rounded-b-lg overflow-hidden shadow-lg">
+                  {/* Section Items Header */}
+                  <div className="bg-gray-100 p-3">
+                    <div className="grid grid-cols-12 gap-4 font-medium text-gray-700">
+                      <div className="col-span-1">#</div>
+                      <div className="col-span-5">Description</div>
+                      <div className="col-span-2 text-center">Qty</div>
+                      <div className="col-span-2 text-center">Unit Price</div>
+                      <div className="col-span-2 text-right">Amount</div>
+                    </div>
+                  </div>
+                  
+                  {/* Section Items */}
+                  <div className="bg-white">
+                    {sectionItems.map((item, index) => (
+                      <div key={item.id} className={`grid grid-cols-12 gap-4 p-3 hover:bg-gray-50 ${index < sectionItems.length - 1 ? 'border-b border-gray-200' : ''}`}>
+                        <div className="col-span-1 text-gray-500 font-medium">
+                          {index + 1}
+                        </div>
+                        <div className="col-span-5">
+                          <p className="font-medium text-gray-900">{item.description}</p>
+                        </div>
+                        <div className="col-span-2 text-center text-gray-700 font-medium">
+                          {item.quantity}
+                        </div>
+                        <div className="col-span-2 text-center text-gray-700">
+                          {formatCurrency(item.material_cost)}
+                        </div>
+                        <div className="col-span-2 text-right font-medium text-gray-900">
+                          {formatCurrency(item.material_cost * item.quantity)}
+                        </div>
                       </div>
-                      <div className="col-span-1 text-center text-gray-700 font-medium">
-                        {item.quantity}
+                    ))}
+                  </div>
+
+                  {/* Section Totals */}
+                  <div className="bg-gray-50 border-t-2 border-gray-200 p-4">
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium text-gray-700">Section Subtotal:</span>
+                        <span className="font-bold text-lg">{formatCurrency(sectionSubtotal)}</span>
                       </div>
-                      <div className="col-span-2 text-center text-gray-700">
-                        {formatCurrency(item.material_cost)}
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium text-gray-700">Labor Charge (36%):</span>
+                        <span className="font-bold text-lg text-blue-600">{formatCurrency(sectionLaborCharge)}</span>
                       </div>
-                      <div className="col-span-2 text-center">
-                        <div className="text-gray-700">{formatCurrency(item.labor_charge)}</div>
-                        <div className="text-xs text-gray-500">({item.labor_percentage}%)</div>
-                      </div>
-                      <div className="col-span-2 text-center font-medium text-gray-900">
-                        {formatCurrency(item.material_cost + item.labor_charge)}
-                      </div>
-                      <div className="col-span-2 text-right font-bold text-gray-900">
-                        {formatCurrency(item.total_price)}
+                      <div className={`flex justify-between items-center bg-gradient-to-r ${colors.gradient} text-white p-3 rounded-lg`}>
+                        <span className="font-bold">Section Total:</span>
+                        <span className="font-bold text-xl">{formatCurrency(sectionTotal)}</span>
                       </div>
                     </div>
-                  ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
-        {/* Enhanced Totals */}
+        {/* Grand Totals */}
         <div className="flex justify-end mb-8">
           <div className="w-96">
             <div className="bg-gray-50 p-6 rounded-lg shadow-lg">
@@ -300,8 +335,8 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice, company }) => {
           </div>
         </div>
 
-        {/* Enhanced Footer */}
-        <div className="grid grid-cols-3 gap-8 text-sm bg-gray-50 p-6 rounded-lg">
+        {/* Enhanced Footer with Dealers */}
+        <div className="grid grid-cols-3 gap-8 text-sm bg-gray-50 p-6 rounded-lg mb-6">
           <div>
             <h4 className={`font-bold mb-3 text-[${colors.primary}]`}>Questions?</h4>
             <div className="space-y-1 text-gray-700">
@@ -326,6 +361,37 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice, company }) => {
             <p className="text-xs leading-relaxed text-gray-700">
               {invoice.payment_terms || "Payment is due within 30 days of invoice date. Late payments may incur additional charges. All work is guaranteed for 12 months from completion date."}
             </p>
+          </div>
+        </div>
+
+        {/* Dealers Section */}
+        <div className="bg-gradient-to-r from-gray-100 to-gray-200 p-6 rounded-lg shadow-inner">
+          <h4 className={`font-bold text-center mb-4 text-[${colors.primary}] text-lg`}>Our Trusted Partners & Dealers</h4>
+          <div className="grid grid-cols-4 gap-4 text-xs text-gray-600">
+            <div className="text-center">
+              <p className="font-semibold">Building Materials</p>
+              <p>Bamburi Cement Ltd</p>
+              <p>East African Portland</p>
+              <p>Devki Steel Mills</p>
+            </div>
+            <div className="text-center">
+              <p className="font-semibold">Electrical Supplies</p>
+              <p>General Electric Kenya</p>
+              <p>Schneider Electric</p>
+              <p>Siemens Kenya</p>
+            </div>
+            <div className="text-center">
+              <p className="font-semibold">Plumbing & Hardware</p>
+              <p>Mabati Rolling Mills</p>
+              <p>Basco Products Kenya</p>
+              <p>Polyoak Packaging</p>
+            </div>
+            <div className="text-center">
+              <p className="font-semibold">Finishing Materials</p>
+              <p>Crown Paints Kenya</p>
+              <p>Galaxy Paints</p>
+              <p>Tile & Carpet Centre</p>
+            </div>
           </div>
         </div>
 

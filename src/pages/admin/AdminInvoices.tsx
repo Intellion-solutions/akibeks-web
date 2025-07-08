@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -313,21 +312,9 @@ const AdminInvoices = () => {
         if (i === index) {
           const updatedItem = { ...item, [field]: value };
           
-          // Recalculate labor charge and total when material cost or labor percentage changes
-          if (field === "material_cost" || field === "labor_percentage") {
-            updatedItem.labor_charge = calculateLaborCharge(
-              field === "material_cost" ? value : item.material_cost,
-              field === "labor_percentage" ? value : item.labor_percentage
-            );
-          }
-          
-          // Recalculate total price
-          if (field === "material_cost" || field === "labor_percentage" || field === "labor_charge" || field === "quantity") {
-            updatedItem.total_price = calculateItemTotal(
-              updatedItem.material_cost,
-              updatedItem.labor_charge,
-              updatedItem.quantity
-            );
+          // Only update material cost - labor is calculated per section now
+          if (field === "material_cost" || field === "quantity") {
+            updatedItem.total_price = updatedItem.material_cost * updatedItem.quantity;
           }
           
           return updatedItem;
@@ -337,14 +324,33 @@ const AdminInvoices = () => {
     }));
   };
 
-  const getTotalAmount = () => {
-    const subtotal = newInvoice.items.reduce((total, item) => total + item.total_price, 0);
-    const taxAmount = subtotal * (newInvoice.taxRate / 100);
-    return subtotal + taxAmount - newInvoice.discountAmount;
+  const getSubtotal = () => {
+    return newInvoice.items.reduce((total, item) => total + (item.material_cost * item.quantity), 0);
   };
 
-  const getSubtotal = () => {
-    return newInvoice.items.reduce((total, item) => total + item.total_price, 0);
+  const getSectionSubtotal = (sectionName: string) => {
+    return newInvoice.items
+      .filter(item => item.section === sectionName)
+      .reduce((total, item) => total + (item.material_cost * item.quantity), 0);
+  };
+
+  const getSectionLaborCharge = (sectionName: string, laborPercentage: number = 36) => {
+    const sectionSubtotal = getSectionSubtotal(sectionName);
+    return sectionSubtotal * (laborPercentage / 100);
+  };
+
+  const getTotalLaborCharges = () => {
+    const sections = [...new Set(newInvoice.items.map(item => item.section))];
+    return sections.reduce((total, section) => {
+      return total + getSectionLaborCharge(section);
+    }, 0);
+  };
+
+  const getTotalAmount = () => {
+    const subtotal = getSubtotal();
+    const laborCharges = getTotalLaborCharges();
+    const taxAmount = (subtotal + laborCharges) * (newInvoice.taxRate / 100);
+    return subtotal + laborCharges + taxAmount - newInvoice.discountAmount;
   };
 
   const currencySymbol = companySettings.currency_symbol || 'KSh';
@@ -435,7 +441,7 @@ const AdminInvoices = () => {
                   Create Professional Invoice
                 </DialogTitle>
                 <DialogDescription>
-                  Generate a beautifully designed invoice with material costs and labor charges
+                  Generate a beautifully designed invoice with section-based labor charges
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-6">
@@ -512,98 +518,120 @@ const AdminInvoices = () => {
                   </div>
                 </div>
 
-                {/* Invoice Items */}
+                {/* Enhanced Invoice Items with Section Grouping */}
                 <div>
                   <div className="flex justify-between items-center mb-4">
-                    <Label className="text-base font-medium">Invoice Items *</Label>
+                    <Label className="text-base font-medium">Invoice Items by Section *</Label>
                     <Button type="button" variant="outline" size="sm" onClick={addInvoiceItem}>
                       <Plus className="w-4 h-4 mr-2" />
                       Add Item
                     </Button>
                   </div>
                   
-                  <div className="space-y-4">
-                    {newInvoice.items.map((item, index) => (
-                      <Card key={index} className="p-4">
-                        <div className="grid grid-cols-12 gap-3 items-end">
-                          <div className="col-span-3">
-                            <Label htmlFor={`item-desc-${index}`}>Description</Label>
-                            <Input
-                              id={`item-desc-${index}`}
-                              value={item.description}
-                              onChange={(e) => updateInvoiceItem(index, "description", e.target.value)}
-                              placeholder="Item description"
-                            />
+                  <div className="space-y-6">
+                    {/* Group items by section */}
+                    {[...new Set(newInvoice.items.map(item => item.section))].map((sectionName) => {
+                      const sectionItems = newInvoice.items.filter(item => item.section === sectionName);
+                      const sectionSubtotal = getSectionSubtotal(sectionName);
+                      const sectionLaborCharge = getSectionLaborCharge(sectionName);
+                      
+                      return (
+                        <Card key={sectionName} className="p-4 border-2 border-blue-200">
+                          <div className="mb-4">
+                            <h3 className="text-lg font-bold text-blue-800 flex items-center">
+                              <span className="mr-2">📋</span>
+                              {sectionName}
+                            </h3>
                           </div>
-                          <div className="col-span-1">
-                            <Label htmlFor={`item-qty-${index}`}>Qty</Label>
-                            <Input
-                              id={`item-qty-${index}`}
-                              type="number"
-                              value={item.quantity}
-                              onChange={(e) => updateInvoiceItem(index, "quantity", parseFloat(e.target.value) || 0)}
-                              min="0"
-                              step="0.01"
-                            />
+                          
+                          <div className="space-y-4">
+                            {sectionItems.map((item, globalIndex) => {
+                              const itemIndex = newInvoice.items.findIndex(i => i === item);
+                              return (
+                                <div key={itemIndex} className="grid grid-cols-12 gap-3 items-end bg-gray-50 p-3 rounded">
+                                  <div className="col-span-4">
+                                    <Label htmlFor={`item-desc-${itemIndex}`}>Description</Label>
+                                    <Input
+                                      id={`item-desc-${itemIndex}`}
+                                      value={item.description}
+                                      onChange={(e) => updateInvoiceItem(itemIndex, "description", e.target.value)}
+                                      placeholder="Item description"
+                                    />
+                                  </div>
+                                  <div className="col-span-2">
+                                    <Label htmlFor={`item-qty-${itemIndex}`}>Quantity</Label>
+                                    <Input
+                                      id={`item-qty-${itemIndex}`}
+                                      type="number"
+                                      value={item.quantity}
+                                      onChange={(e) => updateInvoiceItem(itemIndex, "quantity", parseFloat(e.target.value) || 0)}
+                                      min="0"
+                                      step="0.01"
+                                    />
+                                  </div>
+                                  <div className="col-span-2">
+                                    <Label htmlFor={`item-material-${itemIndex}`}>Unit Price ({currencySymbol})</Label>
+                                    <Input
+                                      id={`item-material-${itemIndex}`}
+                                      type="number"
+                                      value={item.material_cost}
+                                      onChange={(e) => updateInvoiceItem(itemIndex, "material_cost", parseFloat(e.target.value) || 0)}
+                                      min="0"
+                                      step="0.01"
+                                    />
+                                  </div>
+                                  <div className="col-span-2">
+                                    <Label>Amount ({currencySymbol})</Label>
+                                    <Input 
+                                      value={(item.material_cost * item.quantity).toFixed(2)} 
+                                      readOnly 
+                                      className="bg-gray-100 font-medium"
+                                    />
+                                  </div>
+                                  <div className="col-span-2">
+                                    <Label>Section</Label>
+                                    <Input
+                                      value={item.section}
+                                      onChange={(e) => updateInvoiceItem(itemIndex, "section", e.target.value)}
+                                      placeholder="e.g., Foundation, Roofing"
+                                    />
+                                  </div>
+                                  <div className="col-span-1">
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => removeInvoiceItem(itemIndex)}
+                                      disabled={newInvoice.items.length === 1}
+                                    >
+                                      ×
+                                    </Button>
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
-                          <div className="col-span-2">
-                            <Label htmlFor={`item-material-${index}`}>Material Cost ({currencySymbol})</Label>
-                            <Input
-                              id={`item-material-${index}`}
-                              type="number"
-                              value={item.material_cost}
-                              onChange={(e) => updateInvoiceItem(index, "material_cost", parseFloat(e.target.value) || 0)}
-                              min="0"
-                              step="0.01"
-                            />
+
+                          {/* Section Summary */}
+                          <div className="mt-4 pt-4 border-t bg-blue-50 p-3 rounded">
+                            <div className="grid grid-cols-3 gap-4 text-sm">
+                              <div>
+                                <span className="font-medium">Section Subtotal:</span>
+                                <p className="font-bold text-lg">{currencySymbol} {sectionSubtotal.toFixed(2)}</p>
+                              </div>
+                              <div>
+                                <span className="font-medium">Labor Charge (36%):</span>
+                                <p className="font-bold text-lg text-blue-600">{currencySymbol} {sectionLaborCharge.toFixed(2)}</p>
+                              </div>
+                              <div>
+                                <span className="font-medium">Section Total:</span>
+                                <p className="font-bold text-xl text-blue-800">{currencySymbol} {(sectionSubtotal + sectionLaborCharge).toFixed(2)}</p>
+                              </div>
+                            </div>
                           </div>
-                          <div className="col-span-1">
-                            <Label htmlFor={`item-labor-pct-${index}`}>Labor %</Label>
-                            <Input
-                              id={`item-labor-pct-${index}`}
-                              type="number"
-                              value={item.labor_percentage}
-                              onChange={(e) => updateInvoiceItem(index, "labor_percentage", parseFloat(e.target.value) || 0)}
-                              min="0"
-                              step="0.1"
-                            />
-                          </div>
-                          <div className="col-span-2">
-                            <Label>Labor Charge ({currencySymbol})</Label>
-                            <Input 
-                              value={item.labor_charge.toFixed(2)} 
-                              readOnly 
-                              className="bg-gray-50"
-                              title={`${item.labor_percentage}% of ${currencySymbol}${item.material_cost}`}
-                            />
-                          </div>
-                          <div className="col-span-2">
-                            <Label>Total ({currencySymbol})</Label>
-                            <Input value={item.total_price.toFixed(2)} readOnly className="bg-gray-50 font-medium" />
-                          </div>
-                          <div className="col-span-1">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => removeInvoiceItem(index)}
-                              disabled={newInvoice.items.length === 1}
-                            >
-                              ×
-                            </Button>
-                          </div>
-                        </div>
-                        <div className="mt-3">
-                          <Label htmlFor={`item-section-${index}`}>Section</Label>
-                          <Input
-                            id={`item-section-${index}`}
-                            value={item.section}
-                            onChange={(e) => updateInvoiceItem(index, "section", e.target.value)}
-                            placeholder="e.g., Foundation, Roofing, Electrical"
-                          />
-                        </div>
-                      </Card>
-                    ))}
+                        </Card>
+                      );
+                    })}
                   </div>
                   
                   {/* Invoice Totals */}
@@ -611,12 +639,16 @@ const AdminInvoices = () => {
                     <div className="flex justify-end">
                       <div className="w-80 space-y-2">
                         <div className="flex justify-between">
-                          <span>Subtotal:</span>
+                          <span>Material Subtotal:</span>
                           <span className="font-medium">{currencySymbol} {getSubtotal().toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between">
+                          <span>Total Labor Charges:</span>
+                          <span className="font-medium text-blue-600">{currencySymbol} {getTotalLaborCharges().toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
                           <span>Tax ({newInvoice.taxRate}%):</span>
-                          <span className="font-medium">{currencySymbol} {(getSubtotal() * newInvoice.taxRate / 100).toFixed(2)}</span>
+                          <span className="font-medium">{currencySymbol} {((getSubtotal() + getTotalLaborCharges()) * newInvoice.taxRate / 100).toFixed(2)}</span>
                         </div>
                         {newInvoice.discountAmount > 0 && (
                           <div className="flex justify-between text-green-600">
