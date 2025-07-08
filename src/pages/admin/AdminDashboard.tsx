@@ -1,102 +1,138 @@
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { 
-  Users, 
-  FileText, 
-  DollarSign, 
-  Settings, 
   BarChart3, 
-  Calendar,
-  Building,
-  Receipt,
-  Database,
+  FileText, 
+  Users, 
+  DollarSign, 
   TrendingUp,
-  Shield,
-  Wrench
+  Calendar,
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  Plus
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/contexts/AdminContext";
 import AdminLogin from "@/components/AdminLogin";
 import AdminHeader from "@/components/AdminHeader";
+import AdminDashboardActions from "@/components/admin/AdminDashboardActions";
+import { Link } from "react-router-dom";
 
 const AdminDashboard = () => {
+  const { toast } = useToast();
   const { isAuthenticated, companySettings } = useAdmin();
+  const [stats, setStats] = useState({
+    totalClients: 0,
+    totalProjects: 0,
+    totalInvoices: 0,
+    totalRevenue: 0,
+    pendingInvoices: 0,
+    activeProjects: 0,
+    overdueInvoices: 0,
+    completedProjects: 0
+  });
+  const [loading, setLoading] = useState(true);
 
   if (!isAuthenticated) {
     return <AdminLogin />;
   }
 
-  const adminFeatures = [
+  useEffect(() => {
+    fetchDashboardStats();
+  }, []);
+
+  const fetchDashboardStats = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch clients count
+      const { count: clientsCount } = await supabase
+        .from('clients')
+        .select('*', { count: 'exact', head: true });
+
+      // Fetch projects count and active projects
+      const { data: projects, count: projectsCount } = await supabase
+        .from('projects')
+        .select('*', { count: 'exact' });
+
+      const activeProjects = projects?.filter(p => p.status === 'in_progress').length || 0;
+      const completedProjects = projects?.filter(p => p.status === 'completed').length || 0;
+
+      // Fetch invoices data
+      const { data: invoices, count: invoicesCount } = await supabase
+        .from('invoices')
+        .select('*', { count: 'exact' });
+
+      const totalRevenue = invoices?.reduce((sum, inv) => sum + (inv.paid_amount || 0), 0) || 0;
+      const pendingInvoices = invoices?.filter(inv => inv.status === 'pending').length || 0;
+      const overdueInvoices = invoices?.filter(inv => inv.status === 'overdue').length || 0;
+
+      setStats({
+        totalClients: clientsCount || 0,
+        totalProjects: projectsCount || 0,
+        totalInvoices: invoicesCount || 0,
+        totalRevenue,
+        pendingInvoices,
+        activeProjects,
+        overdueInvoices,
+        completedProjects
+      });
+
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load dashboard statistics",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const currencySymbol = companySettings?.currency_symbol || 'KSh';
+
+  const statCards = [
     {
-      title: "Projects",
-      description: "Manage construction projects and track progress",
-      icon: Building,
-      link: "/admin/projects",
-      color: "bg-blue-500"
-    },
-    {
-      title: "Clients",
-      description: "Manage client information and relationships",
+      title: "Total Clients",
+      value: stats.totalClients,
       icon: Users,
-      link: "/admin/clients",
-      color: "bg-green-500"
+      color: "text-blue-600",
+      bgColor: "bg-blue-100",
+      change: "+12%",
+      trend: "up"
     },
     {
-      title: "Quotes",
-      description: "Create and manage project quotations",
-      icon: FileText,
-      link: "/admin/quotes",
-      color: "bg-orange-500"
-    },
-    {
-      title: "Invoices",
-      description: "Generate and track invoices",
-      icon: Receipt,
-      link: "/admin/invoices",
-      color: "bg-purple-500"
-    },
-    {
-      title: "Templates",
-      description: "Design professional document templates",
-      icon: Wrench,
-      link: "/admin/templates",
-      color: "bg-red-500"
-    },
-    {
-      title: "Analytics",
-      description: "Business insights and performance metrics",
-      icon: TrendingUp,
-      link: "/admin/analytics",
-      color: "bg-indigo-500"
-    },
-    {
-      title: "Reports",
-      description: "Generate detailed business reports",
+      title: "Active Projects", 
+      value: stats.activeProjects,
       icon: BarChart3,
-      link: "/admin/reports",
-      color: "bg-teal-500"
+      color: "text-green-600",
+      bgColor: "bg-green-100",
+      change: "+8%",
+      trend: "up"
     },
     {
-      title: "Users",
-      description: "Manage system users and permissions",
-      icon: Shield,
-      link: "/admin/users",
-      color: "bg-gray-500"
+      title: "Total Revenue",
+      value: `${currencySymbol} ${stats.totalRevenue.toLocaleString()}`,
+      icon: DollarSign,
+      color: "text-purple-600",
+      bgColor: "bg-purple-100",
+      change: "+23%",
+      trend: "up"
     },
     {
-      title: "Settings",
-      description: "Configure company settings and preferences",
-      icon: Settings,
-      link: "/admin/settings",
-      color: "bg-yellow-500"
-    },
-    {
-      title: "Backup",
-      description: "Database backup and restore operations",
-      icon: Database,
-      link: "/admin/backup",
-      color: "bg-pink-500"
+      title: "Pending Invoices",
+      value: stats.pendingInvoices,
+      icon: FileText,
+      color: "text-orange-600",
+      bgColor: "bg-orange-100",
+      change: "-5%",
+      trend: "down"
     }
   ];
 
@@ -106,122 +142,132 @@ const AdminDashboard = () => {
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600 mt-2">Welcome back! Manage your business operations from here.</p>
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
+          <p className="text-gray-600 mt-2">Welcome back! Here's what's happening with your business today.</p>
         </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <Building className="w-8 h-8 text-blue-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Active Projects</p>
-                  <p className="text-2xl font-bold text-gray-900">12</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <Users className="w-8 h-8 text-green-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Clients</p>
-                  <p className="text-2xl font-bold text-gray-900">48</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <FileText className="w-8 h-8 text-orange-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Pending Quotes</p>
-                  <p className="text-2xl font-bold text-gray-900">8</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <DollarSign className="w-8 h-8 text-purple-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Monthly Revenue</p>
-                  <p className="text-2xl font-bold text-gray-900">{companySettings.currency_symbol || 'KSh'} 2.5M</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Admin Features Grid */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Management Tools</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {adminFeatures.map((feature, index) => (
-              <Link key={index} to={feature.link}>
-                <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
-                  <CardHeader className="pb-3">
-                    <div className={`w-12 h-12 ${feature.color} rounded-lg flex items-center justify-center mb-3`}>
-                      <feature.icon className="w-6 h-6 text-white" />
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {statCards.map((stat, index) => (
+            <Card key={index} className="hover:shadow-lg transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">{stat.title}</p>
+                    <p className="text-2xl font-bold text-gray-900 mt-2">
+                      {loading ? "..." : stat.value}
+                    </p>
+                    <div className="flex items-center mt-2">
+                      <TrendingUp className={`w-4 h-4 mr-1 ${stat.trend === 'up' ? 'text-green-500' : 'text-red-500'}`} />
+                      <span className={`text-sm ${stat.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+                        {stat.change}
+                      </span>
+                      <span className="text-sm text-gray-500 ml-1">from last month</span>
                     </div>
-                    <CardTitle className="text-lg">{feature.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="text-sm">{feature.description}</CardDescription>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
+                  </div>
+                  <div className={`w-12 h-12 ${stat.bgColor} rounded-lg flex items-center justify-center`}>
+                    <stat.icon className={`w-6 h-6 ${stat.color}`} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
-        {/* Recent Activity */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>Latest updates and system activity</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center space-x-4">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">New quote request from ABC Construction</p>
-                  <p className="text-xs text-gray-500">2 minutes ago</p>
+        {/* Quick Summary Cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-red-500" />
+                Urgent Items
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Overdue Invoices</span>
+                <div className="flex items-center gap-2">
+                  <Badge variant="destructive">{stats.overdueInvoices}</Badge>
+                  <Button size="sm" variant="outline" asChild>
+                    <Link to="/admin/invoices">View</Link>
+                  </Button>
                 </div>
               </div>
-              <div className="flex items-center space-x-4">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">Project "Riverside Complex" updated to 75% completion</p>
-                  <p className="text-xs text-gray-500">1 hour ago</p>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Pending Payments</span>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary">{stats.pendingInvoices}</Badge>
+                  <Button size="sm" variant="outline" asChild>
+                    <Link to="/admin/invoices">View</Link>
+                  </Button>
                 </div>
               </div>
-              <div className="flex items-center space-x-4">
-                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">Invoice INV-2024-001 payment received</p>
-                  <p className="text-xs text-gray-500">3 hours ago</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Clock className="w-5 h-5 text-blue-500" />
+                In Progress
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Active Projects</span>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">{stats.activeProjects}</Badge>
+                  <Button size="sm" variant="outline" asChild>
+                    <Link to="/admin/projects">View</Link>
+                  </Button>
                 </div>
               </div>
-              <div className="flex items-center space-x-4">
-                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">New client registration: Kenya Railways</p>
-                  <p className="text-xs text-gray-500">5 hours ago</p>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Draft Invoices</span>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">
+                    {stats.totalInvoices - stats.pendingInvoices - stats.overdueInvoices}
+                  </Badge>
+                  <Button size="sm" variant="outline" asChild>
+                    <Link to="/admin/invoices">View</Link>
+                  </Button>
                 </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-green-500" />
+                Completed
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Completed Projects</span>
+                <div className="flex items-center gap-2">
+                  <Badge variant="default">{stats.completedProjects}</Badge>
+                  <Button size="sm" variant="outline" asChild>
+                    <Link to="/admin/projects">View</Link>
+                  </Button>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Total Clients</span>
+                <div className="flex items-center gap-2">
+                  <Badge variant="default">{stats.totalClients}</Badge>
+                  <Button size="sm" variant="outline" asChild>
+                    <Link to="/admin/clients">View</Link>
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Functional Actions Component */}
+        <AdminDashboardActions />
       </div>
     </div>
   );

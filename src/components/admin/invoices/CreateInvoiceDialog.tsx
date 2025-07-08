@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card } from "@/components/ui/card";
+import InvoiceSectionManager from "./InvoiceSectionManager";
+import LetterheadManager from "./LetterheadManager";
 
 interface Template {
   id: string;
@@ -58,6 +59,26 @@ const CreateInvoiceDialog = ({
   getTotalAmount,
   currencySymbol
 }: CreateInvoiceDialogProps) => {
+  const [currentTab, setCurrentTab] = useState<'basic' | 'items' | 'letterhead'>('basic');
+
+  const defaultLetterheadConfig = {
+    enabled: newInvoice.letterheadEnabled || false,
+    companyName: 'AKIBEKS Engineering Solutions',
+    address: 'Nairobi, Kenya',
+    phone: '+254 123 456 789',
+    email: 'info@akibeks.com',
+    website: 'www.akibeks.com',
+    headerColor: '#1e40af',
+    template: 'professional' as const
+  };
+
+  const [letterheadConfig, setLetterheadConfig] = useState(defaultLetterheadConfig);
+
+  const handleLetterheadConfigUpdate = (config: typeof defaultLetterheadConfig) => {
+    setLetterheadConfig(config);
+    setNewInvoice(prev => ({ ...prev, letterheadEnabled: config.enabled, letterheadConfig: config }));
+  };
+
   return (
     <Dialog open={showCreateInvoice} onOpenChange={setShowCreateInvoice}>
       <DialogTrigger asChild>
@@ -66,7 +87,7 @@ const CreateInvoiceDialog = ({
           New Invoice
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Palette className="w-5 h-5" />
@@ -76,243 +97,183 @@ const CreateInvoiceDialog = ({
             Generate a beautifully designed invoice with section-based labor charges
           </DialogDescription>
         </DialogHeader>
+
+        {/* Tab Navigation */}
+        <div className="flex border-b">
+          <button
+            className={`px-4 py-2 font-medium ${currentTab === 'basic' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}
+            onClick={() => setCurrentTab('basic')}
+          >
+            Basic Info
+          </button>
+          <button
+            className={`px-4 py-2 font-medium ${currentTab === 'items' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}
+            onClick={() => setCurrentTab('items')}
+          >
+            Items & Sections
+          </button>
+          <button
+            className={`px-4 py-2 font-medium ${currentTab === 'letterhead' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}
+            onClick={() => setCurrentTab('letterhead')}
+          >
+            Letterhead
+          </button>
+        </div>
+
         <div className="space-y-6">
-          {/* Basic Info */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="clientId">Client *</Label>
-              <Select value={newInvoice.clientId} onValueChange={(value) => setNewInvoice(prev => ({ ...prev, clientId: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a client" />
-                </SelectTrigger>
-                <SelectContent>
-                  {clients.map(client => (
-                    <SelectItem key={client.id} value={client.id}>
-                      {client.company_name || client.full_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="dueDate">Due Date</Label>
-              <Input
-                id="dueDate"
-                type="date"
-                value={newInvoice.dueDate}
-                onChange={(e) => setNewInvoice(prev => ({ ...prev, dueDate: e.target.value }))}
+          {currentTab === 'basic' && (
+            <>
+              {/* Basic Info */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="clientId">Client *</Label>
+                  <Select value={newInvoice.clientId} onValueChange={(value) => setNewInvoice(prev => ({ ...prev, clientId: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a client" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clients.map(client => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.company_name || client.full_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="dueDate">Due Date</Label>
+                  <Input
+                    id="dueDate"
+                    type="date"
+                    value={newInvoice.dueDate}
+                    onChange={(e) => setNewInvoice(prev => ({ ...prev, dueDate: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              {/* Template and Design */}
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="templateType">Template Design</Label>
+                  <Select value={newInvoice.templateType} onValueChange={(value) => setNewInvoice(prev => ({ ...prev, templateType: value }))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {templates.map(template => (
+                        <SelectItem key={template.id} value={template.template_type}>
+                          {template.template_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="paymentTerms">Payment Terms</Label>
+                  <Select value={newInvoice.paymentTerms} onValueChange={(value) => setNewInvoice(prev => ({ ...prev, paymentTerms: value }))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Net 15">Net 15</SelectItem>
+                      <SelectItem value="Net 30">Net 30</SelectItem>
+                      <SelectItem value="Net 45">Net 45</SelectItem>
+                      <SelectItem value="Net 60">Net 60</SelectItem>
+                      <SelectItem value="Due on Receipt">Due on Receipt</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="taxRate">Tax Rate (%)</Label>
+                  <Input
+                    id="taxRate"
+                    type="number"
+                    value={newInvoice.taxRate}
+                    onChange={(e) => setNewInvoice(prev => ({ ...prev, taxRate: parseFloat(e.target.value) || 0 }))}
+                    step="0.1"
+                    min="0"
+                  />
+                </div>
+              </div>
+
+              {/* Discount */}
+              <div>
+                <Label htmlFor="discountAmount">Discount Amount ({currencySymbol})</Label>
+                <Input
+                  id="discountAmount"
+                  type="number"
+                  value={newInvoice.discountAmount}
+                  onChange={(e) => setNewInvoice(prev => ({ ...prev, discountAmount: parseFloat(e.target.value) || 0 }))}
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+
+              {/* Notes */}
+              <div>
+                <Label htmlFor="notes">Notes/Terms</Label>
+                <Textarea
+                  id="notes"
+                  value={newInvoice.notes}
+                  onChange={(e) => setNewInvoice(prev => ({ ...prev, notes: e.target.value }))}
+                  placeholder="Additional notes, payment instructions, or terms..."
+                  rows={3}
+                />
+              </div>
+            </>
+          )}
+
+          {currentTab === 'items' && (
+            <>
+              {/* Enhanced Invoice Items with Section Grouping */}
+              <InvoiceSectionManager
+                items={newInvoice.items}
+                updateInvoiceItem={updateInvoiceItem}
+                addInvoiceItem={addInvoiceItem}
+                removeInvoiceItem={removeInvoiceItem}
+                getSectionSubtotal={getSectionSubtotal}
+                getSectionLaborCharge={getSectionLaborCharge}
+                currencySymbol={currencySymbol}
               />
-            </div>
-          </div>
-
-          {/* Template and Design */}
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="templateType">Template Design</Label>
-              <Select value={newInvoice.templateType} onValueChange={(value) => setNewInvoice(prev => ({ ...prev, templateType: value }))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {templates.map(template => (
-                    <SelectItem key={template.id} value={template.template_type}>
-                      {template.template_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="paymentTerms">Payment Terms</Label>
-              <Select value={newInvoice.paymentTerms} onValueChange={(value) => setNewInvoice(prev => ({ ...prev, paymentTerms: value }))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Net 15">Net 15</SelectItem>
-                  <SelectItem value="Net 30">Net 30</SelectItem>
-                  <SelectItem value="Net 45">Net 45</SelectItem>
-                  <SelectItem value="Net 60">Net 60</SelectItem>
-                  <SelectItem value="Due on Receipt">Due on Receipt</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="taxRate">Tax Rate (%)</Label>
-              <Input
-                id="taxRate"
-                type="number"
-                value={newInvoice.taxRate}
-                onChange={(e) => setNewInvoice(prev => ({ ...prev, taxRate: parseFloat(e.target.value) || 0 }))}
-                step="0.1"
-                min="0"
-              />
-            </div>
-          </div>
-
-          {/* Enhanced Invoice Items with Section Grouping */}
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <Label className="text-base font-medium">Invoice Items by Section *</Label>
-              <Button type="button" variant="outline" size="sm" onClick={addInvoiceItem}>
-                <Plus className="w-4 h-4 mr-2" />
-                Add Item
-              </Button>
-            </div>
-            
-            <div className="space-y-6">
-              {/* Group items by section */}
-              {Array.from(new Set(newInvoice.items.map((item: any) => item.section))).map((sectionName: string) => {
-                const sectionItems = newInvoice.items.filter((item: any) => item.section === sectionName);
-                const sectionSubtotal = getSectionSubtotal(sectionName);
-                const sectionLaborCharge = getSectionLaborCharge(sectionName);
-                
-                return (
-                  <Card key={sectionName} className="p-4 border-2 border-blue-200">
-                    <div className="mb-4">
-                      <h3 className="text-lg font-bold text-blue-800 flex items-center">
-                        <span className="mr-2">📋</span>
-                        {sectionName}
-                      </h3>
+              
+              {/* Invoice Totals */}
+              <div className="mt-6 pt-4 border-t">
+                <div className="flex justify-end">
+                  <div className="w-80 space-y-2">
+                    <div className="flex justify-between">
+                      <span>Material Subtotal:</span>
+                      <span className="font-medium">{currencySymbol} {getSubtotal().toFixed(2)}</span>
                     </div>
-                    
-                    <div className="space-y-4">
-                      {sectionItems.map((item: any, globalIndex: number) => {
-                        const itemIndex = newInvoice.items.findIndex((i: any) => i === item);
-                        return (
-                          <div key={itemIndex} className="grid grid-cols-12 gap-3 items-end bg-gray-50 p-3 rounded">
-                            <div className="col-span-4">
-                              <Label htmlFor={`item-desc-${itemIndex}`}>Description</Label>
-                              <Input
-                                id={`item-desc-${itemIndex}`}
-                                value={item.description}
-                                onChange={(e) => updateInvoiceItem(itemIndex, "description", e.target.value)}
-                                placeholder="Item description"
-                              />
-                            </div>
-                            <div className="col-span-2">
-                              <Label htmlFor={`item-qty-${itemIndex}`}>Quantity</Label>
-                              <Input
-                                id={`item-qty-${itemIndex}`}
-                                type="number"
-                                value={item.quantity}
-                                onChange={(e) => updateInvoiceItem(itemIndex, "quantity", parseFloat(e.target.value) || 0)}
-                                min="0"
-                                step="0.01"
-                              />
-                            </div>
-                            <div className="col-span-2">
-                              <Label htmlFor={`item-material-${itemIndex}`}>Unit Price ({currencySymbol})</Label>
-                              <Input
-                                id={`item-material-${itemIndex}`}
-                                type="number"
-                                value={item.material_cost}
-                                onChange={(e) => updateInvoiceItem(itemIndex, "material_cost", parseFloat(e.target.value) || 0)}
-                                min="0"
-                                step="0.01"
-                              />
-                            </div>
-                            <div className="col-span-2">
-                              <Label>Amount ({currencySymbol})</Label>
-                              <Input 
-                                value={(item.material_cost * item.quantity).toFixed(2)} 
-                                readOnly 
-                                className="bg-gray-100 font-medium"
-                              />
-                            </div>
-                            <div className="col-span-1">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => removeInvoiceItem(itemIndex)}
-                                disabled={newInvoice.items.length === 1}
-                              >
-                                ×
-                              </Button>
-                            </div>
-                          </div>
-                        );
-                      })}
+                    <div className="flex justify-between">
+                      <span>Total Labor Charges:</span>
+                      <span className="font-medium text-blue-600">{currencySymbol} {getTotalLaborCharges().toFixed(2)}</span>
                     </div>
-
-                    {/* Section Summary */}
-                    <div className="mt-4 pt-4 border-t bg-blue-50 p-3 rounded">
-                      <div className="grid grid-cols-3 gap-4 text-sm">
-                        <div>
-                          <span className="font-medium">Section Subtotal:</span>
-                          <p className="font-bold text-lg">{currencySymbol} {sectionSubtotal.toFixed(2)}</p>
-                        </div>
-                        <div>
-                          <span className="font-medium">Labor Charge (36%):</span>
-                          <p className="font-bold text-lg text-blue-600">{currencySymbol} {sectionLaborCharge.toFixed(2)}</p>
-                        </div>
-                        <div>
-                          <span className="font-medium">Section Total:</span>
-                          <p className="font-bold text-xl text-blue-800">{currencySymbol} {(sectionSubtotal + sectionLaborCharge).toFixed(2)}</p>
-                        </div>
+                    <div className="flex justify-between">
+                      <span>Tax ({newInvoice.taxRate}%):</span>
+                      <span className="font-medium">{currencySymbol} {((getSubtotal() + getTotalLaborCharges()) * newInvoice.taxRate / 100).toFixed(2)}</span>
+                    </div>
+                    {newInvoice.discountAmount > 0 && (
+                      <div className="flex justify-between text-green-600">
+                        <span>Discount:</span>
+                        <span className="font-medium">-{currencySymbol} {newInvoice.discountAmount.toFixed(2)}</span>
                       </div>
+                    )}
+                    <div className="flex justify-between text-lg font-bold border-t pt-2">
+                      <span>Total:</span>
+                      <span>{currencySymbol} {getTotalAmount().toFixed(2)}</span>
                     </div>
-                  </Card>
-                );
-              })}
-            </div>
-            
-            {/* Invoice Totals */}
-            <div className="mt-6 pt-4 border-t">
-              <div className="flex justify-end">
-                <div className="w-80 space-y-2">
-                  <div className="flex justify-between">
-                    <span>Material Subtotal:</span>
-                    <span className="font-medium">{currencySymbol} {getSubtotal().toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Total Labor Charges:</span>
-                    <span className="font-medium text-blue-600">{currencySymbol} {getTotalLaborCharges().toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Tax ({newInvoice.taxRate}%):</span>
-                    <span className="font-medium">{currencySymbol} {((getSubtotal() + getTotalLaborCharges()) * newInvoice.taxRate / 100).toFixed(2)}</span>
-                  </div>
-                  {newInvoice.discountAmount > 0 && (
-                    <div className="flex justify-between text-green-600">
-                      <span>Discount:</span>
-                      <span className="font-medium">-{currencySymbol} {newInvoice.discountAmount.toFixed(2)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between text-lg font-bold border-t pt-2">
-                    <span>Total:</span>
-                    <span>{currencySymbol} {getTotalAmount().toFixed(2)}</span>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
+            </>
+          )}
 
-          {/* Discount */}
-          <div>
-            <Label htmlFor="discountAmount">Discount Amount ({currencySymbol})</Label>
-            <Input
-              id="discountAmount"
-              type="number"
-              value={newInvoice.discountAmount}
-              onChange={(e) => setNewInvoice(prev => ({ ...prev, discountAmount: parseFloat(e.target.value) || 0 }))}
-              min="0"
-              step="0.01"
+          {currentTab === 'letterhead' && (
+            <LetterheadManager
+              letterheadConfig={letterheadConfig}
+              updateLetterheadConfig={handleLetterheadConfigUpdate}
             />
-          </div>
-
-          {/* Notes */}
-          <div>
-            <Label htmlFor="notes">Notes/Terms</Label>
-            <Textarea
-              id="notes"
-              value={newInvoice.notes}
-              onChange={(e) => setNewInvoice(prev => ({ ...prev, notes: e.target.value }))}
-              placeholder="Additional notes, payment instructions, or terms..."
-              rows={3}
-            />
-          </div>
+          )}
 
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => setShowCreateInvoice(false)}>
