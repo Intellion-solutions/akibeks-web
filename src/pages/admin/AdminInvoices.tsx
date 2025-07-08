@@ -1,19 +1,15 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, FileText, DollarSign, Calendar, Download, Send, Eye, Palette } from "lucide-react";
+import { FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/contexts/AdminContext";
 import AdminLogin from "@/components/AdminLogin";
 import AdminHeader from "@/components/AdminHeader";
 import InvoiceViewer from "@/components/InvoiceViewer";
+import InvoiceStats from "@/components/admin/invoices/InvoiceStats";
+import InvoiceFilters from "@/components/admin/invoices/InvoiceFilters";
+import CreateInvoiceDialog from "@/components/admin/invoices/CreateInvoiceDialog";
+import InvoiceList from "@/components/admin/invoices/InvoiceList";
 
 interface Invoice {
   id: string;
@@ -177,12 +173,33 @@ const AdminInvoices = () => {
     setShowInvoiceViewer(true);
   };
 
-  const calculateLaborCharge = (materialCost: number, laborPercentage: number) => {
-    return materialCost * (laborPercentage / 100);
+  const getSubtotal = () => {
+    return newInvoice.items.reduce((total, item) => total + (item.material_cost * item.quantity), 0);
   };
 
-  const calculateItemTotal = (materialCost: number, laborCharge: number, quantity: number) => {
-    return (materialCost + laborCharge) * quantity;
+  const getSectionSubtotal = (sectionName: string) => {
+    return newInvoice.items
+      .filter(item => item.section === sectionName)
+      .reduce((total, item) => total + (item.material_cost * item.quantity), 0);
+  };
+
+  const getSectionLaborCharge = (sectionName: string, laborPercentage: number = 36) => {
+    const sectionSubtotal = getSectionSubtotal(sectionName);
+    return sectionSubtotal * (laborPercentage / 100);
+  };
+
+  const getTotalLaborCharges = () => {
+    const sections = [...new Set(newInvoice.items.map(item => item.section))];
+    return sections.reduce((total, section) => {
+      return total + getSectionLaborCharge(section);
+    }, 0);
+  };
+
+  const getTotalAmount = () => {
+    const subtotal = getSubtotal();
+    const laborCharges = getTotalLaborCharges();
+    const taxAmount = (subtotal + laborCharges) * (newInvoice.taxRate / 100);
+    return subtotal + laborCharges + taxAmount - newInvoice.discountAmount;
   };
 
   const handleCreateInvoice = async () => {
@@ -312,7 +329,6 @@ const AdminInvoices = () => {
         if (i === index) {
           const updatedItem = { ...item, [field]: value };
           
-          // Only update material cost - labor is calculated per section now
           if (field === "material_cost" || field === "quantity") {
             updatedItem.total_price = updatedItem.material_cost * updatedItem.quantity;
           }
@@ -324,36 +340,7 @@ const AdminInvoices = () => {
     }));
   };
 
-  const getSubtotal = () => {
-    return newInvoice.items.reduce((total, item) => total + (item.material_cost * item.quantity), 0);
-  };
-
-  const getSectionSubtotal = (sectionName: string) => {
-    return newInvoice.items
-      .filter(item => item.section === sectionName)
-      .reduce((total, item) => total + (item.material_cost * item.quantity), 0);
-  };
-
-  const getSectionLaborCharge = (sectionName: string, laborPercentage: number = 36) => {
-    const sectionSubtotal = getSectionSubtotal(sectionName);
-    return sectionSubtotal * (laborPercentage / 100);
-  };
-
-  const getTotalLaborCharges = () => {
-    const sections = [...new Set(newInvoice.items.map(item => item.section))];
-    return sections.reduce((total, section) => {
-      return total + getSectionLaborCharge(section);
-    }, 0);
-  };
-
-  const getTotalAmount = () => {
-    const subtotal = getSubtotal();
-    const laborCharges = getTotalLaborCharges();
-    const taxAmount = (subtotal + laborCharges) * (newInvoice.taxRate / 100);
-    return subtotal + laborCharges + taxAmount - newInvoice.discountAmount;
-  };
-
-  const currencySymbol = companySettings.currency_symbol || 'KSh';
+  const currencySymbol = companySettings?.currency_symbol || 'KSh';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -368,451 +355,43 @@ const AdminInvoices = () => {
           <p className="text-gray-600 mt-2">Create and manage professional invoices with templates</p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Total Invoices</p>
-                  <p className="text-2xl font-bold">{invoices.length}</p>
-                </div>
-                <FileText className="w-8 h-8 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Paid</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    {invoices.filter(inv => inv.status === "paid").length}
-                  </p>
-                </div>
-                <DollarSign className="w-8 h-8 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Pending</p>
-                  <p className="text-2xl font-bold text-yellow-600">
-                    {invoices.filter(inv => inv.status === "pending").length}
-                  </p>
-                </div>
-                <Calendar className="w-8 h-8 text-yellow-600" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Total Value</p>
-                  <p className="text-2xl font-bold text-blue-600">
-                    {currencySymbol} {invoices.reduce((sum, inv) => sum + parseFloat(inv.total_amount.toString()), 0).toLocaleString()}
-                  </p>
-                </div>
-                <FileText className="w-8 h-8 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <InvoiceStats invoices={invoices} currencySymbol={currencySymbol} />
 
-        {/* Create Invoice Button */}
         <div className="mb-6">
-          <Dialog open={showCreateInvoice} onOpenChange={setShowCreateInvoice}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                New Invoice
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Palette className="w-5 h-5" />
-                  Create Professional Invoice
-                </DialogTitle>
-                <DialogDescription>
-                  Generate a beautifully designed invoice with section-based labor charges
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-6">
-                {/* Basic Info */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="clientId">Client *</Label>
-                    <Select value={newInvoice.clientId} onValueChange={(value) => setNewInvoice(prev => ({ ...prev, clientId: value }))}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a client" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {clients.map(client => (
-                          <SelectItem key={client.id} value={client.id}>
-                            {client.company_name || client.full_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="dueDate">Due Date</Label>
-                    <Input
-                      id="dueDate"
-                      type="date"
-                      value={newInvoice.dueDate}
-                      onChange={(e) => setNewInvoice(prev => ({ ...prev, dueDate: e.target.value }))}
-                    />
-                  </div>
-                </div>
-
-                {/* Template and Design */}
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="templateType">Template Design</Label>
-                    <Select value={newInvoice.templateType} onValueChange={(value) => setNewInvoice(prev => ({ ...prev, templateType: value }))}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {templates.map(template => (
-                          <SelectItem key={template.id} value={template.template_type}>
-                            {template.template_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="paymentTerms">Payment Terms</Label>
-                    <Select value={newInvoice.paymentTerms} onValueChange={(value) => setNewInvoice(prev => ({ ...prev, paymentTerms: value }))}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Net 15">Net 15</SelectItem>
-                        <SelectItem value="Net 30">Net 30</SelectItem>
-                        <SelectItem value="Net 45">Net 45</SelectItem>
-                        <SelectItem value="Net 60">Net 60</SelectItem>
-                        <SelectItem value="Due on Receipt">Due on Receipt</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="taxRate">Tax Rate (%)</Label>
-                    <Input
-                      id="taxRate"
-                      type="number"
-                      value={newInvoice.taxRate}
-                      onChange={(e) => setNewInvoice(prev => ({ ...prev, taxRate: parseFloat(e.target.value) || 0 }))}
-                      step="0.1"
-                      min="0"
-                    />
-                  </div>
-                </div>
-
-                {/* Enhanced Invoice Items with Section Grouping */}
-                <div>
-                  <div className="flex justify-between items-center mb-4">
-                    <Label className="text-base font-medium">Invoice Items by Section *</Label>
-                    <Button type="button" variant="outline" size="sm" onClick={addInvoiceItem}>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Item
-                    </Button>
-                  </div>
-                  
-                  <div className="space-y-6">
-                    {/* Group items by section */}
-                    {[...new Set(newInvoice.items.map(item => item.section))].map((sectionName) => {
-                      const sectionItems = newInvoice.items.filter(item => item.section === sectionName);
-                      const sectionSubtotal = getSectionSubtotal(sectionName);
-                      const sectionLaborCharge = getSectionLaborCharge(sectionName);
-                      
-                      return (
-                        <Card key={sectionName} className="p-4 border-2 border-blue-200">
-                          <div className="mb-4">
-                            <h3 className="text-lg font-bold text-blue-800 flex items-center">
-                              <span className="mr-2">📋</span>
-                              {sectionName}
-                            </h3>
-                          </div>
-                          
-                          <div className="space-y-4">
-                            {sectionItems.map((item, globalIndex) => {
-                              const itemIndex = newInvoice.items.findIndex(i => i === item);
-                              return (
-                                <div key={itemIndex} className="grid grid-cols-12 gap-3 items-end bg-gray-50 p-3 rounded">
-                                  <div className="col-span-4">
-                                    <Label htmlFor={`item-desc-${itemIndex}`}>Description</Label>
-                                    <Input
-                                      id={`item-desc-${itemIndex}`}
-                                      value={item.description}
-                                      onChange={(e) => updateInvoiceItem(itemIndex, "description", e.target.value)}
-                                      placeholder="Item description"
-                                    />
-                                  </div>
-                                  <div className="col-span-2">
-                                    <Label htmlFor={`item-qty-${itemIndex}`}>Quantity</Label>
-                                    <Input
-                                      id={`item-qty-${itemIndex}`}
-                                      type="number"
-                                      value={item.quantity}
-                                      onChange={(e) => updateInvoiceItem(itemIndex, "quantity", parseFloat(e.target.value) || 0)}
-                                      min="0"
-                                      step="0.01"
-                                    />
-                                  </div>
-                                  <div className="col-span-2">
-                                    <Label htmlFor={`item-material-${itemIndex}`}>Unit Price ({currencySymbol})</Label>
-                                    <Input
-                                      id={`item-material-${itemIndex}`}
-                                      type="number"
-                                      value={item.material_cost}
-                                      onChange={(e) => updateInvoiceItem(itemIndex, "material_cost", parseFloat(e.target.value) || 0)}
-                                      min="0"
-                                      step="0.01"
-                                    />
-                                  </div>
-                                  <div className="col-span-2">
-                                    <Label>Amount ({currencySymbol})</Label>
-                                    <Input 
-                                      value={(item.material_cost * item.quantity).toFixed(2)} 
-                                      readOnly 
-                                      className="bg-gray-100 font-medium"
-                                    />
-                                  </div>
-                                  <div className="col-span-2">
-                                    <Label>Section</Label>
-                                    <Input
-                                      value={item.section}
-                                      onChange={(e) => updateInvoiceItem(itemIndex, "section", e.target.value)}
-                                      placeholder="e.g., Foundation, Roofing"
-                                    />
-                                  </div>
-                                  <div className="col-span-1">
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => removeInvoiceItem(itemIndex)}
-                                      disabled={newInvoice.items.length === 1}
-                                    >
-                                      ×
-                                    </Button>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-
-                          {/* Section Summary */}
-                          <div className="mt-4 pt-4 border-t bg-blue-50 p-3 rounded">
-                            <div className="grid grid-cols-3 gap-4 text-sm">
-                              <div>
-                                <span className="font-medium">Section Subtotal:</span>
-                                <p className="font-bold text-lg">{currencySymbol} {sectionSubtotal.toFixed(2)}</p>
-                              </div>
-                              <div>
-                                <span className="font-medium">Labor Charge (36%):</span>
-                                <p className="font-bold text-lg text-blue-600">{currencySymbol} {sectionLaborCharge.toFixed(2)}</p>
-                              </div>
-                              <div>
-                                <span className="font-medium">Section Total:</span>
-                                <p className="font-bold text-xl text-blue-800">{currencySymbol} {(sectionSubtotal + sectionLaborCharge).toFixed(2)}</p>
-                              </div>
-                            </div>
-                          </div>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                  
-                  {/* Invoice Totals */}
-                  <div className="mt-6 pt-4 border-t">
-                    <div className="flex justify-end">
-                      <div className="w-80 space-y-2">
-                        <div className="flex justify-between">
-                          <span>Material Subtotal:</span>
-                          <span className="font-medium">{currencySymbol} {getSubtotal().toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Total Labor Charges:</span>
-                          <span className="font-medium text-blue-600">{currencySymbol} {getTotalLaborCharges().toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Tax ({newInvoice.taxRate}%):</span>
-                          <span className="font-medium">{currencySymbol} {((getSubtotal() + getTotalLaborCharges()) * newInvoice.taxRate / 100).toFixed(2)}</span>
-                        </div>
-                        {newInvoice.discountAmount > 0 && (
-                          <div className="flex justify-between text-green-600">
-                            <span>Discount:</span>
-                            <span className="font-medium">-{currencySymbol} {newInvoice.discountAmount.toFixed(2)}</span>
-                          </div>
-                        )}
-                        <div className="flex justify-between text-lg font-bold border-t pt-2">
-                          <span>Total:</span>
-                          <span>{currencySymbol} {getTotalAmount().toFixed(2)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Discount */}
-                <div>
-                  <Label htmlFor="discountAmount">Discount Amount ({currencySymbol})</Label>
-                  <Input
-                    id="discountAmount"
-                    type="number"
-                    value={newInvoice.discountAmount}
-                    onChange={(e) => setNewInvoice(prev => ({ ...prev, discountAmount: parseFloat(e.target.value) || 0 }))}
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
-
-                {/* Notes */}
-                <div>
-                  <Label htmlFor="notes">Notes/Terms</Label>
-                  <Textarea
-                    id="notes"
-                    value={newInvoice.notes}
-                    onChange={(e) => setNewInvoice(prev => ({ ...prev, notes: e.target.value }))}
-                    placeholder="Additional notes, payment instructions, or terms..."
-                    rows={3}
-                  />
-                </div>
-
-                <div className="flex justify-end gap-3">
-                  <Button variant="outline" onClick={() => setShowCreateInvoice(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleCreateInvoice}>
-                    Create Invoice
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <CreateInvoiceDialog
+            showCreateInvoice={showCreateInvoice}
+            setShowCreateInvoice={setShowCreateInvoice}
+            newInvoice={newInvoice}
+            setNewInvoice={setNewInvoice}
+            clients={clients}
+            templates={templates}
+            handleCreateInvoice={handleCreateInvoice}
+            addInvoiceItem={addInvoiceItem}
+            removeInvoiceItem={removeInvoiceItem}
+            updateInvoiceItem={updateInvoiceItem}
+            getSubtotal={getSubtotal}
+            getSectionSubtotal={getSectionSubtotal}
+            getSectionLaborCharge={getSectionLaborCharge}
+            getTotalLaborCharges={getTotalLaborCharges}
+            getTotalAmount={getTotalAmount}
+            currencySymbol={currencySymbol}
+          />
         </div>
 
-        {/* Filters */}
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Search invoices by client, project, or invoice number..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-full md:w-48">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="paid">Paid</SelectItem>
-                  <SelectItem value="overdue">Overdue</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
+        <InvoiceFilters
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          filterStatus={filterStatus}
+          setFilterStatus={setFilterStatus}
+        />
 
-        {/* Invoices List */}
-        <div className="grid gap-6">
-          {filteredInvoices.map((invoice) => (
-            <Card key={invoice.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-semibold">{invoice.invoice_number}</h3>
-                      <Badge variant={getStatusColor(invoice.status)}>
-                        {invoice.status}
-                      </Badge>
-                      {invoice.template_type && (
-                        <Badge variant="outline">{invoice.template_type}</Badge>
-                      )}
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-gray-600">
-                      <div>
-                        <span className="font-medium">Client:</span> {invoice.clients?.company_name || invoice.clients?.full_name}
-                      </div>
-                      <div>
-                        <span className="font-medium">Amount:</span> {currencySymbol} {parseFloat(invoice.total_amount.toString()).toLocaleString()}
-                      </div>
-                      <div>
-                        <span className="font-medium">Due:</span> {invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : 'Not set'}
-                      </div>
-                      <div>
-                        <span className="font-medium">Created:</span> {new Date(invoice.created_at).toLocaleDateString()}
-                      </div>
-                    </div>
-                    
-                    {invoice.notes && (
-                      <p className="text-gray-600 mt-2">{invoice.notes}</p>
-                    )}
-                  </div>
-                  
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleViewInvoice(invoice.id)}
-                    >
-                      <Eye className="w-4 h-4 mr-2" />
-                      View
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <Download className="w-4 h-4 mr-2" />
-                      Download
-                    </Button>
-                    {invoice.status !== "paid" && (
-                      <Button size="sm">
-                        <Send className="w-4 h-4 mr-2" />
-                        Send
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <InvoiceList
+          invoices={filteredInvoices}
+          currencySymbol={currencySymbol}
+          handleViewInvoice={handleViewInvoice}
+          getStatusColor={getStatusColor}
+        />
 
-        {filteredInvoices.length === 0 && !loading && (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No invoices found</h3>
-              <p className="text-gray-600">
-                {searchTerm || filterStatus !== "all" 
-                  ? "Try adjusting your search or filter criteria"
-                  : "No invoices have been created yet"
-                }
-              </p>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Invoice Viewer */}
         <InvoiceViewer
           invoiceId={selectedInvoiceId || ''}
           open={showInvoiceViewer}

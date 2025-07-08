@@ -53,9 +53,15 @@ const SubmitTestimonial = () => {
         .insert({
           client_name: data.clientName,
           client_role: data.clientRole,
+          client_email: data.email,
+          client_phone: data.phone,
+          project_type: data.projectType,
           content: data.content,
           rating: data.rating,
-          is_approved: false, // Requires admin approval
+          project_details: data.projectDetails,
+          location: data.location,
+          would_recommend: data.wouldRecommend,
+          is_approved: false,
           is_featured: false
         });
 
@@ -102,7 +108,7 @@ const SubmitTestimonial = () => {
 
   const projectTypes = [
     "Residential Construction",
-    "Commercial Building",
+    "Commercial Building", 
     "Infrastructure Development",
     "Renovation & Remodeling",
     "Engineering Consultation",
@@ -368,7 +374,7 @@ const SubmitTestimonial = () => {
                       <Button type="submit" disabled={isSubmitting} className="w-full" size="lg">
                         {isSubmitting ? (
                           <>
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-fully animate-spin mr-2" />
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
                             Submitting Testimonial...
                           </>
                         ) : (

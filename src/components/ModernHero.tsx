@@ -9,13 +9,15 @@ interface ModernHeroProps {
   ctaText?: string;
   ctaLink?: string;
   backgroundImage?: string;
+  showTestimonialButton?: boolean;
 }
 
 const ModernHero = ({ 
   title = "Building Tomorrow's Infrastructure",
   subtitle = "From concept to completion, we deliver innovative engineering solutions that shape the future. Trust AKIBEKS for your next construction project.",
   ctaText = "Get Started",
-  ctaLink = "/request-quote"
+  ctaLink = "/request-quote",
+  showTestimonialButton = true
 }: ModernHeroProps) => {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
@@ -63,10 +65,14 @@ const ModernHero = ({
                 </Link>
               </Button>
               
-              <Button variant="outline" size="lg" className="border-2 border-white/20 text-white hover:bg-white/10 px-8 py-4 text-lg font-semibold rounded-xl backdrop-blur-sm">
-                <Play className="w-5 h-5 mr-2" />
-                Watch Demo
-              </Button>
+              {showTestimonialButton && (
+                <Button variant="outline" size="lg" className="border-2 border-white/20 text-white hover:bg-white/10 px-8 py-4 text-lg font-semibold rounded-xl backdrop-blur-sm">
+                  <Link to="/submit-testimonial" className="flex items-center">
+                    <Play className="w-5 h-5 mr-2" />
+                    Share Review
+                  </Link>
+                </Button>
+              )}
             </div>
             
             {/* Stats */}

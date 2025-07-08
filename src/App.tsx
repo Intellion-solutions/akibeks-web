@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Home from './pages/Home';
@@ -16,6 +17,7 @@ import ScrollToTop from './components/ScrollToTop';
 import Solutions from "./pages/Solutions";
 import Industries from "./pages/Industries";
 import AdminLetterheads from "./pages/admin/AdminLetterheads";
+import SubmitTestimonial from "./pages/SubmitTestimonial";
 
 function App() {
   return (
@@ -38,6 +40,7 @@ function App() {
           <Route path="/solutions" element={<Solutions />} />
           <Route path="/industries" element={<Industries />} />
           <Route path="/admin/letterheads" element={<AdminLetterheads />} />
+          <Route path="/submit-testimonial" element={<SubmitTestimonial />} />
         </Routes>
       </div>
     </Router>
