@@ -9,7 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-const ServiceRequestForm = () => {
+interface ServiceRequestFormProps {
+  onSuccess?: () => void;
+}
+
+const ServiceRequestForm = ({ onSuccess }: ServiceRequestFormProps) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -94,6 +98,11 @@ const ServiceRequestForm = () => {
         preferred_start_date: "",
         notes: ""
       });
+
+      // Call onSuccess callback if provided
+      if (onSuccess) {
+        onSuccess();
+      }
 
     } catch (error) {
       console.error('Error submitting service request:', error);
