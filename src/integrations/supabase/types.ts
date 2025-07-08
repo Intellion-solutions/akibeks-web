@@ -226,7 +226,11 @@ export type Database = {
           description: string
           id: string
           invoice_id: string | null
+          labor_charge: number | null
+          labor_percentage: number | null
+          material_cost: number | null
           quantity: number
+          section: string | null
           total_price: number
           unit_price: number
         }
@@ -235,7 +239,11 @@ export type Database = {
           description: string
           id?: string
           invoice_id?: string | null
+          labor_charge?: number | null
+          labor_percentage?: number | null
+          material_cost?: number | null
           quantity: number
+          section?: string | null
           total_price: number
           unit_price: number
         }
@@ -244,7 +252,11 @@ export type Database = {
           description?: string
           id?: string
           invoice_id?: string | null
+          labor_charge?: number | null
+          labor_percentage?: number | null
+          material_cost?: number | null
           quantity?: number
+          section?: string | null
           total_price?: number
           unit_price?: number
         }
@@ -258,46 +270,100 @@ export type Database = {
           },
         ]
       }
+      invoice_templates: {
+        Row: {
+          color_scheme: Json | null
+          created_at: string
+          id: string
+          is_default: boolean | null
+          layout_config: Json | null
+          letterhead_config: Json | null
+          template_name: string
+          template_type: string
+          updated_at: string
+        }
+        Insert: {
+          color_scheme?: Json | null
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          layout_config?: Json | null
+          letterhead_config?: Json | null
+          template_name: string
+          template_type?: string
+          updated_at?: string
+        }
+        Update: {
+          color_scheme?: Json | null
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          layout_config?: Json | null
+          letterhead_config?: Json | null
+          template_name?: string
+          template_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       invoices: {
         Row: {
           client_id: string | null
           created_at: string | null
+          discount_amount: number | null
           due_date: string | null
           id: string
           invoice_number: string
+          letterhead_enabled: boolean | null
           notes: string | null
           paid_amount: number | null
           payment_terms: string | null
           project_id: string | null
           status: Database["public"]["Enums"]["invoice_status"] | null
+          subtotal: number | null
+          tax_amount: number | null
+          tax_rate: number | null
+          template_type: string | null
           total_amount: number
           updated_at: string | null
         }
         Insert: {
           client_id?: string | null
           created_at?: string | null
+          discount_amount?: number | null
           due_date?: string | null
           id?: string
           invoice_number: string
+          letterhead_enabled?: boolean | null
           notes?: string | null
           paid_amount?: number | null
           payment_terms?: string | null
           project_id?: string | null
           status?: Database["public"]["Enums"]["invoice_status"] | null
+          subtotal?: number | null
+          tax_amount?: number | null
+          tax_rate?: number | null
+          template_type?: string | null
           total_amount: number
           updated_at?: string | null
         }
         Update: {
           client_id?: string | null
           created_at?: string | null
+          discount_amount?: number | null
           due_date?: string | null
           id?: string
           invoice_number?: string
+          letterhead_enabled?: boolean | null
           notes?: string | null
           paid_amount?: number | null
           payment_terms?: string | null
           project_id?: string | null
           status?: Database["public"]["Enums"]["invoice_status"] | null
+          subtotal?: number | null
+          tax_amount?: number | null
+          tax_rate?: number | null
+          template_type?: string | null
           total_amount?: number
           updated_at?: string | null
         }

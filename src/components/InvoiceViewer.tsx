@@ -48,7 +48,7 @@ const InvoiceViewer: React.FC<InvoiceViewerProps> = ({ invoiceId, open, onOpenCh
 
       if (invoiceError) throw invoiceError;
 
-      // Fetch invoice items
+      // Fetch invoice items with enhanced fields
       const { data: items, error: itemsError } = await supabase
         .from('invoice_items')
         .select('*')
@@ -72,16 +72,21 @@ const InvoiceViewer: React.FC<InvoiceViewerProps> = ({ invoiceId, open, onOpenCh
           description: item.description,
           quantity: parseFloat(item.quantity.toString()),
           unit_price: parseFloat(item.unit_price.toString()),
+          material_cost: parseFloat(item.material_cost?.toString() || '0'),
+          labor_percentage: parseFloat(item.labor_percentage?.toString() || '36.5'),
+          labor_charge: parseFloat(item.labor_charge?.toString() || '0'),
           total_price: parseFloat(item.total_price.toString()),
-          section: 'General' // Default section since it doesn't exist in the database yet
+          section: item.section || 'General'
         })) || [],
-        subtotal: parseFloat(invoice.total_amount.toString()) || 0,
-        tax_rate: 16, // Kenya VAT rate
-        tax_amount: parseFloat(invoice.total_amount.toString()) * 0.16 / 1.16 || 0,
-        discount_amount: 0,
+        subtotal: parseFloat(invoice.subtotal?.toString() || invoice.total_amount.toString()) || 0,
+        tax_rate: parseFloat(invoice.tax_rate?.toString() || '16'),
+        tax_amount: parseFloat(invoice.tax_amount?.toString() || '0'),
+        discount_amount: parseFloat(invoice.discount_amount?.toString() || '0'),
         total_amount: parseFloat(invoice.total_amount.toString()) || 0,
         notes: invoice.notes,
-        payment_terms: invoice.payment_terms
+        payment_terms: invoice.payment_terms,
+        template_type: invoice.template_type || 'standard',
+        letterhead_enabled: invoice.letterhead_enabled !== false
       };
 
       setInvoiceData(transformedInvoice);
@@ -138,7 +143,6 @@ const InvoiceViewer: React.FC<InvoiceViewerProps> = ({ invoiceId, open, onOpenCh
   };
 
   const handleDownload = () => {
-    // In a real implementation, you'd generate a PDF here
     toast({
       title: "Download Started",
       description: "Invoice PDF download will begin shortly",
@@ -171,7 +175,7 @@ const InvoiceViewer: React.FC<InvoiceViewerProps> = ({ invoiceId, open, onOpenCh
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-2">
               <Eye className="w-5 h-5" />
-              Invoice Preview
+              Professional Invoice Preview
             </DialogTitle>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={handlePrint}>

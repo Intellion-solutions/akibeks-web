@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, FileText, DollarSign, Calendar, Download, Send, Eye } from "lucide-react";
+import { Plus, Search, FileText, DollarSign, Calendar, Download, Send, Eye, Palette } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/contexts/AdminContext";
 import AdminLogin from "@/components/AdminLogin";
@@ -27,6 +27,8 @@ interface Invoice {
   created_at: string;
   notes?: string;
   payment_terms?: string;
+  template_type?: string;
+  letterhead_enabled?: boolean;
   clients?: {
     full_name: string;
     company_name?: string;
@@ -43,6 +45,14 @@ interface Client {
   phone: string;
 }
 
+interface InvoiceTemplate {
+  id: string;
+  template_name: string;
+  template_type: string;
+  is_default: boolean;
+  color_scheme: any;
+}
+
 const AdminInvoices = () => {
   const { toast } = useToast();
   const { isAuthenticated, companySettings } = useAdmin();
@@ -51,6 +61,7 @@ const AdminInvoices = () => {
   const [showCreateInvoice, setShowCreateInvoice] = useState(false);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+  const [templates, setTemplates] = useState<InvoiceTemplate[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [showInvoiceViewer, setShowInvoiceViewer] = useState(false);
@@ -60,7 +71,20 @@ const AdminInvoices = () => {
     dueDate: "",
     paymentTerms: "Net 30",
     notes: "",
-    items: [{ description: "", quantity: 1, unit_price: 0, total_price: 0 }]
+    templateType: "standard",
+    letterheadEnabled: true,
+    taxRate: 16,
+    discountAmount: 0,
+    items: [{ 
+      description: "", 
+      quantity: 1, 
+      unit_price: 0, 
+      material_cost: 0,
+      labor_percentage: 36.5,
+      labor_charge: 0,
+      total_price: 0,
+      section: "General"
+    }]
   });
 
   if (!isAuthenticated) {
@@ -70,6 +94,7 @@ const AdminInvoices = () => {
   useEffect(() => {
     fetchInvoices();
     fetchClients();
+    fetchTemplates();
   }, []);
 
   const fetchInvoices = async () => {
@@ -116,6 +141,20 @@ const AdminInvoices = () => {
     }
   };
 
+  const fetchTemplates = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('invoice_templates')
+        .select('*')
+        .order('template_name');
+
+      if (error) throw error;
+      setTemplates(data || []);
+    } catch (error) {
+      console.error('Error fetching templates:', error);
+    }
+  };
+
   const filteredInvoices = invoices.filter(invoice => {
     const clientName = invoice.clients?.company_name || invoice.clients?.full_name || '';
     const matchesSearch = clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -139,6 +178,14 @@ const AdminInvoices = () => {
     setShowInvoiceViewer(true);
   };
 
+  const calculateLaborCharge = (materialCost: number, laborPercentage: number) => {
+    return materialCost * (laborPercentage / 100);
+  };
+
+  const calculateItemTotal = (materialCost: number, laborCharge: number, quantity: number) => {
+    return (materialCost + laborCharge) * quantity;
+  };
+
   const handleCreateInvoice = async () => {
     try {
       if (!newInvoice.clientId || newInvoice.items.length === 0) {
@@ -150,19 +197,27 @@ const AdminInvoices = () => {
         return;
       }
 
-      const totalAmount = getTotalAmount();
+      const subtotal = newInvoice.items.reduce((sum, item) => sum + item.total_price, 0);
+      const taxAmount = subtotal * (newInvoice.taxRate / 100);
+      const totalAmount = subtotal + taxAmount - newInvoice.discountAmount;
       
-      // Create invoice with invoice_number as empty string to trigger auto-generation
+      // Create invoice
       const { data: invoice, error: invoiceError } = await supabase
         .from('invoices')
         .insert({
-          invoice_number: '', // This will trigger the auto-generation function
+          invoice_number: '', // Auto-generated
           client_id: newInvoice.clientId,
+          subtotal: subtotal,
+          tax_rate: newInvoice.taxRate,
+          tax_amount: taxAmount,
+          discount_amount: newInvoice.discountAmount,
           total_amount: totalAmount,
           due_date: newInvoice.dueDate || null,
           payment_terms: newInvoice.paymentTerms,
           notes: newInvoice.notes,
-          status: 'draft' as const
+          template_type: newInvoice.templateType,
+          letterhead_enabled: newInvoice.letterheadEnabled,
+          status: 'draft'
         })
         .select()
         .single();
@@ -175,7 +230,11 @@ const AdminInvoices = () => {
         description: item.description,
         quantity: item.quantity,
         unit_price: item.unit_price,
-        total_price: item.total_price
+        material_cost: item.material_cost,
+        labor_percentage: item.labor_percentage,
+        labor_charge: item.labor_charge,
+        total_price: item.total_price,
+        section: item.section
       }));
 
       const { error: itemsError } = await supabase
@@ -195,7 +254,20 @@ const AdminInvoices = () => {
         dueDate: "",
         paymentTerms: "Net 30",
         notes: "",
-        items: [{ description: "", quantity: 1, unit_price: 0, total_price: 0 }]
+        templateType: "standard",
+        letterheadEnabled: true,
+        taxRate: 16,
+        discountAmount: 0,
+        items: [{ 
+          description: "", 
+          quantity: 1, 
+          unit_price: 0, 
+          material_cost: 0,
+          labor_percentage: 36.5,
+          labor_charge: 0,
+          total_price: 0,
+          section: "General"
+        }]
       });
       
       await fetchInvoices();
@@ -212,7 +284,16 @@ const AdminInvoices = () => {
   const addInvoiceItem = () => {
     setNewInvoice(prev => ({
       ...prev,
-      items: [...prev.items, { description: "", quantity: 1, unit_price: 0, total_price: 0 }]
+      items: [...prev.items, { 
+        description: "", 
+        quantity: 1, 
+        unit_price: 0, 
+        material_cost: 0,
+        labor_percentage: 36.5,
+        labor_charge: 0,
+        total_price: 0,
+        section: "General"
+      }]
     }));
   };
 
@@ -231,9 +312,24 @@ const AdminInvoices = () => {
       items: prev.items.map((item, i) => {
         if (i === index) {
           const updatedItem = { ...item, [field]: value };
-          if (field === "quantity" || field === "unit_price") {
-            updatedItem.total_price = updatedItem.quantity * updatedItem.unit_price;
+          
+          // Recalculate labor charge and total when material cost or labor percentage changes
+          if (field === "material_cost" || field === "labor_percentage") {
+            updatedItem.labor_charge = calculateLaborCharge(
+              field === "material_cost" ? value : item.material_cost,
+              field === "labor_percentage" ? value : item.labor_percentage
+            );
           }
+          
+          // Recalculate total price
+          if (field === "material_cost" || field === "labor_percentage" || field === "labor_charge" || field === "quantity") {
+            updatedItem.total_price = calculateItemTotal(
+              updatedItem.material_cost,
+              updatedItem.labor_charge,
+              updatedItem.quantity
+            );
+          }
+          
           return updatedItem;
         }
         return item;
@@ -242,6 +338,12 @@ const AdminInvoices = () => {
   };
 
   const getTotalAmount = () => {
+    const subtotal = newInvoice.items.reduce((total, item) => total + item.total_price, 0);
+    const taxAmount = subtotal * (newInvoice.taxRate / 100);
+    return subtotal + taxAmount - newInvoice.discountAmount;
+  };
+
+  const getSubtotal = () => {
     return newInvoice.items.reduce((total, item) => total + item.total_price, 0);
   };
 
@@ -257,7 +359,7 @@ const AdminInvoices = () => {
             <FileText className="w-8 h-8 mr-3" />
             Invoice Management
           </h1>
-          <p className="text-gray-600 mt-2">Create and manage project invoices</p>
+          <p className="text-gray-600 mt-2">Create and manage professional invoices with templates</p>
         </div>
 
         {/* Stats Cards */}
@@ -326,14 +428,18 @@ const AdminInvoices = () => {
                 New Invoice
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Create New Invoice</DialogTitle>
+                <DialogTitle className="flex items-center gap-2">
+                  <Palette className="w-5 h-5" />
+                  Create Professional Invoice
+                </DialogTitle>
                 <DialogDescription>
-                  Generate a new invoice for your client
+                  Generate a beautifully designed invoice with material costs and labor charges
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-6">
+                {/* Basic Info */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="clientId">Client *</Label>
@@ -361,22 +467,52 @@ const AdminInvoices = () => {
                   </div>
                 </div>
 
-                <div>
-                  <Label htmlFor="paymentTerms">Payment Terms</Label>
-                  <Select value={newInvoice.paymentTerms} onValueChange={(value) => setNewInvoice(prev => ({ ...prev, paymentTerms: value }))}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Net 15">Net 15</SelectItem>
-                      <SelectItem value="Net 30">Net 30</SelectItem>
-                      <SelectItem value="Net 45">Net 45</SelectItem>
-                      <SelectItem value="Net 60">Net 60</SelectItem>
-                      <SelectItem value="Due on Receipt">Due on Receipt</SelectItem>
-                    </SelectContent>
-                  </Select>
+                {/* Template and Design */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="templateType">Template Design</Label>
+                    <Select value={newInvoice.templateType} onValueChange={(value) => setNewInvoice(prev => ({ ...prev, templateType: value }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {templates.map(template => (
+                          <SelectItem key={template.id} value={template.template_type}>
+                            {template.template_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="paymentTerms">Payment Terms</Label>
+                    <Select value={newInvoice.paymentTerms} onValueChange={(value) => setNewInvoice(prev => ({ ...prev, paymentTerms: value }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Net 15">Net 15</SelectItem>
+                        <SelectItem value="Net 30">Net 30</SelectItem>
+                        <SelectItem value="Net 45">Net 45</SelectItem>
+                        <SelectItem value="Net 60">Net 60</SelectItem>
+                        <SelectItem value="Due on Receipt">Due on Receipt</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="taxRate">Tax Rate (%)</Label>
+                    <Input
+                      id="taxRate"
+                      type="number"
+                      value={newInvoice.taxRate}
+                      onChange={(e) => setNewInvoice(prev => ({ ...prev, taxRate: parseFloat(e.target.value) || 0 }))}
+                      step="0.1"
+                      min="0"
+                    />
+                  </div>
                 </div>
 
+                {/* Invoice Items */}
                 <div>
                   <div className="flex justify-between items-center mb-4">
                     <Label className="text-base font-medium">Invoice Items *</Label>
@@ -386,68 +522,131 @@ const AdminInvoices = () => {
                     </Button>
                   </div>
                   
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {newInvoice.items.map((item, index) => (
-                      <div key={index} className="grid grid-cols-12 gap-3 items-end">
-                        <div className="col-span-5">
-                          <Label htmlFor={`item-desc-${index}`}>Description</Label>
+                      <Card key={index} className="p-4">
+                        <div className="grid grid-cols-12 gap-3 items-end">
+                          <div className="col-span-3">
+                            <Label htmlFor={`item-desc-${index}`}>Description</Label>
+                            <Input
+                              id={`item-desc-${index}`}
+                              value={item.description}
+                              onChange={(e) => updateInvoiceItem(index, "description", e.target.value)}
+                              placeholder="Item description"
+                            />
+                          </div>
+                          <div className="col-span-1">
+                            <Label htmlFor={`item-qty-${index}`}>Qty</Label>
+                            <Input
+                              id={`item-qty-${index}`}
+                              type="number"
+                              value={item.quantity}
+                              onChange={(e) => updateInvoiceItem(index, "quantity", parseFloat(e.target.value) || 0)}
+                              min="0"
+                              step="0.01"
+                            />
+                          </div>
+                          <div className="col-span-2">
+                            <Label htmlFor={`item-material-${index}`}>Material Cost ({currencySymbol})</Label>
+                            <Input
+                              id={`item-material-${index}`}
+                              type="number"
+                              value={item.material_cost}
+                              onChange={(e) => updateInvoiceItem(index, "material_cost", parseFloat(e.target.value) || 0)}
+                              min="0"
+                              step="0.01"
+                            />
+                          </div>
+                          <div className="col-span-1">
+                            <Label htmlFor={`item-labor-pct-${index}`}>Labor %</Label>
+                            <Input
+                              id={`item-labor-pct-${index}`}
+                              type="number"
+                              value={item.labor_percentage}
+                              onChange={(e) => updateInvoiceItem(index, "labor_percentage", parseFloat(e.target.value) || 0)}
+                              min="0"
+                              step="0.1"
+                            />
+                          </div>
+                          <div className="col-span-2">
+                            <Label>Labor Charge ({currencySymbol})</Label>
+                            <Input 
+                              value={item.labor_charge.toFixed(2)} 
+                              readOnly 
+                              className="bg-gray-50"
+                              title={`${item.labor_percentage}% of ${currencySymbol}${item.material_cost}`}
+                            />
+                          </div>
+                          <div className="col-span-2">
+                            <Label>Total ({currencySymbol})</Label>
+                            <Input value={item.total_price.toFixed(2)} readOnly className="bg-gray-50 font-medium" />
+                          </div>
+                          <div className="col-span-1">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => removeInvoiceItem(index)}
+                              disabled={newInvoice.items.length === 1}
+                            >
+                              ×
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="mt-3">
+                          <Label htmlFor={`item-section-${index}`}>Section</Label>
                           <Input
-                            id={`item-desc-${index}`}
-                            value={item.description}
-                            onChange={(e) => updateInvoiceItem(index, "description", e.target.value)}
-                            placeholder="Item description"
+                            id={`item-section-${index}`}
+                            value={item.section}
+                            onChange={(e) => updateInvoiceItem(index, "section", e.target.value)}
+                            placeholder="e.g., Foundation, Roofing, Electrical"
                           />
                         </div>
-                        <div className="col-span-2">
-                          <Label htmlFor={`item-qty-${index}`}>Quantity</Label>
-                          <Input
-                            id={`item-qty-${index}`}
-                            type="number"
-                            value={item.quantity}
-                            onChange={(e) => updateInvoiceItem(index, "quantity", parseFloat(e.target.value) || 0)}
-                            min="0"
-                            step="0.01"
-                          />
-                        </div>
-                        <div className="col-span-2">
-                          <Label htmlFor={`item-rate-${index}`}>Rate ({currencySymbol})</Label>
-                          <Input
-                            id={`item-rate-${index}`}
-                            type="number"
-                            value={item.unit_price}
-                            onChange={(e) => updateInvoiceItem(index, "unit_price", parseFloat(e.target.value) || 0)}
-                            min="0"
-                            step="0.01"
-                          />
-                        </div>
-                        <div className="col-span-2">
-                          <Label>Amount ({currencySymbol})</Label>
-                          <Input value={item.total_price.toLocaleString()} readOnly className="bg-gray-50" />
-                        </div>
-                        <div className="col-span-1">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => removeInvoiceItem(index)}
-                            disabled={newInvoice.items.length === 1}
-                          >
-                            ×
-                          </Button>
-                        </div>
-                      </div>
+                      </Card>
                     ))}
                   </div>
                   
-                  <div className="mt-4 pt-4 border-t">
+                  {/* Invoice Totals */}
+                  <div className="mt-6 pt-4 border-t">
                     <div className="flex justify-end">
-                      <div className="text-lg font-semibold">
-                        Total: {currencySymbol} {getTotalAmount().toLocaleString()}
+                      <div className="w-80 space-y-2">
+                        <div className="flex justify-between">
+                          <span>Subtotal:</span>
+                          <span className="font-medium">{currencySymbol} {getSubtotal().toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Tax ({newInvoice.taxRate}%):</span>
+                          <span className="font-medium">{currencySymbol} {(getSubtotal() * newInvoice.taxRate / 100).toFixed(2)}</span>
+                        </div>
+                        {newInvoice.discountAmount > 0 && (
+                          <div className="flex justify-between text-green-600">
+                            <span>Discount:</span>
+                            <span className="font-medium">-{currencySymbol} {newInvoice.discountAmount.toFixed(2)}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-lg font-bold border-t pt-2">
+                          <span>Total:</span>
+                          <span>{currencySymbol} {getTotalAmount().toFixed(2)}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
 
+                {/* Discount */}
+                <div>
+                  <Label htmlFor="discountAmount">Discount Amount ({currencySymbol})</Label>
+                  <Input
+                    id="discountAmount"
+                    type="number"
+                    value={newInvoice.discountAmount}
+                    onChange={(e) => setNewInvoice(prev => ({ ...prev, discountAmount: parseFloat(e.target.value) || 0 }))}
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+
+                {/* Notes */}
                 <div>
                   <Label htmlFor="notes">Notes/Terms</Label>
                   <Textarea
@@ -506,7 +705,7 @@ const AdminInvoices = () => {
         {/* Invoices List */}
         <div className="grid gap-6">
           {filteredInvoices.map((invoice) => (
-            <Card key={invoice.id}>
+            <Card key={invoice.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-6">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                   <div className="flex-1">
@@ -515,6 +714,9 @@ const AdminInvoices = () => {
                       <Badge variant={getStatusColor(invoice.status)}>
                         {invoice.status}
                       </Badge>
+                      {invoice.template_type && (
+                        <Badge variant="outline">{invoice.template_type}</Badge>
+                      )}
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-gray-600">
