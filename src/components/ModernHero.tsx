@@ -3,7 +3,20 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Play, Award, Users, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 
-const ModernHero = () => {
+interface ModernHeroProps {
+  title?: string;
+  subtitle?: string;
+  ctaText?: string;
+  ctaLink?: string;
+  backgroundImage?: string;
+}
+
+const ModernHero = ({ 
+  title = "Building Tomorrow's Infrastructure",
+  subtitle = "From concept to completion, we deliver innovative engineering solutions that shape the future. Trust AKIBEKS for your next construction project.",
+  ctaText = "Get Started",
+  ctaLink = "/request-quote"
+}: ModernHeroProps) => {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       {/* Animated Background */}
@@ -24,21 +37,28 @@ const ModernHero = () => {
             </div>
             
             <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight animate-fade-in">
-              Building Tomorrow's
-              <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent block">
-                Infrastructure
-              </span>
+              {title.includes('Infrastructure') ? (
+                <>
+                  Building Tomorrow's
+                  <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent block">
+                    Infrastructure
+                  </span>
+                </>
+              ) : (
+                <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                  {title}
+                </span>
+              )}
             </h1>
             
             <p className="text-xl text-gray-300 mb-8 max-w-2xl animate-fade-in">
-              From concept to completion, we deliver innovative engineering solutions that shape the future. 
-              Trust AKIBEKS for your next construction project.
+              {subtitle}
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12 animate-fade-in">
               <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-2xl transform hover:scale-105 transition-all duration-300">
-                <Link to="/request-quote" className="flex items-center">
-                  Get Started
+                <Link to={ctaLink} className="flex items-center">
+                  {ctaText}
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Link>
               </Button>
