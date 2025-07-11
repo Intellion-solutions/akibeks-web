@@ -42,7 +42,7 @@ const SEOHead = ({
       <meta name="googlebot" content="index, follow" />
       <link rel="canonical" href={canonicalUrl} />
 
-      {/* Enhanced Meta Tags */}
+      {/* Enhanced Meta Tags for Better Ranking */}
       <meta name="language" content="en" />
       <meta name="distribution" content="global" />
       <meta name="rating" content="general" />
@@ -100,7 +100,7 @@ const SEOHead = ({
       <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       <meta name="apple-mobile-web-app-title" content="AKIBEKS" />
 
-      {/* Enhanced Schema.org structured data */}
+      {/* Enhanced Schema.org structured data for better Google ranking */}
       <script type="application/ld+json">
         {JSON.stringify({
           "@context": "https://schema.org",

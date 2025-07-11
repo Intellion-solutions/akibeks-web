@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Home from './pages/Home';
 import About from './pages/About';
 import Services from './pages/Services';
+import ServiceDetail from './pages/ServiceDetail';
 import Portfolio from './pages/Portfolio';
 import Contact from './pages/Contact';
 import RequestQuote from './pages/RequestQuote';
@@ -20,6 +21,7 @@ import Solutions from "./pages/Solutions";
 import Industries from "./pages/Industries";
 import AdminLetterheads from "./pages/admin/AdminLetterheads";
 import SubmitTestimonial from "./pages/SubmitTestimonial";
+import Consulting from "./pages/Services/Consulting";
 
 function App() {
   return (
@@ -31,6 +33,8 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="/services" element={<Services />} />
+          <Route path="/services/:id" element={<ServiceDetail />} />
+          <Route path="/services/consulting" element={<Consulting />} />
           <Route path="/portfolio" element={<Portfolio />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/request-quote" element={<RequestQuote />} />

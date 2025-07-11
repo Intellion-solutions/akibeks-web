@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Helmet } from 'react-helmet-async';
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import SEOHead from "@/components/SEOHead";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -152,11 +153,12 @@ const Services = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Helmet>
-        <title>Engineering & Construction Services - AKIBEKS Engineering Solutions</title>
-        <meta name="description" content="Comprehensive engineering and construction services in Kenya. Structural engineering, project management, construction, and consulting services with 15+ years of experience." />
-        <meta name="keywords" content="engineering services Kenya, construction services, structural engineering, project management, building construction" />
-      </Helmet>
+      <SEOHead 
+        title="Engineering & Construction Services - AKIBEKS Engineering Solutions"
+        description="Comprehensive engineering and construction services in Kenya. Structural engineering, project management, construction, and consulting services with 15+ years of experience."
+        keywords="engineering services Kenya, construction services, structural engineering, project management, building construction"
+        url="https://akibeks.co.ke/services"
+      />
       
       <Navbar />
       
@@ -255,9 +257,11 @@ const Services = () => {
                       </div>
                       
                       <div className="flex gap-2 mt-6">
-                        <Button className="flex-1 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
-                          Learn More
-                          <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                        <Button className="flex-1 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300" asChild>
+                          <Link to={`/services/${service.id}`}>
+                            Learn More
+                            <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                          </Link>
                         </Button>
                         <Button variant="outline" onClick={() => setShowRequestForm(true)}>
                           Request Quote

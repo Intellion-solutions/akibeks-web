@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import SEOHead from "@/components/SEOHead";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -144,6 +145,12 @@ const ServiceDetail = () => {
 
   return (
     <div className="min-h-screen bg-white">
+      <SEOHead 
+        title={`${service.name} - Professional ${formatCategoryName(service.category)} Services`}
+        description={`${service.description} Professional ${service.name} services in Kenya with competitive pricing starting from KSh ${service.base_price.toLocaleString()}/${service.unit}.`}
+        keywords={`${service.name}, ${formatCategoryName(service.category)}, construction services Kenya, engineering services, ${service.category} Kenya`}
+        url={`https://akibeks.co.ke/services/${id}`}
+      />
       <Navbar />
       
       <div className="max-w-7xl mx-auto px-4 py-12">
