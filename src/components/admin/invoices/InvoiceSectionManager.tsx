@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import { Plus, Trash2, Edit2, Save, X } from "lucide-react";
 
 interface InvoiceItem {
@@ -11,6 +12,8 @@ interface InvoiceItem {
   quantity: number;
   material_cost: number;
   section: string;
+  labor_charge?: number;
+  labor_percentage?: number;
 }
 
 interface InvoiceSectionManagerProps {
@@ -21,6 +24,8 @@ interface InvoiceSectionManagerProps {
   getSectionSubtotal: (section: string) => number;
   getSectionLaborCharge: (section: string, laborPercentage?: number) => number;
   currencySymbol: string;
+  includeLaborInSubtotal: boolean;
+  setIncludeLaborInSubtotal: (include: boolean) => void;
 }
 
 const InvoiceSectionManager = ({
@@ -30,7 +35,9 @@ const InvoiceSectionManager = ({
   removeInvoiceItem,
   getSectionSubtotal,
   getSectionLaborCharge,
-  currencySymbol
+  currencySymbol,
+  includeLaborInSubtotal,
+  setIncludeLaborInSubtotal
 }: InvoiceSectionManagerProps) => {
   const [editingSectionName, setEditingSectionName] = useState<string | null>(null);
   const [tempSectionName, setTempSectionName] = useState("");
@@ -44,7 +51,6 @@ const InvoiceSectionManager = ({
 
   const handleSaveSectionName = (oldSectionName: string) => {
     if (tempSectionName.trim() && tempSectionName !== oldSectionName) {
-      // Update all items in this section
       items.forEach((item, index) => {
         if (item.section === oldSectionName) {
           updateInvoiceItem(index, "section", tempSectionName.trim());
@@ -61,9 +67,7 @@ const InvoiceSectionManager = ({
   };
 
   const addItemToSection = (sectionName: string) => {
-    // Add new item and then update its section
     addInvoiceItem();
-    // Update the section of the newly added item (last item)
     setTimeout(() => {
       updateInvoiceItem(items.length, "section", sectionName);
     }, 0);
@@ -77,11 +81,30 @@ const InvoiceSectionManager = ({
     }, 0);
   };
 
+  const handleLaborChargeUpdate = (globalIndex: number, newLaborCharge: number) => {
+    const item = items[globalIndex];
+    const materialCost = item.material_cost * item.quantity;
+    const newPercentage = materialCost > 0 ? (newLaborCharge / materialCost) * 100 : 0;
+    
+    updateInvoiceItem(globalIndex, "labor_charge", newLaborCharge);
+    updateInvoiceItem(globalIndex, "labor_percentage", newPercentage);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <Label className="text-base font-medium">Invoice Items by Section</Label>
-        <div className="flex gap-2">
+        <div className="flex gap-4 items-center">
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="include-labor"
+              checked={includeLaborInSubtotal}
+              onCheckedChange={setIncludeLaborInSubtotal}
+            />
+            <Label htmlFor="include-labor" className="text-sm">
+              Include Labor in Subtotal
+            </Label>
+          </div>
           <Button type="button" variant="outline" size="sm" onClick={addNewSection}>
             <Plus className="w-4 h-4 mr-2" />
             Add Section
@@ -141,9 +164,13 @@ const InvoiceSectionManager = ({
             <div className="space-y-4">
               {sectionItems.map((item: InvoiceItem, sectionIndex: number) => {
                 const globalIndex = items.findIndex(i => i === item);
+                const materialCost = item.material_cost * item.quantity;
+                const laborCharge = item.labor_charge || (materialCost * ((item.labor_percentage || 36) / 100));
+                const laborPercentage = materialCost > 0 ? (laborCharge / materialCost) * 100 : 0;
+                
                 return (
-                  <div key={globalIndex} className="grid grid-cols-12 gap-3 items-end bg-gray-50 p-3 rounded">
-                    <div className="col-span-4">
+                  <div key={globalIndex} className="grid grid-cols-14 gap-3 items-end bg-gray-50 p-3 rounded">
+                    <div className="col-span-3">
                       <Label htmlFor={`item-desc-${globalIndex}`}>Description</Label>
                       <Input
                         id={`item-desc-${globalIndex}`}
@@ -175,14 +202,34 @@ const InvoiceSectionManager = ({
                       />
                     </div>
                     <div className="col-span-2">
-                      <Label>Amount ({currencySymbol})</Label>
+                      <Label>Material Amount ({currencySymbol})</Label>
                       <Input 
-                        value={(item.material_cost * item.quantity).toFixed(2)} 
+                        value={materialCost.toFixed(2)} 
                         readOnly 
                         className="bg-gray-100 font-medium"
                       />
                     </div>
-                    <div className="col-span-2 flex gap-1">
+                    <div className="col-span-2">
+                      <Label htmlFor={`labor-charge-${globalIndex}`}>Labor Charge ({currencySymbol})</Label>
+                      <Input
+                        id={`labor-charge-${globalIndex}`}
+                        type="number"
+                        value={laborCharge.toFixed(2)}
+                        onChange={(e) => handleLaborChargeUpdate(globalIndex, parseFloat(e.target.value) || 0)}
+                        min="0"
+                        step="0.01"
+                        className="bg-white"
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <Label>Labor % ({laborPercentage.toFixed(1)}%)</Label>
+                      <Input 
+                        value={`${laborPercentage.toFixed(1)}%`}
+                        readOnly 
+                        className="bg-gray-100 font-medium text-center"
+                      />
+                    </div>
+                    <div className="col-span-1 flex gap-1">
                       <Button
                         type="button"
                         variant="outline"
@@ -202,16 +249,18 @@ const InvoiceSectionManager = ({
             <div className="mt-4 pt-4 border-t bg-blue-50 p-3 rounded">
               <div className="grid grid-cols-3 gap-4 text-sm">
                 <div>
-                  <span className="font-medium">Section Subtotal:</span>
+                  <span className="font-medium">Material Subtotal:</span>
                   <p className="font-bold text-lg">{currencySymbol} {sectionSubtotal.toFixed(2)}</p>
                 </div>
                 <div>
-                  <span className="font-medium">Labor Charge (36%):</span>
+                  <span className="font-medium">Labor Charge:</span>
                   <p className="font-bold text-lg text-blue-600">{currencySymbol} {sectionLaborCharge.toFixed(2)}</p>
                 </div>
                 <div>
                   <span className="font-medium">Section Total:</span>
-                  <p className="font-bold text-xl text-blue-800">{currencySymbol} {(sectionSubtotal + sectionLaborCharge).toFixed(2)}</p>
+                  <p className="font-bold text-xl text-blue-800">
+                    {currencySymbol} {(includeLaborInSubtotal ? sectionSubtotal + sectionLaborCharge : sectionSubtotal).toFixed(2)}
+                  </p>
                 </div>
               </div>
             </div>

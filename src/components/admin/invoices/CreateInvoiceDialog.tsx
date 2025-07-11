@@ -39,6 +39,8 @@ interface CreateInvoiceDialogProps {
   getTotalLaborCharges: () => number;
   getTotalAmount: () => number;
   currencySymbol: string;
+  includeLaborInSubtotal: boolean;
+  setIncludeLaborInSubtotal: (include: boolean) => void;
 }
 
 const CreateInvoiceDialog = ({
@@ -57,7 +59,9 @@ const CreateInvoiceDialog = ({
   getSectionLaborCharge,
   getTotalLaborCharges,
   getTotalAmount,
-  currencySymbol
+  currencySymbol,
+  includeLaborInSubtotal,
+  setIncludeLaborInSubtotal
 }: CreateInvoiceDialogProps) => {
   const [currentTab, setCurrentTab] = useState<'basic' | 'items' | 'letterhead'>('basic');
 
@@ -225,7 +229,6 @@ const CreateInvoiceDialog = ({
 
           {currentTab === 'items' && (
             <>
-              {/* Enhanced Invoice Items with Section Grouping */}
               <InvoiceSectionManager
                 items={newInvoice.items}
                 updateInvoiceItem={updateInvoiceItem}
@@ -234,14 +237,16 @@ const CreateInvoiceDialog = ({
                 getSectionSubtotal={getSectionSubtotal}
                 getSectionLaborCharge={getSectionLaborCharge}
                 currencySymbol={currencySymbol}
+                includeLaborInSubtotal={includeLaborInSubtotal}
+                setIncludeLaborInSubtotal={setIncludeLaborInSubtotal}
               />
               
-              {/* Invoice Totals */}
+              {/* Updated Invoice Totals */}
               <div className="mt-6 pt-4 border-t">
                 <div className="flex justify-end">
                   <div className="w-80 space-y-2">
                     <div className="flex justify-between">
-                      <span>Material Subtotal:</span>
+                      <span>Total Material Cost:</span>
                       <span className="font-medium">{currencySymbol} {getSubtotal().toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
@@ -249,8 +254,12 @@ const CreateInvoiceDialog = ({
                       <span className="font-medium text-blue-600">{currencySymbol} {getTotalLaborCharges().toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
+                      <span>Subtotal {includeLaborInSubtotal ? '(incl. Labor)' : '(Material only)'}:</span>
+                      <span className="font-medium">{currencySymbol} {(includeLaborInSubtotal ? getSubtotal() + getTotalLaborCharges() : getSubtotal()).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
                       <span>Tax ({newInvoice.taxRate}%):</span>
-                      <span className="font-medium">{currencySymbol} {((getSubtotal() + getTotalLaborCharges()) * newInvoice.taxRate / 100).toFixed(2)}</span>
+                      <span className="font-medium">{currencySymbol} {((includeLaborInSubtotal ? getSubtotal() + getTotalLaborCharges() : getSubtotal()) * newInvoice.taxRate / 100).toFixed(2)}</span>
                     </div>
                     {newInvoice.discountAmount > 0 && (
                       <div className="flex justify-between text-green-600">
@@ -259,7 +268,7 @@ const CreateInvoiceDialog = ({
                       </div>
                     )}
                     <div className="flex justify-between text-lg font-bold border-t pt-2">
-                      <span>Total:</span>
+                      <span>Grand Total:</span>
                       <span>{currencySymbol} {getTotalAmount().toFixed(2)}</span>
                     </div>
                   </div>

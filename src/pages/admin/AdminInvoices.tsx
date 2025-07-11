@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { FileText } from "lucide-react";
+import { FileText, ArrowLeft, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/contexts/AdminContext";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import AdminLogin from "@/components/AdminLogin";
 import AdminHeader from "@/components/AdminHeader";
 import InvoiceViewer from "@/components/InvoiceViewer";
@@ -29,6 +31,7 @@ interface Invoice {
     company_name?: string;
     phone: string;
     email?: string;
+    address: string;
   };
 }
 
@@ -50,13 +53,12 @@ interface InvoiceTemplate {
 
 const AdminInvoices = () => {
   const { isAuthenticated, companySettings } = useAdmin();
+  const navigate = useNavigate();
 
-  // Early return BEFORE any other hooks
   if (!isAuthenticated) {
     return <AdminLogin />;
   }
 
-  // Now we can safely use all hooks after authentication check
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -67,6 +69,7 @@ const AdminInvoices = () => {
   const [loading, setLoading] = useState(false);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [showInvoiceViewer, setShowInvoiceViewer] = useState(false);
+  const [includeLaborInSubtotal, setIncludeLaborInSubtotal] = useState(false);
 
   const [newInvoice, setNewInvoice] = useState({
     clientId: "",
@@ -106,7 +109,8 @@ const AdminInvoices = () => {
             full_name,
             company_name,
             phone,
-            email
+            email,
+            address
           )
         `)
         .order('created_at', { ascending: false });
@@ -153,6 +157,73 @@ const AdminInvoices = () => {
     }
   };
 
+  const deleteInvoice = async (invoiceId: string) => {
+    if (!confirm("Are you sure you want to delete this invoice? This action cannot be undone.")) {
+      return;
+    }
+
+    try {
+      // First delete invoice items
+      const { error: itemsError } = await supabase
+        .from('invoice_items')
+        .delete()
+        .eq('invoice_id', invoiceId);
+
+      if (itemsError) throw itemsError;
+
+      // Then delete the invoice
+      const { error: invoiceError } = await supabase
+        .from('invoices')
+        .delete()
+        .eq('id', invoiceId);
+
+      if (invoiceError) throw invoiceError;
+
+      toast({
+        title: "Success",
+        description: "Invoice deleted successfully",
+      });
+
+      await fetchInvoices();
+    } catch (error) {
+      console.error('Error deleting invoice:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete invoice",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const sendInvoiceViaWhatsApp = async (invoiceId: string) => {
+    try {
+      const invoice = invoices.find(inv => inv.id === invoiceId);
+      if (!invoice || !invoice.clients?.phone) {
+        toast({
+          title: "Error",
+          description: "Client phone number not found",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const clientPhone = invoice.clients.phone.replace(/[^\d]/g, ''); // Remove non-digits
+      const invoiceUrl = `${window.location.origin}/invoice/${invoiceId}`;
+      const message = `Hi ${invoice.clients.full_name || invoice.clients.company_name}, here is your invoice ${invoice.invoice_number}: ${invoiceUrl}`;
+      
+      const whatsappUrl = `https://wa.me/${clientPhone}?text=${encodeURIComponent(message)}`;
+      window.open(whatsappUrl, '_blank');
+
+    } catch (error) {
+      console.error('Error sending WhatsApp message:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send WhatsApp message",
+        variant: "destructive"
+      });
+    }
+  };
+
   const filteredInvoices = invoices.filter(invoice => {
     const clientName = invoice.clients?.company_name || invoice.clients?.full_name || '';
     const matchesSearch = clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -176,10 +247,6 @@ const AdminInvoices = () => {
     setShowInvoiceViewer(true);
   };
 
-  const getSubtotal = () => {
-    return newInvoice.items.reduce((total, item) => total + (item.material_cost * item.quantity), 0);
-  };
-
   const getSectionSubtotal = (sectionName: string) => {
     return newInvoice.items
       .filter(item => item.section === sectionName)
@@ -191,18 +258,24 @@ const AdminInvoices = () => {
     return sectionSubtotal * (laborPercentage / 100);
   };
 
+  const getTotalMaterialCost = () => {
+    return newInvoice.items.reduce((total, item) => total + (item.material_cost * item.quantity), 0);
+  };
+
   const getTotalLaborCharges = () => {
-    const sections = [...new Set(newInvoice.items.map(item => item.section))];
-    return sections.reduce((total, section) => {
-      return total + getSectionLaborCharge(section);
+    return newInvoice.items.reduce((total, item) => {
+      const materialCost = item.material_cost * item.quantity;
+      const laborCharge = item.labor_charge || (materialCost * ((item.labor_percentage || 36) / 100));
+      return total + laborCharge;
     }, 0);
   };
 
-  const getTotalAmount = () => {
-    const subtotal = getSubtotal();
+  const getGrandTotal = () => {
+    const materialCost = getTotalMaterialCost();
     const laborCharges = getTotalLaborCharges();
-    const taxAmount = (subtotal + laborCharges) * (newInvoice.taxRate / 100);
-    return subtotal + laborCharges + taxAmount - newInvoice.discountAmount;
+    const subtotal = includeLaborInSubtotal ? materialCost + laborCharges : materialCost;
+    const taxAmount = subtotal * (newInvoice.taxRate / 100);
+    return subtotal + taxAmount - newInvoice.discountAmount;
   };
 
   const handleCreateInvoice = async () => {
@@ -350,12 +423,25 @@ const AdminInvoices = () => {
       <AdminHeader />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-            <FileText className="w-8 h-8 mr-3" />
-            Invoice Management
-          </h1>
-          <p className="text-gray-600 mt-2">Create and manage professional invoices with templates</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/admin/dashboard')}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Dashboard
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+                <FileText className="w-8 h-8 mr-3" />
+                Invoice Management
+              </h1>
+              <p className="text-gray-600 mt-2">Create and manage professional invoices with templates</p>
+            </div>
+          </div>
         </div>
 
         <InvoiceStats invoices={invoices} currencySymbol={currencySymbol} />
@@ -372,12 +458,14 @@ const AdminInvoices = () => {
             addInvoiceItem={addInvoiceItem}
             removeInvoiceItem={removeInvoiceItem}
             updateInvoiceItem={updateInvoiceItem}
-            getSubtotal={getSubtotal}
+            getSubtotal={getTotalMaterialCost}
             getSectionSubtotal={getSectionSubtotal}
             getSectionLaborCharge={getSectionLaborCharge}
             getTotalLaborCharges={getTotalLaborCharges}
-            getTotalAmount={getTotalAmount}
+            getTotalAmount={getGrandTotal}
             currencySymbol={currencySymbol}
+            includeLaborInSubtotal={includeLaborInSubtotal}
+            setIncludeLaborInSubtotal={setIncludeLaborInSubtotal}
           />
         </div>
 
@@ -393,6 +481,8 @@ const AdminInvoices = () => {
           currencySymbol={currencySymbol}
           handleViewInvoice={handleViewInvoice}
           getStatusColor={getStatusColor}
+          onDeleteInvoice={deleteInvoice}
+          onSendWhatsApp={sendInvoiceViaWhatsApp}
         />
 
         <InvoiceViewer
