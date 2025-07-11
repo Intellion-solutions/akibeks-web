@@ -174,6 +174,34 @@ const AdminDashboard = () => {
           ))}
         </div>
 
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <Button className="h-16 bg-blue-600 hover:bg-blue-700 text-white flex flex-col items-center justify-center gap-2" asChild>
+            <Link to="/admin/clients">
+              <Users className="w-6 h-6" />
+              <span>Manage Clients</span>
+            </Link>
+          </Button>
+          <Button className="h-16 bg-green-600 hover:bg-green-700 text-white flex flex-col items-center justify-center gap-2" asChild>
+            <Link to="/admin/invoices">
+              <FileText className="w-6 h-6" />
+              <span>Create Invoice</span>
+            </Link>
+          </Button>
+          <Button className="h-16 bg-purple-600 hover:bg-purple-700 text-white flex flex-col items-center justify-center gap-2" asChild>
+            <Link to="/admin/inventory">
+              <BarChart3 className="w-6 h-6" />
+              <span>Inventory</span>
+            </Link>
+          </Button>
+          <Button className="h-16 bg-orange-600 hover:bg-orange-700 text-white flex flex-col items-center justify-center gap-2" asChild>
+            <Link to="/admin/templates">
+              <Plus className="w-6 h-6" />
+              <span>Templates</span>
+            </Link>
+          </Button>
+        </div>
+
         {/* Quick Summary Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           <Card>
@@ -189,7 +217,7 @@ const AdminDashboard = () => {
                 <div className="flex items-center gap-2">
                   <Badge variant="destructive">{stats.overdueInvoices}</Badge>
                   <Button size="sm" variant="outline" asChild>
-                    <Link to="/admin/invoices">View</Link>
+                    <Link to="/admin/invoices?filter=overdue">View</Link>
                   </Button>
                 </div>
               </div>
@@ -198,7 +226,7 @@ const AdminDashboard = () => {
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary">{stats.draftInvoices}</Badge>
                   <Button size="sm" variant="outline" asChild>
-                    <Link to="/admin/invoices">View</Link>
+                    <Link to="/admin/invoices?filter=draft">View</Link>
                   </Button>
                 </div>
               </div>
@@ -218,7 +246,7 @@ const AdminDashboard = () => {
                 <div className="flex items-center gap-2">
                   <Badge variant="outline">{stats.activeProjects}</Badge>
                   <Button size="sm" variant="outline" asChild>
-                    <Link to="/admin/projects">View</Link>
+                    <Link to="/admin/projects?filter=active">View</Link>
                   </Button>
                 </div>
               </div>
@@ -229,7 +257,7 @@ const AdminDashboard = () => {
                     {stats.totalInvoices - stats.draftInvoices - stats.overdueInvoices}
                   </Badge>
                   <Button size="sm" variant="outline" asChild>
-                    <Link to="/admin/invoices">View</Link>
+                    <Link to="/admin/invoices?filter=sent">View</Link>
                   </Button>
                 </div>
               </div>
@@ -249,7 +277,7 @@ const AdminDashboard = () => {
                 <div className="flex items-center gap-2">
                   <Badge variant="default">{stats.completedProjects}</Badge>
                   <Button size="sm" variant="outline" asChild>
-                    <Link to="/admin/projects">View</Link>
+                    <Link to="/admin/projects?filter=completed">View</Link>
                   </Button>
                 </div>
               </div>

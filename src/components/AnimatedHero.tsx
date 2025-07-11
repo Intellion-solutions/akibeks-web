@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Play, Award, Users, Calendar, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 
-interface ModernHeroProps {
+interface AnimatedHeroProps {
   title?: string;
   subtitle?: string;
   ctaText?: string;
@@ -12,13 +12,13 @@ interface ModernHeroProps {
   showTestimonialButton?: boolean;
 }
 
-const ModernHero = ({ 
+const AnimatedHero = ({ 
   title = "Building Tomorrow's Infrastructure",
   subtitle = "From concept to completion, we deliver innovative engineering solutions that shape the future. Trust AKIBEKS for your next construction project.",
   ctaText = "Get Started",
   ctaLink = "/request-quote",
   showTestimonialButton = true
-}: ModernHeroProps) => {
+}: AnimatedHeroProps) => {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-blue-50 via-sky-50 to-cyan-50">
       {/* Animated Background Elements */}
@@ -154,4 +154,4 @@ const ModernHero = ({
   );
 };
 
-export default ModernHero;
+export default AnimatedHero;

@@ -12,6 +12,8 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminInvoices from './pages/admin/AdminInvoices';
 import AdminClients from './pages/admin/AdminClients';
 import AdminTemplates from './pages/admin/AdminTemplates';
+import AdminInventory from './pages/admin/AdminInventory';
+import AdminProjects from './pages/admin/AdminProjects';
 import SecurityHeaders from './components/SecurityHeaders';
 import ScrollToTop from './components/ScrollToTop';
 import Solutions from "./pages/Solutions";
@@ -37,6 +39,8 @@ function App() {
           <Route path="/admin/invoices" element={<AdminInvoices />} />
           <Route path="/admin/clients" element={<AdminClients />} />
           <Route path="/admin/templates" element={<AdminTemplates />} />
+          <Route path="/admin/inventory" element={<AdminInventory />} />
+          <Route path="/admin/projects" element={<AdminProjects />} />
           <Route path="/solutions" element={<Solutions />} />
           <Route path="/industries" element={<Industries />} />
           <Route path="/admin/letterheads" element={<AdminLetterheads />} />
