@@ -31,7 +31,7 @@ const AdminDashboard = () => {
     totalProjects: 0,
     totalInvoices: 0,
     totalRevenue: 0,
-    pendingInvoices: 0,
+    draftInvoices: 0,
     activeProjects: 0,
     overdueInvoices: 0,
     completedProjects: 0
@@ -69,7 +69,7 @@ const AdminDashboard = () => {
         .select('*', { count: 'exact' });
 
       const totalRevenue = invoices?.reduce((sum, inv) => sum + (inv.paid_amount || 0), 0) || 0;
-      const pendingInvoices = invoices?.filter(inv => inv.status === 'pending').length || 0;
+      const draftInvoices = invoices?.filter(inv => inv.status === 'draft').length || 0;
       const overdueInvoices = invoices?.filter(inv => inv.status === 'overdue').length || 0;
 
       setStats({
@@ -77,7 +77,7 @@ const AdminDashboard = () => {
         totalProjects: projectsCount || 0,
         totalInvoices: invoicesCount || 0,
         totalRevenue,
-        pendingInvoices,
+        draftInvoices,
         activeProjects,
         overdueInvoices,
         completedProjects
@@ -126,8 +126,8 @@ const AdminDashboard = () => {
       trend: "up"
     },
     {
-      title: "Pending Invoices",
-      value: stats.pendingInvoices,
+      title: "Draft Invoices",
+      value: stats.draftInvoices,
       icon: FileText,
       color: "text-orange-600",
       bgColor: "bg-orange-100",
@@ -194,9 +194,9 @@ const AdminDashboard = () => {
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm">Pending Payments</span>
+                <span className="text-sm">Draft Invoices</span>
                 <div className="flex items-center gap-2">
-                  <Badge variant="secondary">{stats.pendingInvoices}</Badge>
+                  <Badge variant="secondary">{stats.draftInvoices}</Badge>
                   <Button size="sm" variant="outline" asChild>
                     <Link to="/admin/invoices">View</Link>
                   </Button>
@@ -223,10 +223,10 @@ const AdminDashboard = () => {
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm">Draft Invoices</span>
+                <span className="text-sm">Sent Invoices</span>
                 <div className="flex items-center gap-2">
                   <Badge variant="outline">
-                    {stats.totalInvoices - stats.pendingInvoices - stats.overdueInvoices}
+                    {stats.totalInvoices - stats.draftInvoices - stats.overdueInvoices}
                   </Badge>
                   <Button size="sm" variant="outline" asChild>
                     <Link to="/admin/invoices">View</Link>
