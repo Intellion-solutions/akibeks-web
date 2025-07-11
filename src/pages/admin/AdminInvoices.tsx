@@ -49,8 +49,15 @@ interface InvoiceTemplate {
 }
 
 const AdminInvoices = () => {
-  const { toast } = useToast();
   const { isAuthenticated, companySettings } = useAdmin();
+
+  // Early return BEFORE any other hooks
+  if (!isAuthenticated) {
+    return <AdminLogin />;
+  }
+
+  // Now we can safely use all hooks after authentication check
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [showCreateInvoice, setShowCreateInvoice] = useState(false);
@@ -81,10 +88,6 @@ const AdminInvoices = () => {
       section: "General"
     }]
   });
-
-  if (!isAuthenticated) {
-    return <AdminLogin />;
-  }
 
   useEffect(() => {
     fetchInvoices();
