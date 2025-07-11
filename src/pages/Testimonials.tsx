@@ -1,444 +1,207 @@
 
-import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Star, Quote, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Star, Quote, Search, Filter, Users, Award, ThumbsUp, TrendingUp, MessageSquare, ArrowRight, Calendar, MapPin } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { Link } from "react-router-dom";
-
-interface Testimonial {
-  id: string;
-  client_name: string;
-  client_role: string;
-  content: string;
-  rating: number;
-  is_featured: boolean;
-  created_at: string;
-  projects: {
-    title: string;
-  } | null;
-}
+import SEOHead from "@/components/SEOHead";
 
 const Testimonials = () => {
-  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterRating, setFilterRating] = useState("all");
-  const [sortBy, setSortBy] = useState("newest");
-  const [activeTab, setActiveTab] = useState("all");
-
-  useEffect(() => {
-    fetchTestimonials();
-  }, []);
-
-  const fetchTestimonials = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('testimonials')
-        .select(`
-          *,
-          projects (
-            title
-          )
-        `)
-        .eq('is_approved', true)
-        .order('is_featured', { ascending: false })
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setTestimonials(data || []);
-    } catch (error) {
-      console.error('Error fetching testimonials:', error);
-    } finally {
-      setLoading(false);
+  const testimonials = [
+    {
+      id: 1,
+      name: "John Kariuki",
+      role: "Property Developer",
+      company: "Kariuki Properties Ltd",
+      content: "AKIBEKS delivered our commercial complex on time and within budget. Their attention to detail and professional approach exceeded our expectations. The quality of workmanship is exceptional, and their project management skills are top-notch.",
+      rating: 5,
+      project: "Westlands Commercial Complex",
+      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face"
+    },
+    {
+      id: 2,
+      name: "Mary Wanjiku",
+      role: "Homeowner",
+      company: "Private Client",
+      content: "Building our dream home with AKIBEKS was a smooth experience. They guided us through every step and delivered exceptional quality. The team was professional, communicative, and always available to address our concerns.",
+      rating: 5,
+      project: "Karen Residential Home",
+      image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face"
+    },
+    {
+      id: 3,
+      name: "David Mutua",
+      role: "Industrial Client",
+      company: "Mutua Manufacturing",
+      content: "Their industrial construction expertise is unmatched. The factory was completed ahead of schedule with superior build quality. AKIBEKS understood our specific industrial requirements and delivered beyond expectations.",
+      rating: 5,
+      project: "Thika Industrial Plant",
+      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face"
+    },
+    {
+      id: 4,
+      name: "Sarah Njeri",
+      role: "School Principal",
+      company: "Njeri Academy",
+      content: "AKIBEKS constructed our new school block with amazing efficiency. The learning environment they created is modern, safe, and conducive to education. Their commitment to quality and safety standards is exemplary.",
+      rating: 5,
+      project: "Njeri Academy School Block",
+      image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&h=100&fit=crop&crop=face"
+    },
+    {
+      id: 5,
+      name: "Peter Kamau",
+      role: "Hospital Administrator",
+      company: "Kamau Medical Center",
+      content: "The medical facility AKIBEKS built for us meets all healthcare standards and regulations. Their understanding of specialized construction requirements for medical facilities is impressive. Excellent work throughout.",
+      rating: 5,
+      project: "Kamau Medical Center",
+      image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=100&h=100&fit=crop&crop=face"
+    },
+    {
+      id: 6,
+      name: "Grace Muthoni",
+      role: "Hotel Owner",
+      company: "Muthoni Hospitality Group",
+      content: "Our boutique hotel renovation was handled with professionalism and creativity. AKIBEKS transformed our vision into reality while maintaining operations during construction. Outstanding project management and execution.",
+      rating: 5,
+      project: "Nairobi Boutique Hotel",
+      image: "https://images.unsplash.com/photo-1494790108755-2616b612b169?w=100&h=100&fit=crop&crop=face"
+    },
+    {
+      id: 7,
+      name: "James Omondi",
+      role: "Church Pastor",
+      company: "New Life Church",
+      content: "AKIBEKS built our new church sanctuary with dedication and respect for our vision. The acoustics, lighting, and overall design create a perfect worship environment. Their team worked around our schedule seamlessly.",
+      rating: 5,
+      project: "New Life Church Sanctuary",
+      image: "https://images.unsplash.com/photo-1519244703995-f4e0f30006d5?w=100&h=100&fit=crop&crop=face"
+    },
+    {
+      id: 8,
+      name: "Ann Wambui",
+      role: "Shopping Mall Manager",
+      company: "Wambui Enterprises",
+      content: "The shopping mall extension project was complex, but AKIBEKS handled it with expertise. They minimized disruption to ongoing business while delivering high-quality construction. Professional and reliable team.",
+      rating: 5,
+      project: "Nakuru Shopping Mall Extension",
+      image: "https://images.unsplash.com/photo-1494790108755-2616b612b169?w=100&h=100&fit=crop&crop=face"
     }
-  };
+  ];
 
-  const renderStars = (rating: number) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <Star
-        key={i}
-        className={`w-5 h-5 ${
-          i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
-        }`}
-      />
-    ));
-  };
-
-  // Filter and sort testimonials
-  const filteredTestimonials = testimonials
-    .filter(testimonial => {
-      const matchesSearch = testimonial.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           testimonial.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           testimonial.client_role.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesRating = filterRating === "all" || testimonial.rating.toString() === filterRating;
-      
-      const matchesTab = activeTab === "all" || 
-                        (activeTab === "featured" && testimonial.is_featured) ||
-                        (activeTab === "recent" && new Date(testimonial.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
-      
-      return matchesSearch && matchesRating && matchesTab;
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case "newest":
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-        case "oldest":
-          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-        case "highest-rating":
-          return b.rating - a.rating;
-        case "lowest-rating":
-          return a.rating - b.rating;
-        default:
-          return 0;
-      }
-    });
-
-  const featuredTestimonials = filteredTestimonials.filter(t => t.is_featured);
-  const regularTestimonials = filteredTestimonials.filter(t => !t.is_featured);
-
-  // Calculate statistics
-  const averageRating = testimonials.length > 0 
-    ? (testimonials.reduce((sum, t) => sum + t.rating, 0) / testimonials.length).toFixed(1)
-    : "0";
-  
-  const fiveStarCount = testimonials.filter(t => t.rating === 5).length;
-  const totalTestimonials = testimonials.length;
-  const satisfactionRate = totalTestimonials > 0 ? Math.round((fiveStarCount / totalTestimonials) * 100) : 0;
-
-  const ratingBreakdown = [5, 4, 3, 2, 1].map(rating => ({
-    stars: rating,
-    count: testimonials.filter(t => t.rating === rating).length,
-    percentage: totalTestimonials > 0 ? Math.round((testimonials.filter(t => t.rating === rating).length / totalTestimonials) * 100) : 0
-  }));
+  const stats = [
+    { number: "500+", label: "Happy Clients" },
+    { number: "98%", label: "Satisfaction Rate" },
+    { number: "4.9/5", label: "Average Rating" },
+    { number: "15+", label: "Years Trusted" }
+  ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
+      <SEOHead 
+        title="Client Testimonials - AKIBEKS Engineering Solutions"
+        description="Read what our satisfied clients say about AKIBEKS construction and engineering services. Over 500 happy clients across Kenya."
+      />
       <Navbar />
       
-      {/* Enhanced Hero Section */}
-      <section className="bg-gradient-to-r from-blue-900 via-blue-800 to-purple-900 text-white py-24 relative overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute top-20 left-20 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-20 right-20 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+      {/* Header Section */}
+      <section className="pt-24 pb-12 bg-gradient-to-r from-blue-600 to-sky-600 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-4xl md:text-6xl font-bold mb-6">
+            Client Testimonials
+          </h1>
+          <p className="text-xl md:text-2xl text-blue-100 max-w-3xl mx-auto">
+            Hear from our satisfied clients about their experience working with AKIBEKS Engineering Solutions
+          </p>
         </div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-5xl md:text-7xl font-bold mb-8 animate-fade-in">
-              Client <span className="text-orange-400">Testimonials</span>
-            </h1>
-            <p className="text-xl md:text-2xl max-w-4xl mx-auto mb-12 opacity-90 animate-fade-in">
-              Discover what our satisfied clients have to say about our exceptional construction 
-              and engineering services across Kenya
-            </p>
-            
-            {/* Statistics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 max-w-4xl mx-auto mb-8">
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 transform hover:scale-105 transition-all duration-300">
-                <div className="flex items-center justify-center mb-3">
-                  <Users className="w-8 h-8 text-orange-400" />
-                </div>
-                <div className="text-3xl font-bold">{totalTestimonials}</div>
-                <div className="text-sm opacity-80">Happy Clients</div>
-              </div>
-              
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 transform hover:scale-105 transition-all duration-300">
-                <div className="flex items-center justify-center mb-3">
-                  <Star className="w-8 h-8 text-yellow-400 fill-current" />
-                </div>
-                <div className="text-3xl font-bold">{averageRating}</div>
-                <div className="text-sm opacity-80">Average Rating</div>
-              </div>
-              
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 transform hover:scale-105 transition-all duration-300">
-                <div className="flex items-center justify-center mb-3">
-                  <Award className="w-8 h-8 text-green-400" />
-                </div>
-                <div className="text-3xl font-bold">{fiveStarCount}</div>
-                <div className="text-sm opacity-80">5-Star Reviews</div>
-              </div>
-              
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 transform hover:scale-105 transition-all duration-300">
-                <div className="flex items-center justify-center mb-3">
-                  <TrendingUp className="w-8 h-8 text-blue-400" />
-                </div>
-                <div className="text-3xl font-bold">{satisfactionRate}%</div>
-                <div className="text-sm opacity-80">Satisfaction Rate</div>
-              </div>
-            </div>
+      </section>
 
-            {/* CTA Button */}
-            <Link to="/submit-testimonial">
-              <Button size="lg" className="bg-orange-500 hover:bg-orange-600 transform hover:scale-105 transition-all duration-300">
-                <MessageSquare className="w-5 h-5 mr-2" />
-                Share Your Experience
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
-            </Link>
+      {/* Stats Section */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {stats.map((stat, index) => (
+              <div key={index} className="text-center">
+                <div className="text-3xl md:text-4xl font-bold text-blue-600 mb-2">{stat.number}</div>
+                <div className="text-gray-600">{stat.label}</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Rating Breakdown Section */}
-      <section className="py-12 bg-gray-50">
+      {/* Testimonials Grid */}
+      <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">Rating Breakdown</h2>
-              <div className="space-y-4">
-                {ratingBreakdown.map((item) => (
-                  <div key={item.stars} className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-1 w-20">
-                      <span className="text-sm font-medium">{item.stars}</span>
-                      <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                    </div>
-                    <div className="flex-1 bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-yellow-400 h-2 rounded-full" 
-                        style={{ width: `${item.percentage}%` }}
-                      ></div>
-                    </div>
-                    <span className="text-sm text-gray-600 w-12">{item.count}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            <div className="text-center">
-              <div className="text-6xl font-bold text-gray-900 mb-2">{averageRating}</div>
-              <div className="flex items-center justify-center mb-2">
-                {renderStars(Math.round(parseFloat(averageRating)))}
-              </div>
-              <p className="text-gray-600">Based on {totalTestimonials} reviews</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Search and Filter Section */}
-      <section className="py-12 bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid grid-cols-3 w-full max-w-md mx-auto">
-              <TabsTrigger value="all">All Reviews</TabsTrigger>
-              <TabsTrigger value="featured">Featured</TabsTrigger>
-              <TabsTrigger value="recent">Recent</TabsTrigger>
-            </TabsList>
-
-            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-              <div className="flex flex-col sm:flex-row gap-4 flex-1">
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <Input
-                    placeholder="Search testimonials, clients, or projects..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 h-12"
-                  />
-                </div>
-                
-                <Select value={filterRating} onValueChange={setFilterRating}>
-                  <SelectTrigger className="w-40 h-12">
-                    <SelectValue placeholder="All Ratings" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Ratings</SelectItem>
-                    <SelectItem value="5">5 Stars</SelectItem>
-                    <SelectItem value="4">4 Stars</SelectItem>
-                    <SelectItem value="3">3 Stars</SelectItem>
-                    <SelectItem value="2">2 Stars</SelectItem>
-                    <SelectItem value="1">1 Star</SelectItem>
-                  </SelectContent>
-                </Select>
-                
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-40 h-12">
-                    <SelectValue placeholder="Sort By" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="newest">Newest First</SelectItem>
-                    <SelectItem value="oldest">Oldest First</SelectItem>
-                    <SelectItem value="highest-rating">Highest Rating</SelectItem>
-                    <SelectItem value="lowest-rating">Lowest Rating</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="text-sm text-gray-600">
-                Showing {filteredTestimonials.length} of {totalTestimonials} testimonials
-              </div>
-            </div>
-          </Tabs>
-        </div>
-      </section>
-
-      {/* Featured Testimonials */}
-      {featuredTestimonials.length > 0 && activeTab !== 'recent' && (
-        <section className="py-20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-gray-900 mb-4">Featured Reviews</h2>
-              <p className="text-xl text-gray-600">Our most outstanding client experiences</p>
-            </div>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {featuredTestimonials.slice(0, 4).map((testimonial, index) => (
-                <Card key={testimonial.id} className="hover:shadow-2xl transition-all duration-500 hover:scale-105 bg-gradient-to-br from-blue-50 to-orange-50 border-2 border-orange-200 animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <CardTitle className="text-xl text-gray-900">{testimonial.client_name}</CardTitle>
-                        <CardDescription className="text-gray-600 flex items-center mt-1">
-                          <span>{testimonial.client_role}</span>
-                        </CardDescription>
-                      </div>
-                      <Badge variant="secondary" className="bg-orange-100 text-orange-800 font-semibold">
-                        Featured
-                      </Badge>
-                    </div>
-                    <div className="flex items-center space-x-1 mt-2">
-                      {renderStars(testimonial.rating)}
-                      <span className="ml-2 text-sm text-gray-600">({testimonial.rating}/5)</span>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="relative">
-                      <Quote className="absolute -top-2 -left-2 w-8 h-8 text-orange-300" />
-                      <p className="text-gray-700 text-lg italic pl-6 leading-relaxed">{testimonial.content}</p>
-                    </div>
-                    <div className="flex items-center justify-between mt-6 pt-4 border-t">
-                      {testimonial.projects && (
-                        <p className="text-sm text-gray-500 flex items-center">
-                          <span className="font-medium">Project:</span>
-                          <span className="ml-1">{testimonial.projects.title}</span>
-                        </p>
-                      )}
-                      <p className="text-xs text-gray-400 flex items-center">
-                        <Calendar className="w-3 h-3 mr-1" />
-                        {new Date(testimonial.created_at).toLocaleDateString('en-US', { 
-                          year: 'numeric', 
-                          month: 'long', 
-                          day: 'numeric' 
-                        })}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* All Testimonials */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              {activeTab === 'featured' ? 'Featured Client Reviews' : 
-               activeTab === 'recent' ? 'Recent Client Reviews' : 
-               'All Client Reviews'}
+          <div className="text-center mb-12">
+            <Badge className="mb-4 bg-blue-100 text-blue-800">What Our Clients Say</Badge>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Trusted by Industry Leaders
             </h2>
-            <p className="text-xl text-gray-600">Every voice matters to us</p>
+            <p className="text-xl text-gray-600">
+              Real feedback from real clients who have experienced the AKIBEKS difference
+            </p>
           </div>
-          
-          {loading ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <div className="text-lg text-gray-600">Loading testimonials...</div>
-            </div>
-          ) : filteredTestimonials.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {(activeTab === 'featured' ? featuredTestimonials : 
-                activeTab === 'all' ? regularTestimonials : 
-                filteredTestimonials).map((testimonial, index) => (
-                <Card key={testimonial.id} className="hover:shadow-xl transition-all duration-300 hover:-translate-y-2 bg-white animate-fade-in" style={{ animationDelay: `${index * 0.05}s` }}>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <CardTitle className="text-lg text-gray-900">{testimonial.client_name}</CardTitle>
-                        <CardDescription className="text-gray-600">{testimonial.client_role}</CardDescription>
-                      </div>
-                      {testimonial.is_featured && activeTab === 'all' && (
-                        <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
-                          Featured
-                        </Badge>
-                      )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {testimonials.map((testimonial) => (
+              <Card key={testimonial.id} className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden">
+                <CardContent className="p-6">
+                  <div className="flex items-center mb-4">
+                    {[...Array(testimonial.rating)].map((_, i) => (
+                      <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
+                    ))}
+                  </div>
+                  <Quote className="w-8 h-8 text-blue-200 mb-4" />
+                  <p className="text-gray-700 mb-6 leading-relaxed italic">
+                    "{testimonial.content}"
+                  </p>
+                  <div className="flex items-center">
+                    <img 
+                      src={testimonial.image} 
+                      alt={testimonial.name}
+                      className="w-12 h-12 rounded-full object-cover mr-4 border-2 border-blue-100"
+                    />
+                    <div>
+                      <h4 className="font-bold text-gray-900">{testimonial.name}</h4>
+                      <p className="text-sm text-gray-600">{testimonial.role}</p>
+                      <p className="text-sm text-blue-600">{testimonial.company}</p>
                     </div>
-                    <div className="flex items-center space-x-1 mt-2">
-                      {renderStars(testimonial.rating)}
-                      <span className="ml-2 text-sm text-gray-600">({testimonial.rating}/5)</span>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="relative">
-                      <Quote className="absolute -top-1 -left-1 w-6 h-6 text-gray-300" />
-                      <p className="text-gray-700 pl-4 leading-relaxed">{testimonial.content}</p>
-                    </div>
-                    <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                      {testimonial.projects && (
-                        <p className="text-sm text-gray-500">
-                          <span className="font-medium">Project:</span> {testimonial.projects.title}
-                        </p>
-                      )}
-                      <p className="text-xs text-gray-400 flex items-center">
-                        <Calendar className="w-3 h-3 mr-1" />
-                        {new Date(testimonial.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <Card className="max-w-md mx-auto">
-              <CardContent className="p-12 text-center">
-                <ThumbsUp className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No testimonials found</h3>
-                <p className="text-gray-600 mb-6">
-                  {searchTerm || filterRating !== "all" 
-                    ? "Try adjusting your search criteria or filters"
-                    : "No testimonials available at the moment"
-                  }
-                </p>
-                <Link to="/submit-testimonial">
-                  <Button className="bg-blue-600 hover:bg-blue-700">
-                    <MessageSquare className="w-4 h-4 mr-2" />
-                    Be the First to Share
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          )}
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-gray-100">
+                    <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                      Project: {testimonial.project}
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-blue-900 to-purple-900 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">Ready to Join Our Success Stories?</h2>
-          <p className="text-xl mb-8 max-w-3xl mx-auto opacity-90">
-            Experience the same exceptional service that our clients rave about. 
-            Let's build your dream project together.
+      <section className="py-16 bg-gradient-to-r from-blue-600 to-sky-600 text-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6">
+            Ready to Join Our Happy Clients?
+          </h2>
+          <p className="text-xl text-blue-100 mb-8">
+            Experience the AKIBEKS difference for yourself. Let's discuss your next construction project.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/request-quote">
-              <Button size="lg" className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-8 py-4 text-lg transform hover:scale-105 transition-all duration-300">
-                Get Your Free Quote
-              </Button>
-            </Link>
-            <Link to="/projects">
-              <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-blue-900 font-semibold px-8 py-4 text-lg transform hover:scale-105 transition-all duration-300">
-                View Our Projects
-              </Button>
-            </Link>
+            <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100" asChild>
+              <Link to="/request-quote">
+                Get Your Quote
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Link>
+            </Button>
+            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600" asChild>
+              <Link to="/submit-testimonial">Share Your Experience</Link>
+            </Button>
           </div>
         </div>
       </section>

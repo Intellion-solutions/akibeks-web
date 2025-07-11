@@ -61,13 +61,10 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* Desktop CTA Buttons */}
-          <div className="hidden md:flex items-center space-x-4">
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/request-quote">Get Quote</Link>
-            </Button>
+          {/* Desktop CTA Button */}
+          <div className="hidden md:flex items-center">
             <Button size="sm" className="bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-700 hover:to-sky-700" asChild>
-              <Link to="/admin">Admin</Link>
+              <Link to="/request-quote">Get Quote</Link>
             </Button>
           </div>
 

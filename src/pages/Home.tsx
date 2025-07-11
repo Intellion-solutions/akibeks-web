@@ -1,8 +1,7 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Building2, Users, Award, CheckCircle, Star, Phone, Mail, MapPin, Clock, Shield, Zap, Target, TrendingUp, Construction, Home as HomeIcon, Factory, Wrench } from "lucide-react";
+import { ArrowRight, Building2, Users, Award, CheckCircle, Star, Phone, Mail, MapPin, Clock, Shield, Zap, Target, TrendingUp, Construction, Home as HomeIcon, Factory, Wrench, Calculator, FileText, Calendar, Headphones, Globe, Camera, Video, BookOpen, Lightbulb } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -96,6 +95,58 @@ const Home = () => {
     { name: "Infrastructure", icon: Construction, projects: "100+" }
   ];
 
+  const projectShowcase = [
+    {
+      title: "Westlands Corporate Tower",
+      category: "Commercial",
+      image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=500&h=300&fit=crop",
+      description: "35-story corporate headquarters with smart building systems",
+      completion: "2024"
+    },
+    {
+      title: "Kileleshwa Residential Complex",
+      category: "Residential",
+      image: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=500&h=300&fit=crop",
+      description: "Luxury apartments with modern amenities and green spaces",
+      completion: "2023"
+    },
+    {
+      title: "Mombasa Industrial Park",
+      category: "Industrial",
+      image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&h=300&fit=crop",
+      description: "State-of-the-art manufacturing facility with sustainable design",
+      completion: "2024"
+    }
+  ];
+
+  const newsUpdates = [
+    {
+      title: "AKIBEKS Wins National Construction Award 2024",
+      date: "December 15, 2024",
+      excerpt: "Recognized for excellence in sustainable construction practices and innovative project delivery.",
+      image: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&h=250&fit=crop"
+    },
+    {
+      title: "New Green Building Certification Program Launched",
+      date: "November 28, 2024",
+      excerpt: "Leading the industry with our comprehensive green building certification initiative.",
+      image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=250&fit=crop"
+    },
+    {
+      title: "Partnership with Kenya Green Building Society",
+      date: "November 10, 2024",
+      excerpt: "Strategic partnership to promote sustainable construction practices across Kenya.",
+      image: "https://images.unsplash.com/photo-1560472355-536de3962603?w=400&h=250&fit=crop"
+    }
+  ];
+
+  const quickLinks = [
+    { icon: Calculator, title: "Cost Calculator", description: "Get instant project estimates", link: "/calculator" },
+    { icon: FileText, title: "Project Planner", description: "Plan your construction project", link: "/planner" },
+    { icon: Calendar, title: "Schedule Consultation", description: "Book a meeting with our experts", link: "/consultation" },
+    { icon: Headphones, title: "24/7 Support", description: "Get help anytime you need", link: "/support" }
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
       <SEOHead />
@@ -121,8 +172,42 @@ const Home = () => {
         </div>
       </section>
 
-      {/* About Section */}
+      {/* Quick Links Section */}
       <section className="py-20 bg-gradient-to-r from-gray-50 to-blue-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <Badge className="mb-4 bg-indigo-100 text-indigo-800">Quick Access</Badge>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Fast Track Your Project
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Access our digital tools and services to streamline your construction journey
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {quickLinks.map((item, index) => (
+              <Card key={index} className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer">
+                <CardHeader className="text-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <item.icon className="w-8 h-8 text-white" />
+                  </div>
+                  <CardTitle className="text-xl">{item.title}</CardTitle>
+                  <CardDescription>{item.description}</CardDescription>
+                </CardHeader>
+                <CardContent className="text-center">
+                  <Button variant="outline" className="w-full group-hover:bg-indigo-600 group-hover:text-white transition-colors" asChild>
+                    <Link to={item.link}>Access Tool</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* About Section */}
+      <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
@@ -176,7 +261,7 @@ const Home = () => {
       </section>
 
       {/* Services Section */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-gradient-to-r from-gray-50 to-blue-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <Badge className="mb-4 bg-orange-100 text-orange-800">Our Services</Badge>
@@ -223,6 +308,57 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Project Showcase */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <Badge className="mb-4 bg-teal-100 text-teal-800">Recent Projects</Badge>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Featured Project Showcase
+            </h2>
+            <p className="text-xl text-gray-600">
+              Explore our latest completed projects and ongoing developments
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+            {projectShowcase.map((project, index) => (
+              <Card key={index} className="group hover:shadow-xl transition-all duration-300 overflow-hidden">
+                <div className="relative">
+                  <img 
+                    src={project.image} 
+                    alt={project.title}
+                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute top-4 left-4">
+                    <Badge className="bg-teal-600 text-white">{project.category}</Badge>
+                  </div>
+                  <div className="absolute top-4 right-4">
+                    <Badge variant="outline" className="bg-white/90 text-gray-800">{project.completion}</Badge>
+                  </div>
+                </div>
+                <CardContent className="p-6">
+                  <h3 className="text-xl font-bold mb-2 group-hover:text-teal-600 transition-colors">{project.title}</h3>
+                  <p className="text-gray-600 mb-4">{project.description}</p>
+                  <Button variant="outline" className="w-full group-hover:bg-teal-600 group-hover:text-white transition-colors" asChild>
+                    <Link to="/portfolio">View Details</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <div className="text-center">
+            <Button size="lg" asChild>
+              <Link to="/portfolio">
+                View Full Portfolio
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
       {/* Industries We Serve */}
       <section className="py-20 bg-gradient-to-br from-gray-50 to-blue-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -250,8 +386,54 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Why Choose Us */}
+      {/* News & Updates */}
       <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <Badge className="mb-4 bg-amber-100 text-amber-800">Latest News</Badge>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              News & Updates
+            </h2>
+            <p className="text-xl text-gray-600">
+              Stay updated with our latest achievements and industry insights
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+            {newsUpdates.map((news, index) => (
+              <Card key={index} className="group hover:shadow-xl transition-all duration-300 overflow-hidden">
+                <div className="relative">
+                  <img 
+                    src={news.image} 
+                    alt={news.title}
+                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+                <CardContent className="p-6">
+                  <div className="text-sm text-amber-600 mb-2">{news.date}</div>
+                  <h3 className="text-xl font-bold mb-3 group-hover:text-amber-600 transition-colors">{news.title}</h3>
+                  <p className="text-gray-600 mb-4">{news.excerpt}</p>
+                  <Button variant="outline" className="group-hover:bg-amber-600 group-hover:text-white transition-colors" asChild>
+                    <Link to="/blog">Read More</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <div className="text-center">
+            <Button size="lg" asChild>
+              <Link to="/blog">
+                View All News
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose Us */}
+      <section className="py-20 bg-gradient-to-r from-gray-50 to-blue-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <Badge className="mb-4 bg-purple-100 text-purple-800">Why Choose AKIBEKS</Badge>

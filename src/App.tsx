@@ -22,6 +22,9 @@ import Industries from "./pages/Industries";
 import AdminLetterheads from "./pages/admin/AdminLetterheads";
 import SubmitTestimonial from "./pages/SubmitTestimonial";
 import Consulting from "./pages/Services/Consulting";
+import Blog from "./pages/Blog";
+import Testimonials from "./pages/Testimonials";
+import AdminAccess from "./pages/AdminAccess";
 
 function App() {
   return (
@@ -39,6 +42,9 @@ function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/request-quote" element={<RequestQuote />} />
           <Route path="/resources" element={<Resources />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/testimonials" element={<Testimonials />} />
+          <Route path="/admin-access" element={<AdminAccess />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/invoices" element={<AdminInvoices />} />
           <Route path="/admin/clients" element={<AdminClients />} />

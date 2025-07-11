@@ -1,6 +1,6 @@
 
 import { Link } from "react-router-dom";
-import { Phone, Mail, MapPin, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import { Phone, Mail, MapPin, Facebook, Twitter, Instagram, Linkedin, Shield } from "lucide-react";
 import Logo from "./Logo";
 import { useAdmin } from "@/contexts/AdminContext";
 
@@ -88,6 +88,14 @@ const Footer = () => {
               <span>NCA Registered</span>
               <span>•</span>
               <span>ISO Certified</span>
+              <span>•</span>
+              <Link 
+                to="/admin-access" 
+                className="flex items-center text-gray-500 hover:text-gray-400 transition-colors text-xs"
+              >
+                <Shield className="w-3 h-3 mr-1" />
+                Secure Access
+              </Link>
             </div>
           </div>
         </div>
