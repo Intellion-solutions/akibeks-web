@@ -38,13 +38,11 @@ const AdminDashboard = () => {
   });
   const [loading, setLoading] = useState(true);
 
-  if (!isAuthenticated) {
-    return <AdminLogin />;
-  }
-
   useEffect(() => {
-    fetchDashboardStats();
-  }, []);
+    if (isAuthenticated) {
+      fetchDashboardStats();
+    }
+  }, [isAuthenticated]);
 
   const fetchDashboardStats = async () => {
     try {
@@ -94,6 +92,10 @@ const AdminDashboard = () => {
       setLoading(false);
     }
   };
+
+  if (!isAuthenticated) {
+    return <AdminLogin />;
+  }
 
   const currencySymbol = companySettings?.currency_symbol || 'KSh';
 
