@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Building2, Users, Award, CheckCircle, Star, Phone, Mail, MapPin, Clock, Shield, Zap, Target, TrendingUp, Construction, Home as HomeIcon, Factory, Wrench, Calculator, FileText, Calendar, Headphones, Globe, Camera, Video, BookOpen, Lightbulb } from "lucide-react";
+import { ArrowRight, Building2, Users, Award, CheckCircle, Star, Phone, Mail, MapPin, Clock, Shield, Zap, Target, TrendingUp, Construction, Home as HomeIcon, Factory, Wrench, Calculator, FileText, Calendar, Headphones, Globe, Camera, Video, BookOpen, Lightbulb, Gauge, Cpu, Wifi, Database } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -147,6 +147,36 @@ const Home = () => {
     { icon: Headphones, title: "24/7 Support", description: "Get help anytime you need", link: "/support" }
   ];
 
+  const digitalSolutions = [
+    {
+      icon: Gauge,
+      title: "Project Dashboard",
+      description: "Real-time project monitoring and progress tracking"
+    },
+    {
+      icon: Cpu,
+      title: "BIM Integration",
+      description: "3D modeling and Building Information Modeling"
+    },
+    {
+      icon: Wifi,
+      title: "IoT Solutions",
+      description: "Smart building technology and automation"
+    },
+    {
+      icon: Database,
+      title: "Data Analytics",
+      description: "Construction data analysis and insights"
+    }
+  ];
+
+  const certifications = [
+    { name: "NCA Registration", description: "Registered with National Construction Authority" },
+    { name: "ISO 9001:2015", description: "Quality Management System Certification" },
+    { name: "ISO 14001:2015", description: "Environmental Management System" },
+    { name: "OHSAS 18001", description: "Occupational Health and Safety Management" }
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
       <SEOHead />
@@ -155,24 +185,60 @@ const Home = () => {
       {/* Animated Hero Section */}
       <AnimatedHero />
 
-      {/* Stats Section */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Stats Section - Enhanced */}
+      <section className="py-20 bg-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-purple-50 opacity-50"></div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <div className="text-center mb-12">
+            <Badge className="mb-4 bg-blue-100 text-blue-800">Our Impact</Badge>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Building Excellence Since 2008</h2>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat, index) => (
               <div key={index} className="text-center group">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
-                  <stat.icon className="w-8 h-8 text-white" />
+                <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-all duration-300 shadow-lg">
+                  <stat.icon className="w-10 h-10 text-white" />
                 </div>
-                <div className="text-3xl font-bold text-gray-900 mb-2">{stat.number}</div>
-                <div className="text-gray-600">{stat.label}</div>
+                <div className="text-4xl font-bold text-gray-900 mb-2">{stat.number}</div>
+                <div className="text-gray-600 font-medium">{stat.label}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Quick Links Section */}
+      {/* Digital Solutions Section - New */}
+      <section className="py-20 bg-gradient-to-r from-gray-900 to-blue-900 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <Badge className="mb-4 bg-white/20 text-white">Innovation</Badge>
+            <h2 className="text-4xl font-bold mb-4">
+              Digital Construction Solutions
+            </h2>
+            <p className="text-xl text-blue-100 max-w-3xl mx-auto">
+              Leveraging cutting-edge technology to revolutionize construction processes
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {digitalSolutions.map((solution, index) => (
+              <Card key={index} className="bg-white/10 border-white/20 text-white hover:bg-white/20 transition-all duration-300">
+                <CardHeader className="text-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-cyan-400 to-blue-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <solution.icon className="w-8 h-8 text-white" />
+                  </div>
+                  <CardTitle className="text-xl">{solution.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-blue-100 text-center">{solution.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Quick Links Section - Enhanced */}
       <section className="py-20 bg-gradient-to-r from-gray-50 to-blue-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -187,7 +253,7 @@ const Home = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {quickLinks.map((item, index) => (
-              <Card key={index} className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer">
+              <Card key={index} className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-white to-gray-50">
                 <CardHeader className="text-center">
                   <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
                     <item.icon className="w-8 h-8 text-white" />
@@ -206,8 +272,37 @@ const Home = () => {
         </div>
       </section>
 
-      {/* About Section */}
+      {/* Certifications Section - New */}
       <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <Badge className="mb-4 bg-green-100 text-green-800">Certifications</Badge>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Quality Assurance & Compliance
+            </h2>
+            <p className="text-xl text-gray-600">
+              Certified and compliant with international standards
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {certifications.map((cert, index) => (
+              <Card key={index} className="text-center hover:shadow-lg transition-shadow">
+                <CardContent className="p-6">
+                  <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Shield className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-lg font-bold mb-2">{cert.name}</h3>
+                  <p className="text-gray-600 text-sm">{cert.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* About Section - Enhanced */}
+      <section className="py-20 bg-gradient-to-r from-blue-50 to-purple-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
@@ -223,7 +318,9 @@ const Home = () => {
                   "NCA Licensed and ISO Certified",
                   "500+ Successfully Completed Projects",
                   "Serving clients across East Africa",
-                  "Award-winning engineering solutions"
+                  "Award-winning engineering solutions",
+                  "Sustainable construction practices",
+                  "Advanced BIM and digital solutions"
                 ].map((item, index) => (
                   <div key={index} className="flex items-center">
                     <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
@@ -239,7 +336,7 @@ const Home = () => {
               </Button>
             </div>
             <div className="relative">
-              <div className="bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl p-8 text-white">
+              <div className="bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl p-8 text-white shadow-2xl">
                 <h3 className="text-2xl font-bold mb-4">Our Mission</h3>
                 <p className="text-blue-100 mb-6">
                   To transform Kenya's landscape through innovative construction solutions, sustainable practices, and unwavering commitment to quality and excellence.
@@ -255,13 +352,16 @@ const Home = () => {
                   </div>
                 </div>
               </div>
+              {/* Floating elements */}
+              <div className="absolute -top-4 -right-4 w-24 h-24 bg-yellow-400 rounded-full opacity-20"></div>
+              <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-green-400 rounded-full opacity-20"></div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Services Section */}
-      <section className="py-20 bg-gradient-to-r from-gray-50 to-blue-50">
+      {/* Services Section - Keep existing */}
+      <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <Badge className="mb-4 bg-orange-100 text-orange-800">Our Services</Badge>

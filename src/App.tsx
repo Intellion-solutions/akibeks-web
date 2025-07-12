@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -23,6 +22,11 @@ import Testimonials from "./pages/Testimonials";
 import SubmitTestimonial from "./pages/SubmitTestimonial";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+
+// New Pages
+import News from "./pages/News";
+import Careers from "./pages/Careers";
+import CaseStudies from "./pages/CaseStudies";
 
 // Service Detail Pages
 import ServiceDetail from "./pages/ServiceDetail";
@@ -84,6 +88,7 @@ function App() {
               <Route path="/portfolio" element={<Portfolio />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/quote" element={<RequestQuote />} />
+              <Route path="/request-quote" element={<RequestQuote />} />
               <Route path="/book-visit" element={<BookVisit />} />
               <Route path="/blog" element={<Blog />} />
               <Route path="/blog/:slug" element={<BlogPost />} />
@@ -91,6 +96,13 @@ function App() {
               <Route path="/submit-testimonial" element={<SubmitTestimonial />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />
+
+              {/* New Routes */}
+              <Route path="/news" element={<News />} />
+              <Route path="/news/:id" element={<BlogPost />} />
+              <Route path="/careers" element={<Careers />} />
+              <Route path="/case-studies" element={<CaseStudies />} />
+              <Route path="/case-studies/:id" element={<CaseStudies />} />
 
               {/* Additional Pages */}
               <Route path="/team" element={<Team />} />
@@ -107,6 +119,7 @@ function App() {
 
               {/* Admin Routes */}
               <Route path="/admin" element={<AdminAccess />} />
+              <Route path="/admin-access" element={<AdminAccess />} />
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
               <Route path="/admin/invoices" element={<AdminInvoices />} />
               <Route path="/admin/clients" element={<AdminClients />} />
