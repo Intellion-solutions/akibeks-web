@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,6 +13,7 @@ import { useAdmin } from "@/contexts/AdminContext";
 import AdminLogin from "@/components/AdminLogin";
 import AdminHeader from "@/components/AdminHeader";
 import { useToast } from "@/hooks/use-toast";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 interface Testimonial {
   id: string;
@@ -346,10 +346,16 @@ const AdminTestimonials = () => {
           {filteredTestimonials.map(testimonial => (
             <Card key={testimonial.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-lg">{testimonial.client_name}</CardTitle>
-                    <CardDescription>{testimonial.client_role}</CardDescription>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <UserAvatar 
+                      name={testimonial.client_name}
+                      size="md"
+                    />
+                    <div>
+                      <CardTitle className="text-lg">{testimonial.client_name}</CardTitle>
+                      <CardDescription>{testimonial.client_role}</CardDescription>
+                    </div>
                   </div>
                   <div className="flex items-center space-x-2">
                     {testimonial.is_featured && (
@@ -382,8 +388,16 @@ const AdminTestimonials = () => {
                       </DialogTrigger>
                       <DialogContent className="max-w-2xl">
                         <DialogHeader>
-                          <DialogTitle>{selectedTestimonial?.client_name}</DialogTitle>
-                          <DialogDescription>{selectedTestimonial?.client_role}</DialogDescription>
+                          <div className="flex items-center space-x-3 mb-4">
+                            <UserAvatar 
+                              name={selectedTestimonial?.client_name}
+                              size="lg"
+                            />
+                            <div>
+                              <DialogTitle>{selectedTestimonial?.client_name}</DialogTitle>
+                              <DialogDescription>{selectedTestimonial?.client_role}</DialogDescription>
+                            </div>
+                          </div>
                         </DialogHeader>
                         <div className="space-y-4">
                           <div className="flex items-center space-x-1">

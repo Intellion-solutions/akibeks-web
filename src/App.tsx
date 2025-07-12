@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import AuthGuard from './components/AuthGuard';
 import Home from './pages/Home';
 import About from './pages/About';
 import Services from './pages/Services';
@@ -84,24 +85,24 @@ function App() {
           <Route path="/resources" element={<Resources />} />
           <Route path="/service/:serviceId" element={<ServiceDetail />} />
           
-          {/* Admin Routes */}
+          {/* Admin Routes - Protected */}
           <Route path="/admin-access" element={<AdminAccess />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/projects" element={<AdminProjects />} />
-          <Route path="/admin/clients" element={<AdminClients />} />
-          <Route path="/admin/invoices" element={<AdminInvoices />} />
-          <Route path="/admin/quotes" element={<AdminQuotes />} />
-          <Route path="/admin/tasks" element={<AdminTasks />} />
-          <Route path="/admin/documents" element={<AdminDocuments />} />
-          <Route path="/admin/inventory" element={<AdminInventory />} />
-          <Route path="/admin/users" element={<AdminUsers />} />
-          <Route path="/admin/settings" element={<AdminSettings />} />
-          <Route path="/admin/analytics" element={<AdminAnalytics />} />
-          <Route path="/admin/reports" element={<AdminReports />} />
-          <Route path="/admin/testimonials" element={<AdminTestimonials />} />
-          <Route path="/admin/templates" element={<AdminTemplates />} />
-          <Route path="/admin/letterheads" element={<AdminLetterheads />} />
-          <Route path="/admin/backup" element={<AdminBackup />} />
+          <Route path="/admin" element={<AuthGuard><AdminDashboard /></AuthGuard>} />
+          <Route path="/admin/projects" element={<AuthGuard><AdminProjects /></AuthGuard>} />
+          <Route path="/admin/clients" element={<AuthGuard><AdminClients /></AuthGuard>} />
+          <Route path="/admin/invoices" element={<AuthGuard><AdminInvoices /></AuthGuard>} />
+          <Route path="/admin/quotes" element={<AuthGuard><AdminQuotes /></AuthGuard>} />
+          <Route path="/admin/tasks" element={<AuthGuard><AdminTasks /></AuthGuard>} />
+          <Route path="/admin/documents" element={<AuthGuard><AdminDocuments /></AuthGuard>} />
+          <Route path="/admin/inventory" element={<AuthGuard><AdminInventory /></AuthGuard>} />
+          <Route path="/admin/users" element={<AuthGuard><AdminUsers /></AuthGuard>} />
+          <Route path="/admin/settings" element={<AuthGuard><AdminSettings /></AuthGuard>} />
+          <Route path="/admin/analytics" element={<AuthGuard><AdminAnalytics /></AuthGuard>} />
+          <Route path="/admin/reports" element={<AuthGuard><AdminReports /></AuthGuard>} />
+          <Route path="/admin/testimonials" element={<AuthGuard><AdminTestimonials /></AuthGuard>} />
+          <Route path="/admin/templates" element={<AuthGuard><AdminTemplates /></AuthGuard>} />
+          <Route path="/admin/letterheads" element={<AuthGuard><AdminLetterheads /></AuthGuard>} />
+          <Route path="/admin/backup" element={<AuthGuard><AdminBackup /></AuthGuard>} />
           
           {/* Public milestone viewer */}
           <Route path="/milestone/:token" element={<MilestoneViewer />} />
