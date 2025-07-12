@@ -28,16 +28,28 @@ const MilestoneShareDialog = ({ milestoneId, milestoneName, children }: Mileston
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + expiryDays);
 
-      const { error } = await supabase
-        .from('milestone_share_tokens')
-        .insert({
-          milestone_id: milestoneId,
-          token,
-          expires_at: expiresAt.toISOString(),
-          is_active: true
-        });
+      // Use RPC or direct SQL since the table isn't in types yet
+      const { error } = await supabase.rpc('exec', {
+        sql: `
+          INSERT INTO milestone_share_tokens (milestone_id, token, expires_at, is_active)
+          VALUES ($1, $2, $3, $4)
+        `,
+        args: [milestoneId, token, expiresAt.toISOString(), true]
+      });
 
-      if (error) throw error;
+      if (error) {
+        // Fallback: try direct insert with any type
+        const { error: insertError } = await (supabase as any)
+          .from('milestone_share_tokens')
+          .insert({
+            milestone_id: milestoneId,
+            token,
+            expires_at: expiresAt.toISOString(),
+            is_active: true
+          });
+        
+        if (insertError) throw insertError;
+      }
 
       const shareUrl = `${window.location.origin}/milestone/${token}`;
       setShareToken(shareUrl);

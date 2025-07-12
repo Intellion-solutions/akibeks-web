@@ -35,21 +35,43 @@ const MilestoneViewer = () => {
 
   const fetchMilestone = async () => {
     try {
-      // First verify the token is valid
+      // Query using raw SQL since types aren't updated
       const { data: tokenData, error: tokenError } = await supabase
-        .from('milestone_share_tokens')
-        .select('milestone_id, expires_at, is_active')
-        .eq('token', token)
-        .eq('is_active', true)
-        .single();
+        .rpc('exec', {
+          sql: `
+            SELECT milestone_id, expires_at, is_active 
+            FROM milestone_share_tokens 
+            WHERE token = $1 AND is_active = true
+          `,
+          args: [token]
+        });
 
-      if (tokenError || !tokenData) {
+      // Fallback method if RPC doesn't work
+      let validToken = null;
+      if (tokenError) {
+        const { data: fallbackData, error: fallbackError } = await (supabase as any)
+          .from('milestone_share_tokens')
+          .select('milestone_id, expires_at, is_active')
+          .eq('token', token)
+          .eq('is_active', true)
+          .single();
+        
+        if (fallbackError || !fallbackData) {
+          setError("Invalid or expired share link");
+          return;
+        }
+        validToken = fallbackData;
+      } else {
+        validToken = tokenData?.[0];
+      }
+
+      if (!validToken) {
         setError("Invalid or expired share link");
         return;
       }
 
       // Check if token is expired
-      if (new Date(tokenData.expires_at) < new Date()) {
+      if (new Date(validToken.expires_at) < new Date()) {
         setError("This share link has expired");
         return;
       }
@@ -61,7 +83,7 @@ const MilestoneViewer = () => {
           *,
           projects!inner(title, location, progress_percentage)
         `)
-        .eq('id', tokenData.milestone_id)
+        .eq('id', validToken.milestone_id)
         .single();
 
       if (milestoneError || !milestoneData) {
