@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 interface CompanySettings {
   company_name?: string;
@@ -42,11 +43,14 @@ interface CompanySettings {
 
 interface AdminContextType {
   isAuthenticated: boolean;
-  login: (password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   companySettings: CompanySettings;
   loadCompanySettings: () => Promise<void>;
   updateCompanySettings: (settings: Partial<CompanySettings>) => Promise<void>;
+  loginAttempts: number;
+  isLocked: boolean;
+  sessionExpiry: Date | null;
 }
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
@@ -63,10 +67,78 @@ interface AdminProviderProps {
   children: ReactNode;
 }
 
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
+const SESSION_DURATION = 60 * 60 * 1000; // 1 hour
+
 export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [companySettings, setCompanySettings] = useState<CompanySettings>({});
+  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [isLocked, setIsLocked] = useState(false);
+  const [sessionExpiry, setSessionExpiry] = useState<Date | null>(null);
+  const [lastActivity, setLastActivity] = useState(Date.now());
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  // Activity tracking for session management
+  useEffect(() => {
+    const handleActivity = () => {
+      setLastActivity(Date.now());
+    };
+
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+    events.forEach(event => {
+      document.addEventListener(event, handleActivity, true);
+    });
+
+    return () => {
+      events.forEach(event => {
+        document.removeEventListener(event, handleActivity, true);
+      });
+    };
+  }, []);
+
+  // Session timeout monitoring
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const checkSession = () => {
+      const now = Date.now();
+      const timeSinceActivity = now - lastActivity;
+      
+      if (timeSinceActivity > SESSION_DURATION) {
+        logout();
+        toast({
+          title: "Session Expired",
+          description: "Your session has expired due to inactivity.",
+          variant: "destructive"
+        });
+      }
+    };
+
+    const interval = setInterval(checkSession, 60000); // Check every minute
+    return () => clearInterval(interval);
+  }, [isAuthenticated, lastActivity]);
+
+  // Check lockout status
+  useEffect(() => {
+    const lockoutEnd = localStorage.getItem('admin_lockout_end');
+    if (lockoutEnd) {
+      const lockoutEndTime = parseInt(lockoutEnd);
+      if (Date.now() < lockoutEndTime) {
+        setIsLocked(true);
+        const attempts = localStorage.getItem('admin_login_attempts');
+        setLoginAttempts(attempts ? parseInt(attempts) : 0);
+      } else {
+        // Clear expired lockout
+        localStorage.removeItem('admin_lockout_end');
+        localStorage.removeItem('admin_login_attempts');
+        setIsLocked(false);
+        setLoginAttempts(0);
+      }
+    }
+  }, []);
 
   const loadCompanySettings = async () => {
     try {
@@ -76,13 +148,11 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
 
       if (error) throw error;
 
-      // Convert array of settings to object
       const settingsObj: CompanySettings = {};
       data?.forEach((setting) => {
         const key = setting.setting_key as keyof CompanySettings;
         let value: any = setting.setting_value;
         
-        // Convert string values to appropriate types
         if (key === 'tax_rate' || key === 'session_timeout' || key === 'login_attempts') {
           value = parseFloat(value) || 0;
         } else if (['email_notifications', 'project_updates', 'payment_reminders', 'quote_expiry_alerts', 'system_maintenance', 'auto_archive', 'two_factor_auth', 'ip_restrictions', 'sidebar_collapsed', 'compact_mode', 'show_animations'].includes(key)) {
@@ -105,13 +175,11 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
 
   const updateCompanySettings = async (settings: Partial<CompanySettings>) => {
     try {
-      // Convert settings object to array format for database
       const settingsArray = Object.entries(settings).map(([key, value]) => ({
         setting_key: key,
         setting_value: String(value),
       }));
 
-      // Upsert each setting
       for (const setting of settingsArray) {
         const { error } = await supabase
           .from('company_settings')
@@ -120,7 +188,6 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
         if (error) throw error;
       }
 
-      // Reload settings
       await loadCompanySettings();
 
       toast({
@@ -138,29 +205,113 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
   };
 
   useEffect(() => {
-    // Check if user is already authenticated
     const authStatus = localStorage.getItem('admin_authenticated');
-    if (authStatus === 'true') {
-      setIsAuthenticated(true);
-      loadCompanySettings();
+    const sessionExpiryStr = localStorage.getItem('admin_session_expiry');
+    
+    if (authStatus === 'true' && sessionExpiryStr) {
+      const expiryDate = new Date(sessionExpiryStr);
+      if (expiryDate > new Date()) {
+        setIsAuthenticated(true);
+        setSessionExpiry(expiryDate);
+        loadCompanySettings();
+      } else {
+        // Session expired
+        localStorage.removeItem('admin_authenticated');
+        localStorage.removeItem('admin_session_expiry');
+      }
     }
   }, []);
 
-  const login = async (password: string): Promise<boolean> => {
-    // Simple password check - in production, this should be more secure
-    if (password === 'admin123') {
-      setIsAuthenticated(true);
-      localStorage.setItem('admin_authenticated', 'true');
-      await loadCompanySettings();
-      return true;
+  const login = async (email: string, password: string): Promise<boolean> => {
+    // Check if locked out
+    if (isLocked) {
+      const lockoutEnd = localStorage.getItem('admin_lockout_end');
+      if (lockoutEnd) {
+        const remainingTime = Math.ceil((parseInt(lockoutEnd) - Date.now()) / 60000);
+        toast({
+          title: "Account Locked",
+          description: `Too many failed attempts. Try again in ${remainingTime} minutes.`,
+          variant: "destructive"
+        });
+        return false;
+      }
     }
-    return false;
+
+    // Check credentials
+    if (email === 'admin@akibeks.com' && password === 'admin123') {
+      // Reset login attempts on successful login
+      setLoginAttempts(0);
+      setIsLocked(false);
+      localStorage.removeItem('admin_login_attempts');
+      localStorage.removeItem('admin_lockout_end');
+      
+      // Set authentication
+      setIsAuthenticated(true);
+      const expiryDate = new Date(Date.now() + SESSION_DURATION);
+      setSessionExpiry(expiryDate);
+      
+      localStorage.setItem('admin_authenticated', 'true');
+      localStorage.setItem('admin_session_expiry', expiryDate.toISOString());
+      
+      await loadCompanySettings();
+      
+      // Log successful login
+      console.log(`Admin login successful at ${new Date().toISOString()}`);
+      
+      toast({
+        title: "Login Successful",
+        description: "Welcome to the admin panel!",
+      });
+      
+      return true;
+    } else {
+      // Handle failed login
+      const newAttempts = loginAttempts + 1;
+      setLoginAttempts(newAttempts);
+      localStorage.setItem('admin_login_attempts', newAttempts.toString());
+      
+      if (newAttempts >= MAX_LOGIN_ATTEMPTS) {
+        const lockoutEnd = Date.now() + LOCKOUT_DURATION;
+        setIsLocked(true);
+        localStorage.setItem('admin_lockout_end', lockoutEnd.toString());
+        
+        toast({
+          title: "Account Locked",
+          description: `Too many failed attempts. Account locked for 15 minutes.`,
+          variant: "destructive"
+        });
+      } else {
+        const remainingAttempts = MAX_LOGIN_ATTEMPTS - newAttempts;
+        toast({
+          title: "Login Failed",
+          description: `Invalid credentials. ${remainingAttempts} attempts remaining.`,
+          variant: "destructive"
+        });
+      }
+      
+      // Log failed login attempt
+      console.warn(`Failed admin login attempt at ${new Date().toISOString()} - Email: ${email}`);
+      
+      return false;
+    }
   };
 
   const logout = () => {
     setIsAuthenticated(false);
+    setSessionExpiry(null);
     localStorage.removeItem('admin_authenticated');
+    localStorage.removeItem('admin_session_expiry');
     setCompanySettings({});
+    
+    // Log logout
+    console.log(`Admin logout at ${new Date().toISOString()}`);
+    
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out.",
+    });
+    
+    navigate('/admin-access');
   };
 
   return (
@@ -170,7 +321,10 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
       logout,
       companySettings,
       loadCompanySettings,
-      updateCompanySettings
+      updateCompanySettings,
+      loginAttempts,
+      isLocked,
+      sessionExpiry
     }}>
       {children}
     </AdminContext.Provider>
