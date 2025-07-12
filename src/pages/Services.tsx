@@ -1,374 +1,241 @@
 
-import { useState } from "react";
-import { Helmet } from 'react-helmet-async';
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import SEOHead from "@/components/SEOHead";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Users, TrendingUp, Wrench, CheckCircle, ArrowRight, Award, Shield, Zap, Plus } from "lucide-react";
-import { Link } from "react-router-dom";
-import ServiceRequestForm from "@/components/ServiceRequestForm";
+import { Separator } from "@/components/ui/separator";
+import { CheckCircle, ArrowRight, Phone, Mail } from "lucide-react";
+import { SEOHead } from "@/components/SEOHead";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+interface Service {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  base_price: number;
+  unit: string;
+  is_active: boolean;
+}
 
 const Services = () => {
-  const [showRequestForm, setShowRequestForm] = useState(false);
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-  const services = [
-    {
-      id: "structural",
-      title: "Structural Engineering",
-      description: "Advanced structural analysis and design solutions for all types of construction projects.",
-      icon: Building2,
-      features: [
-        "Seismic Analysis & Design",
-        "3D Structural Modeling",
-        "Foundation Engineering",
-        "Steel & Concrete Design",
-        "Structural Health Monitoring",
-        "Retrofit & Strengthening"
-      ],
-      benefits: [
-        "Earthquake-resistant structures",
-        "Optimized material usage",
-        "Cost-effective solutions",
-        "Compliance with building codes"
-      ],
-      price: "From KSh 50,000",
-      duration: "2-8 weeks",
-      color: "from-blue-500 to-cyan-500"
-    },
-    {
-      id: "project-management",
-      title: "Project Management",
-      description: "Comprehensive project oversight ensuring timely delivery and quality execution.",
-      icon: Users,
-      features: [
-        "Project Planning & Scheduling",
-        "Resource Management",
-        "Quality Control Systems",
-        "Risk Assessment & Mitigation",
-        "Progress Monitoring",
-        "Stakeholder Communication"
-      ],
-      benefits: [
-        "On-time project delivery",
-        "Budget optimization",
-        "Quality assurance",
-        "Reduced project risks"
-      ],
-      price: "From KSh 100,000",
-      duration: "Project duration",
-      color: "from-green-500 to-emerald-500"
-    },
-    {
-      id: "construction",
-      title: "Construction Services",
-      description: "Full-scale construction services from groundbreaking to final handover.",
-      icon: Wrench,
-      features: [
-        "Site Preparation & Excavation",
-        "Foundation Construction",
-        "Structural Construction",
-        "MEP Installation",
-        "Finishing Works",
-        "Landscaping & External Works"
-      ],
-      benefits: [
-        "Turnkey solutions",
-        "Quality craftsmanship",
-        "Timely completion",
-        "Warranty coverage"
-      ],
-      price: "From KSh 25,000/m²",
-      duration: "3-18 months",
-      color: "from-orange-500 to-red-500"
-    },
-    {
-      id: "consulting",
-      title: "Engineering Consulting",
-      description: "Expert technical consulting and advisory services for complex engineering challenges.",
-      icon: TrendingUp,
-      features: [
-        "Feasibility Studies",
-        "Technical Due Diligence",
-        "Code Compliance Review",
-        "Value Engineering",
-        "Sustainability Consulting",
-        "Expert Witness Services"
-      ],
-      benefits: [
-        "Informed decision making",
-        "Risk mitigation",
-        "Cost optimization",
-        "Regulatory compliance"
-      ],
-      price: "From KSh 30,000",
-      duration: "1-4 weeks",
-      color: "from-purple-500 to-indigo-500"
-    }
-  ];
+  useEffect(() => {
+    fetchServices();
+  }, []);
 
-  const processSteps = [
-    {
-      step: "01",
-      title: "Initial Consultation",
-      description: "We discuss your project requirements, goals, and constraints to understand your vision."
-    },
-    {
-      step: "02",
-      title: "Proposal & Planning",
-      description: "We develop a comprehensive proposal with detailed scope, timeline, and budget."
-    },
-    {
-      step: "03",
-      title: "Design & Engineering",
-      description: "Our expert team creates detailed designs and engineering solutions for your project."
-    },
-    {
-      step: "04",
-      title: "Construction & Delivery",
-      description: "We execute the project with precision, maintaining quality and timeline commitments."
-    }
-  ];
+  const fetchServices = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('services')
+        .select('*')
+        .eq('is_active', true)
+        .order('category', { ascending: true });
 
-  const whyChooseUs = [
-    {
-      icon: Award,
-      title: "Certified Excellence",
-      description: "NCA registered, ISO certified, and LEED accredited professionals."
-    },
-    {
-      icon: Shield,
-      title: "Quality Assurance",
-      description: "Rigorous quality control processes and comprehensive warranties."
-    },
-    {
-      icon: Zap,
-      title: "Innovation",
-      description: "Cutting-edge technology and sustainable construction practices."
+      if (error) throw error;
+      setServices(data || []);
+    } catch (error) {
+      console.error('Error fetching services:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load services. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  const getCategoryColor = (category: string) => {
+    const colors = {
+      construction: "bg-blue-100 text-blue-800",
+      electrical: "bg-yellow-100 text-yellow-800",
+      plumbing: "bg-green-100 text-green-800",
+      renovation: "bg-purple-100 text-purple-800",
+      civil_works: "bg-red-100 text-red-800",
+      project_management: "bg-indigo-100 text-indigo-800"
+    };
+    return colors[category as keyof typeof colors] || "bg-gray-100 text-gray-800";
+  };
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('en-KE', {
+      style: 'currency',
+      currency: 'KES',
+      minimumFractionDigits: 0,
+    }).format(price);
+  };
+
+  const groupedServices = services.reduce((acc, service) => {
+    const category = service.category;
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(service);
+    return acc;
+  }, {} as Record<string, Service[]>);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading services...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
       <SEOHead 
-        title="Engineering & Construction Services - AKIBEKS Engineering Solutions"
-        description="Comprehensive engineering and construction services in Kenya. Structural engineering, project management, construction, and consulting services with 15+ years of experience."
-        keywords="engineering services Kenya, construction services, structural engineering, project management, building construction"
-        url="https://akibeks.co.ke/services"
+        title="Our Services | Professional Construction & Engineering Solutions"
+        description="Comprehensive construction, electrical, plumbing, and project management services. Get quality solutions for your building needs in Kenya."
       />
       
-      <Navbar />
-      
-      <div className="pt-16">
+      <div className="min-h-screen bg-gray-50">
         {/* Hero Section */}
-        <section className="bg-gradient-to-r from-blue-900 to-blue-800 text-white py-20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center">
-              <h1 className="text-4xl md:text-6xl font-bold mb-6">Our Services</h1>
-              <p className="text-xl md:text-2xl text-blue-100 max-w-3xl mx-auto mb-8">
-                Comprehensive engineering and construction solutions tailored to your needs
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" className="bg-orange-500 hover:bg-orange-600" asChild>
-                  <Link to="/create-project">
-                    <Plus className="w-5 h-5 mr-2" />
-                    Start Your Project
-                  </Link>
-                </Button>
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-900">
-                  <Link to="/request-quote">Get Quote</Link>
-                </Button>
-              </div>
-            </div>
+        <section className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 className="text-4xl md:text-5xl font-bold mb-6">
+              Professional Construction Services
+            </h1>
+            <p className="text-xl mb-8 max-w-3xl mx-auto">
+              From foundation to finish, we provide comprehensive construction and engineering solutions 
+              tailored to your specific needs and budget.
+            </p>
+            <Button size="lg" variant="secondary" asChild>
+              <a href="/request-quote">Get Free Quote</a>
+            </Button>
           </div>
         </section>
 
         {/* Services Grid */}
-        <section className="py-20">
+        <section className="py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <Badge className="mb-4 bg-blue-100 text-blue-800 px-4 py-2">Our Expertise</Badge>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                Professional Engineering Services
-              </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                From concept to completion, we deliver excellence in every aspect of construction and engineering.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {services.map((service, index) => (
-                <Card key={service.id} className="group hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 overflow-hidden">
-                  <div className="relative">
-                    <div className={`absolute inset-0 bg-gradient-to-br ${service.color} opacity-5 group-hover:opacity-10 transition-opacity duration-500`}></div>
-                    <CardHeader className="relative z-10">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${service.color} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
-                          <service.icon className="w-8 h-8 text-white" />
-                        </div>
-                        <div className="text-right">
-                          <div className="text-sm text-gray-500">Starting from</div>
-                          <div className="text-lg font-bold text-gray-900">{service.price}</div>
-                        </div>
-                      </div>
-                      <CardTitle className="text-2xl font-bold text-gray-900 mb-2">
-                        {service.title}
-                      </CardTitle>
-                      <CardDescription className="text-gray-600 leading-relaxed text-base">
-                        {service.description}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="relative z-10">
-                      <Tabs defaultValue="features" className="w-full">
-                        <TabsList className="grid w-full grid-cols-2">
-                          <TabsTrigger value="features">Features</TabsTrigger>
-                          <TabsTrigger value="benefits">Benefits</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="features" className="mt-4">
-                          <ul className="space-y-2">
-                            {service.features.map((feature, idx) => (
-                              <li key={idx} className="flex items-center text-sm">
-                                <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                                {feature}
-                              </li>
-                            ))}
-                          </ul>
-                        </TabsContent>
-                        <TabsContent value="benefits" className="mt-4">
-                          <ul className="space-y-2">
-                            {service.benefits.map((benefit, idx) => (
-                              <li key={idx} className="flex items-center text-sm">
-                                <CheckCircle className="w-4 h-4 text-blue-500 mr-2 flex-shrink-0" />
-                                {benefit}
-                              </li>
-                            ))}
-                          </ul>
-                        </TabsContent>
-                      </Tabs>
-                      
-                      <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                        <div className="flex justify-between items-center text-sm">
-                          <span className="text-gray-600">Typical Duration:</span>
-                          <span className="font-medium">{service.duration}</span>
-                        </div>
-                      </div>
-                      
-                      <div className="flex gap-2 mt-6">
-                        <Button className="flex-1 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300" asChild>
-                          <Link to={`/services/${service.id}`}>
-                            Learn More
-                            <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                          </Link>
-                        </Button>
-                        <Button variant="outline" onClick={() => setShowRequestForm(true)}>
-                          Request Quote
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Process Section */}
-        <section className="py-20 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <Badge className="mb-4 bg-purple-100 text-purple-800 px-4 py-2">Our Process</Badge>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                How We Work
-              </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Our proven process ensures successful project delivery from start to finish.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {processSteps.map((step, index) => (
-                <div key={index} className="text-center">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-white font-bold text-xl">{step.step}</span>
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2">{step.title}</h3>
-                  <p className="text-gray-600">{step.description}</p>
+            {Object.entries(groupedServices).map(([category, categoryServices]) => (
+              <div key={category} className="mb-12">
+                <div className="text-center mb-8">
+                  <h2 className="text-3xl font-bold text-gray-900 mb-4 capitalize">
+                    {category.replace('_', ' ')} Services
+                  </h2>
+                  <Separator className="w-24 mx-auto" />
                 </div>
-              ))}
-            </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {categoryServices.map((service) => (
+                    <Card key={service.id} className="hover:shadow-lg transition-shadow duration-300">
+                      <CardHeader>
+                        <div className="flex items-center justify-between mb-2">
+                          <Badge className={getCategoryColor(service.category)}>
+                            {service.category.replace('_', ' ')}
+                          </Badge>
+                          <span className="text-2xl font-bold text-blue-600">
+                            {formatPrice(service.base_price)}
+                          </span>
+                        </div>
+                        <CardTitle className="text-xl">{service.name}</CardTitle>
+                        <CardDescription className="text-sm text-gray-600">
+                          per {service.unit}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-gray-600 mb-6">{service.description}</p>
+                        <div className="flex items-center mb-4">
+                          <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
+                          <span className="text-sm">Professional Quality</span>
+                        </div>
+                        <div className="flex items-center mb-4">
+                          <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
+                          <span className="text-sm">Licensed & Insured</span>
+                        </div>
+                        <div className="flex items-center mb-6">
+                          <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
+                          <span className="text-sm">24/7 Support</span>
+                        </div>
+                        <Button className="w-full" asChild>
+                          <a href="/request-quote">
+                            Get Quote <ArrowRight className="w-4 h-4 ml-2" />
+                          </a>
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </section>
 
         {/* Why Choose Us */}
-        <section className="py-20 bg-gradient-to-br from-gray-50 to-blue-50">
+        <section className="bg-white py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <Badge className="mb-4 bg-green-100 text-green-800 px-4 py-2">Why Choose AKIBEKS</Badge>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                Excellence You Can Trust
-              </h2>
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Why Choose Our Services?</h2>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                We combine years of experience with modern techniques to deliver exceptional results
+              </p>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {whyChooseUs.map((item, index) => (
-                <div key={index} className="text-center">
-                  <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <item.icon className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
-                  <p className="text-gray-600">{item.description}</p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle className="w-8 h-8 text-blue-600" />
                 </div>
-              ))}
+                <h3 className="text-xl font-semibold mb-2">Quality Assured</h3>
+                <p className="text-gray-600">All work meets industry standards and regulations</p>
+              </div>
+              
+              <div className="text-center">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Phone className="w-8 h-8 text-green-600" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">24/7 Support</h3>
+                <p className="text-gray-600">Round-the-clock customer service and emergency support</p>
+              </div>
+              
+              <div className="text-center">
+                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Mail className="w-8 h-8 text-purple-600" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">Licensed Team</h3>
+                <p className="text-gray-600">Certified professionals with extensive experience</p>
+              </div>
+              
+              <div className="text-center">
+                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <ArrowRight className="w-8 h-8 text-orange-600" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">Timely Delivery</h3>
+                <p className="text-gray-600">Projects completed on schedule and within budget</p>
+              </div>
             </div>
           </div>
         </section>
 
         {/* CTA Section */}
-        <section className="py-20 bg-gradient-to-r from-blue-900 to-purple-900 text-white">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              Ready to Start Your Project?
-            </h2>
-            <p className="text-xl mb-8 opacity-90">
-              Get in touch with our expert team and let's bring your vision to life.
+        <section className="bg-gray-900 text-white py-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 className="text-3xl font-bold mb-4">Ready to Start Your Project?</h2>
+            <p className="text-xl mb-8 max-w-2xl mx-auto">
+              Get a personalized quote for your construction needs. Our experts are ready to help you bring your vision to life.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-white text-blue-900 hover:bg-gray-100" asChild>
-                <Link to="/create-project">
-                  Start Project
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Link>
+              <Button size="lg" variant="secondary" asChild>
+                <a href="/request-quote">Request Quote</a>
               </Button>
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-900" asChild>
-                <Link to="/contact">Contact Us</Link>
+              <Button size="lg" variant="outline" asChild>
+                <a href="/contact">Contact Us</a>
               </Button>
             </div>
           </div>
         </section>
       </div>
-
-      {/* Service Request Form Modal */}
-      {showRequestForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold">Request Service Quote</h2>
-                <Button variant="ghost" onClick={() => setShowRequestForm(false)}>
-                  ×
-                </Button>
-              </div>
-              <ServiceRequestForm onSuccess={() => setShowRequestForm(false)} />
-            </div>
-          </div>
-        </div>
-      )}
-
-      <Footer />
-    </div>
+    </>
   );
 };
 

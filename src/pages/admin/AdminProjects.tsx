@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,91 +10,101 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Building, Calendar, Users, MapPin, Edit } from "lucide-react";
+import { Plus, Search, Building, Calendar, Users, MapPin, Edit, Share2 } from "lucide-react";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { supabase } from "@/integrations/supabase/client";
+import MilestoneShareDialog from "@/components/admin/MilestoneShareDialog";
+
+interface Project {
+  id: string;
+  title: string;
+  description: string;
+  location: string;
+  status: string;
+  start_date: string;
+  end_date: string;
+  budget: number;
+  progress_percentage: number;
+  clients?: {
+    full_name: string;
+  };
+  milestones?: Milestone[];
+}
+
+interface Milestone {
+  id: string;
+  title: string;
+  description: string;
+  target_date: string;
+  is_completed: boolean;
+}
 
 const AdminProjects = () => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [showCreateProject, setShowCreateProject] = useState(false);
-
-  const [projects] = useState([
-    {
-      id: 1,
-      name: "Westlands Residential Complex",
-      client: "John Doe",
-      location: "Westlands, Nairobi",
-      type: "Residential",
-      status: "in_progress",
-      progress: 75,
-      startDate: "2023-09-01",
-      endDate: "2024-03-15",
-      budget: 4500000,
-      spent: 3375000,
-      teamMembers: ["Engineer A", "Foreman B", "Architect C"],
-      description: "3-bedroom house with modern amenities and landscaping"
-    },
-    {
-      id: 2,
-      name: "Kilimani Office Tower",
-      client: "Jane Smith",
-      location: "Kilimani, Nairobi",
-      type: "Commercial",
-      status: "in_progress",
-      progress: 45,
-      startDate: "2023-11-01",
-      endDate: "2024-06-20",
-      budget: 8500000,
-      spent: 3825000,
-      teamMembers: ["Engineer D", "Project Manager E"],
-      description: "20-unit office complex with modern facilities"
-    },
-    {
-      id: 3,
-      name: "Karen Villa Renovation",
-      client: "Mike Wilson",
-      location: "Karen, Nairobi",
-      type: "Renovation",
-      status: "completed",
-      progress: 100,
-      startDate: "2023-10-01",
-      endDate: "2023-12-15",
-      budget: 1800000,
-      spent: 1750000,
-      teamMembers: ["Interior Designer F", "Contractor G"],
-      description: "Complete kitchen and bathroom renovation"
-    },
-    {
-      id: 4,
-      name: "Kiambu Civil Works",
-      client: "Sarah Mwangi",
-      location: "Kiambu",
-      type: "Civil Works",
-      status: "planning",
-      progress: 15,
-      startDate: "2024-02-01",
-      endDate: "2024-08-30",
-      budget: 15000000,
-      spent: 2250000,
-      teamMembers: ["Civil Engineer H", "Surveyor I"],
-      description: "Road construction and drainage system"
-    }
-  ]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [newProject, setNewProject] = useState({
-    name: "",
-    client: "",
+    title: "",
+    client_id: "",
     location: "",
-    type: "",
     budget: "",
-    startDate: "",
-    endDate: "",
+    start_date: "",
+    end_date: "",
     description: ""
   });
 
+  useEffect(() => {
+    fetchProjects();
+    fetchClients();
+  }, []);
+
+  const fetchProjects = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select(`
+          *,
+          clients(full_name),
+          project_milestones(id, title, description, target_date, is_completed)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setProjects(data || []);
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load projects.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchClients = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('*')
+        .order('full_name');
+
+      if (error) throw error;
+      setClients(data || []);
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+    }
+  };
+
   const filteredProjects = projects.filter(project => {
-    const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         project.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         project.clients?.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          project.location.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === "all" || project.status === filterStatus;
     return matchesSearch && matchesStatus;
@@ -120,155 +130,166 @@ const AdminProjects = () => {
     }
   };
 
-  const handleCreateProject = () => {
-    console.log("Creating new project:", newProject);
-    toast({
-      title: "Project Created",
-      description: "New project has been added successfully.",
-    });
-    setShowCreateProject(false);
-    setNewProject({
-      name: "",
-      client: "",
-      location: "",
-      type: "",
-      budget: "",
-      startDate: "",
-      endDate: "",
-      description: ""
-    });
+  const handleCreateProject = async () => {
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .insert([{
+          ...newProject,
+          budget: parseFloat(newProject.budget) || 0
+        }]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Project Created",
+        description: "New project has been added successfully.",
+      });
+      
+      setShowCreateProject(false);
+      setNewProject({
+        title: "",
+        client_id: "",
+        location: "",
+        budget: "",
+        start_date: "",
+        end_date: "",
+        description: ""
+      });
+      
+      fetchProjects();
+    } catch (error) {
+      console.error('Error creating project:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create project.",
+        variant: "destructive",
+      });
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading projects...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Project Management</h1>
-              <p className="text-gray-600">Monitor and manage all construction projects</p>
-            </div>
-            <div className="flex gap-3">
-              <Button variant="outline" asChild>
-                <a href="/admin">Back to Dashboard</a>
+      <AdminPageHeader
+        title="Project Management"
+        description="Monitor and manage all construction projects"
+        actions={
+          <Dialog open={showCreateProject} onOpenChange={setShowCreateProject}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                New Project
               </Button>
-              <Dialog open={showCreateProject} onOpenChange={setShowCreateProject}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="w-4 h-4 mr-2" />
-                    New Project
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>Create New Project</DialogTitle>
-                    <DialogDescription>
-                      Add a new construction project to your portfolio
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="name">Project Name</Label>
-                        <Input
-                          id="name"
-                          value={newProject.name}
-                          onChange={(e) => setNewProject(prev => ({ ...prev, name: e.target.value }))}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="client">Client Name</Label>
-                        <Input
-                          id="client"
-                          value={newProject.client}
-                          onChange={(e) => setNewProject(prev => ({ ...prev, client: e.target.value }))}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="location">Location</Label>
-                        <Input
-                          id="location"
-                          value={newProject.location}
-                          onChange={(e) => setNewProject(prev => ({ ...prev, location: e.target.value }))}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="type">Project Type</Label>
-                        <Select onValueChange={(value) => setNewProject(prev => ({ ...prev, type: value }))}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Residential">Residential</SelectItem>
-                            <SelectItem value="Commercial">Commercial</SelectItem>
-                            <SelectItem value="Renovation">Renovation</SelectItem>
-                            <SelectItem value="Civil Works">Civil Works</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="budget">Budget (KSh)</Label>
-                        <Input
-                          id="budget"
-                          type="number"
-                          value={newProject.budget}
-                          onChange={(e) => setNewProject(prev => ({ ...prev, budget: e.target.value }))}
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <Label htmlFor="startDate">Start Date</Label>
-                          <Input
-                            id="startDate"
-                            type="date"
-                            value={newProject.startDate}
-                            onChange={(e) => setNewProject(prev => ({ ...prev, startDate: e.target.value }))}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="endDate">End Date</Label>
-                          <Input
-                            id="endDate"
-                            type="date"
-                            value={newProject.endDate}
-                            onChange={(e) => setNewProject(prev => ({ ...prev, endDate: e.target.value }))}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="description">Description</Label>
-                      <Textarea
-                        id="description"
-                        value={newProject.description}
-                        onChange={(e) => setNewProject(prev => ({ ...prev, description: e.target.value }))}
-                        placeholder="Describe the project scope and requirements..."
-                      />
-                    </div>
-
-                    <div className="flex justify-end gap-3">
-                      <Button variant="outline" onClick={() => setShowCreateProject(false)}>
-                        Cancel
-                      </Button>
-                      <Button onClick={handleCreateProject}>
-                        Create Project
-                      </Button>
-                    </div>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Create New Project</DialogTitle>
+                <DialogDescription>
+                  Add a new construction project to your portfolio
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="title">Project Title</Label>
+                    <Input
+                      id="title"
+                      value={newProject.title}
+                      onChange={(e) => setNewProject(prev => ({ ...prev, title: e.target.value }))}
+                    />
                   </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </div>
-        </div>
-      </div>
+                  <div>
+                    <Label htmlFor="client">Client</Label>
+                    <Select onValueChange={(value) => setNewProject(prev => ({ ...prev, client_id: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select client" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {clients.map((client) => (
+                          <SelectItem key={client.id} value={client.id}>
+                            {client.full_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="location">Location</Label>
+                    <Input
+                      id="location"
+                      value={newProject.location}
+                      onChange={(e) => setNewProject(prev => ({ ...prev, location: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="budget">Budget (KSh)</Label>
+                    <Input
+                      id="budget"
+                      type="number"
+                      value={newProject.budget}
+                      onChange={(e) => setNewProject(prev => ({ ...prev, budget: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="start_date">Start Date</Label>
+                    <Input
+                      id="start_date"
+                      type="date"
+                      value={newProject.start_date}
+                      onChange={(e) => setNewProject(prev => ({ ...prev, start_date: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="end_date">End Date</Label>
+                    <Input
+                      id="end_date"
+                      type="date"
+                      value={newProject.end_date}
+                      onChange={(e) => setNewProject(prev => ({ ...prev, end_date: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={newProject.description}
+                    onChange={(e) => setNewProject(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Describe the project scope and requirements..."
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3">
+                  <Button variant="outline" onClick={() => setShowCreateProject(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleCreateProject}>
+                    Create Project
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        }
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Cards */}
@@ -319,7 +340,7 @@ const AdminProjects = () => {
                 <div>
                   <p className="text-sm text-gray-600">Total Value</p>
                   <p className="text-2xl font-bold">
-                    KSh {projects.reduce((sum, p) => sum + p.budget, 0).toLocaleString()}
+                    KSh {projects.reduce((sum, p) => sum + (p.budget || 0), 0).toLocaleString()}
                   </p>
                 </div>
                 <MapPin className="w-8 h-8 text-blue-600" />
@@ -369,8 +390,8 @@ const AdminProjects = () => {
                     <div className="flex items-center gap-3 mb-4">
                       <span className="text-2xl">{getStatusIcon(project.status)}</span>
                       <div>
-                        <h3 className="text-xl font-semibold">{project.name}</h3>
-                        <p className="text-gray-600">{project.client}</p>
+                        <h3 className="text-xl font-semibold">{project.title}</h3>
+                        <p className="text-gray-600">{project.clients?.full_name}</p>
                       </div>
                       <Badge variant={getStatusColor(project.status)} className="ml-auto">
                         {project.status.replace("_", " ")}
@@ -383,45 +404,59 @@ const AdminProjects = () => {
                         <p className="font-medium">{project.location}</p>
                       </div>
                       <div>
-                        <span className="text-sm text-gray-600">Type:</span>
-                        <p className="font-medium">{project.type}</p>
-                      </div>
-                      <div>
                         <span className="text-sm text-gray-600">Budget:</span>
-                        <p className="font-medium">KSh {project.budget.toLocaleString()}</p>
+                        <p className="font-medium">KSh {project.budget?.toLocaleString()}</p>
                       </div>
                       <div>
                         <span className="text-sm text-gray-600">Start Date:</span>
-                        <p className="font-medium">{project.startDate}</p>
+                        <p className="font-medium">
+                          {project.start_date ? new Date(project.start_date).toLocaleDateString() : 'Not set'}
+                        </p>
                       </div>
                       <div>
                         <span className="text-sm text-gray-600">End Date:</span>
-                        <p className="font-medium">{project.endDate}</p>
-                      </div>
-                      <div>
-                        <span className="text-sm text-gray-600">Spent:</span>
-                        <p className="font-medium">KSh {project.spent.toLocaleString()}</p>
+                        <p className="font-medium">
+                          {project.end_date ? new Date(project.end_date).toLocaleDateString() : 'Not set'}
+                        </p>
                       </div>
                     </div>
 
                     <div className="mb-4">
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-sm font-medium">Progress</span>
-                        <span className="text-sm text-gray-600">{project.progress}%</span>
+                        <span className="text-sm text-gray-600">{project.progress_percentage || 0}%</span>
                       </div>
-                      <Progress value={project.progress} className="h-2" />
+                      <Progress value={project.progress_percentage || 0} className="h-2" />
                     </div>
 
-                    <p className="text-gray-600 mb-4">{project.description}</p>
+                    {project.description && (
+                      <p className="text-gray-600 mb-4">{project.description}</p>
+                    )}
 
-                    <div>
-                      <span className="text-sm text-gray-600">Team Members:</span>
-                      <div className="flex flex-wrap gap-2 mt-1">
-                        {project.teamMembers.map((member, index) => (
-                          <Badge key={index} variant="outline">{member}</Badge>
-                        ))}
+                    {/* Milestones */}
+                    {project.milestones && project.milestones.length > 0 && (
+                      <div className="mb-4">
+                        <h4 className="font-medium mb-2">Milestones ({project.milestones.length})</h4>
+                        <div className="space-y-2">
+                          {project.milestones.slice(0, 3).map((milestone) => (
+                            <div key={milestone.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                              <div className="flex items-center gap-2">
+                                <span className={`w-3 h-3 rounded-full ${milestone.is_completed ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                                <span className="text-sm">{milestone.title}</span>
+                              </div>
+                              <MilestoneShareDialog 
+                                milestoneId={milestone.id} 
+                                milestoneName={milestone.title}
+                              >
+                                <Button variant="ghost" size="sm">
+                                  <Share2 className="w-4 h-4" />
+                                </Button>
+                              </MilestoneShareDialog>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
 
                   <div className="flex flex-col gap-2 lg:w-48">
