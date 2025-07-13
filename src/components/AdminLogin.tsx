@@ -9,7 +9,10 @@ import { useAdmin } from '@/contexts/AdminContext';
 import { useToast } from '@/hooks/use-toast';
 
 const AdminLogin = () => {
-  const [password, setPassword] = useState('');
+  const [credentials, setCredentials] = useState({
+    email: 'admin@akibeks.com',
+    password: ''
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login } = useAdmin();
@@ -19,7 +22,7 @@ const AdminLogin = () => {
     e.preventDefault();
     setLoading(true);
     
-    const success = await login(password);
+    const success = await login(credentials.email, credentials.password);
     
     if (success) {
       toast({
@@ -29,7 +32,7 @@ const AdminLogin = () => {
     } else {
       toast({
         title: "Login Failed",
-        description: "Invalid password. Please try again.",
+        description: "Invalid credentials. Please try again.",
         variant: "destructive"
       });
     }
@@ -48,19 +51,30 @@ const AdminLogin = () => {
           </div>
           <CardTitle className="text-2xl">Admin Login</CardTitle>
           <CardDescription>
-            Enter your password to access the admin panel
+            Enter your credentials to access the admin panel
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={credentials.email}
+                onChange={(e) => setCredentials(prev => ({ ...prev, email: e.target.value }))}
+                placeholder="admin@akibeks.com"
+                required
+              />
+            </div>
             <div>
               <Label htmlFor="password">Password</Label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={credentials.password}
+                  onChange={(e) => setCredentials(prev => ({ ...prev, password: e.target.value }))}
                   placeholder="Enter admin password"
                   required
                 />
@@ -81,7 +95,9 @@ const AdminLogin = () => {
           </form>
           <div className="mt-4 p-3 bg-blue-50 rounded-lg">
             <p className="text-sm text-blue-700">
-              <strong>Demo Password:</strong> admin123
+              <strong>Demo Credentials:</strong><br />
+              Email: admin@akibeks.com<br />
+              Password: admin123
             </p>
           </div>
         </CardContent>
