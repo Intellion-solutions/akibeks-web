@@ -252,11 +252,40 @@ const AdminInvoices = () => {
       }
 
       const clientPhone = invoice.clients.phone.replace(/[^\d]/g, ''); // Remove non-digits
-      const invoiceUrl = `${window.location.origin}/invoice/${invoiceId}`;
-      const message = `Hi ${invoice.clients.full_name || invoice.clients.company_name}, here is your invoice ${invoice.invoice_number}: ${invoiceUrl}`;
+      const clientName = invoice.clients.full_name || invoice.clients.company_name;
+      const companyName = companySettings?.company_name || 'AKIBEKS Engineering Solutions';
+      
+      // Create a simple message with invoice details
+      const message = `Dear ${clientName},
+
+Greetings from ${companyName}!
+
+Please find your invoice details below:
+📄 Invoice Number: ${invoice.invoice_number}
+💰 Amount: KSh ${invoice.total_amount.toLocaleString()}
+📅 Due Date: ${new Date(invoice.due_date).toLocaleDateString()}
+
+Payment Details:
+• Bank: Equity Bank Kenya
+• A/C: 123 567 890
+• A/C Name: ${companyName}
+
+This is a system-generated invoice. For any queries, please contact us.
+
+Thank you for your business!
+
+Best regards,
+${companyName}
+📞 +254 710 245 118
+✉️ info@akibeks.co.ke`;
       
       const whatsappUrl = `https://wa.me/${clientPhone}?text=${encodeURIComponent(message)}`;
       window.open(whatsappUrl, '_blank');
+
+      toast({
+        title: "WhatsApp Opened",
+        description: "Invoice details sent via WhatsApp",
+      });
 
     } catch (error) {
       console.error('Error sending WhatsApp message:', error);
