@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/contexts/AdminContext";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import AdminLogin from "@/components/AdminLogin";
 import AdminHeader from "@/components/AdminHeader";
 import InvoiceViewer from "@/components/InvoiceViewer";
