@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, ArrowLeft, Trash2 } from "lucide-react";
+import { FileText, ArrowLeft, Trash2, DollarSign, Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/contexts/AdminContext";
 import { useNavigate } from "react-router-dom";
@@ -12,6 +12,9 @@ import InvoiceStats from "@/components/admin/invoices/InvoiceStats";
 import InvoiceFilters from "@/components/admin/invoices/InvoiceFilters";
 import CreateInvoiceDialog from "@/components/admin/invoices/CreateInvoiceDialog";
 import InvoiceList from "@/components/admin/invoices/InvoiceList";
+import AdminInvoiceTable from "@/components/admin/invoices/AdminInvoiceTable";
+import InvoiceTableView from "@/components/admin/invoices/InvoiceTableView";
+import AuditLog from "@/components/admin/AuditLog";
 
 interface Invoice {
   id: string;
@@ -98,6 +101,8 @@ const AdminInvoices = () => {
     fetchTemplates();
   }, []);
 
+  const [showAuditLog, setShowAuditLog] = useState(false);
+
   const fetchInvoices = async () => {
     try {
       setLoading(true);
@@ -155,6 +160,44 @@ const AdminInvoices = () => {
     } catch (error) {
       console.error('Error fetching templates:', error);
     }
+  };
+
+  const getTotalMaterialCost = () => {
+    return newInvoice.items.reduce((total, item) => total + (item.material_cost * item.quantity), 0);
+  };
+
+  const getTotalLaborCharges = () => {
+    return newInvoice.items.reduce((total, item) => {
+      const materialCost = item.material_cost * item.quantity;
+      const laborCharge = item.labor_charge || (materialCost * ((item.labor_percentage || 36) / 100));
+      return total + laborCharge;
+    }, 0);
+  };
+
+  const getGrandTotal = () => {
+    const materialCost = getTotalMaterialCost();
+    const laborCharges = getTotalLaborCharges();
+    const subtotal = includeLaborInSubtotal ? materialCost + laborCharges : materialCost;
+    return subtotal - newInvoice.discountAmount;
+  };
+
+  const getTotalRevenue = () => {
+    return invoices.reduce((sum, inv) => sum + Number(inv.total_amount), 0);
+  };
+
+  const getPaidAmount = () => {
+    return invoices.reduce((sum, inv) => sum + Number(inv.paid_amount || 0), 0);
+  };
+
+  const getOutstandingAmount = () => {
+    return getTotalRevenue() - getPaidAmount();
+  };
+
+  const getOverdueInvoices = () => {
+    const today = new Date();
+    return invoices.filter(inv => 
+      inv.due_date && new Date(inv.due_date) < today && inv.status !== 'paid'
+    ).length;
   };
 
   const deleteInvoice = async (invoiceId: string) => {
@@ -224,6 +267,11 @@ const AdminInvoices = () => {
     }
   };
 
+  const handleEditInvoice = (invoiceId: string) => {
+    console.log('Edit invoice:', invoiceId);
+    handleViewInvoice(invoiceId);
+  };
+
   const filteredInvoices = invoices.filter(invoice => {
     const clientName = invoice.clients?.company_name || invoice.clients?.full_name || '';
     const matchesSearch = clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -256,26 +304,6 @@ const AdminInvoices = () => {
   const getSectionLaborCharge = (sectionName: string, laborPercentage: number = 36) => {
     const sectionSubtotal = getSectionSubtotal(sectionName);
     return sectionSubtotal * (laborPercentage / 100);
-  };
-
-  const getTotalMaterialCost = () => {
-    return newInvoice.items.reduce((total, item) => total + (item.material_cost * item.quantity), 0);
-  };
-
-  const getTotalLaborCharges = () => {
-    return newInvoice.items.reduce((total, item) => {
-      const materialCost = item.material_cost * item.quantity;
-      const laborCharge = item.labor_charge || (materialCost * ((item.labor_percentage || 36) / 100));
-      return total + laborCharge;
-    }, 0);
-  };
-
-  const getGrandTotal = () => {
-    const materialCost = getTotalMaterialCost();
-    const laborCharges = getTotalLaborCharges();
-    const subtotal = includeLaborInSubtotal ? materialCost + laborCharges : materialCost;
-    const taxAmount = subtotal * (newInvoice.taxRate / 100);
-    return subtotal + taxAmount - newInvoice.discountAmount;
   };
 
   const handleCreateInvoice = async () => {
@@ -432,19 +460,103 @@ const AdminInvoices = () => {
               className="flex items-center gap-2"
             >
               <ArrowLeft className="w-4 h-4" />
-              Back to Dashboard
+              Dashboard
             </Button>
             <div>
               <h1 className="text-3xl font-bold text-gray-900 flex items-center">
                 <FileText className="w-8 h-8 mr-3" />
                 Invoice Management
               </h1>
-              <p className="text-gray-600 mt-2">Create and manage professional invoices with templates</p>
+              <p className="text-gray-600 mt-2">Create and manage professional invoices</p>
             </div>
+          </div>
+          
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowAuditLog(!showAuditLog)}
+              className="flex items-center gap-2"
+            >
+              📊 Audit Log
+            </Button>
           </div>
         </div>
 
-        <InvoiceStats invoices={invoices} currencySymbol={currencySymbol} />
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Total Invoices</p>
+                  <p className="text-2xl font-bold">{invoices.length}</p>
+                </div>
+                <FileText className="w-8 h-8 text-blue-600" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Total Revenue</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {currencySymbol} {getTotalRevenue().toLocaleString()}
+                  </p>
+                </div>
+                <DollarSign className="w-8 h-8 text-green-600" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Amount Paid</p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {currencySymbol} {getPaidAmount().toLocaleString()}
+                  </p>
+                </div>
+                <Calendar className="w-8 h-8 text-blue-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Outstanding</p>
+                  <p className="text-2xl font-bold text-orange-600">
+                    {currencySymbol} {getOutstandingAmount().toLocaleString()}
+                  </p>
+                </div>
+                <Calendar className="w-8 h-8 text-orange-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Overdue</p>
+                  <p className="text-2xl font-bold text-red-600">
+                    {getOverdueInvoices()}
+                  </p>
+                </div>
+                <FileText className="w-8 h-8 text-red-600" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {showAuditLog && (
+          <div className="mb-8">
+            <AuditLog />
+          </div>
+        )}
 
         <div className="mb-6">
           <CreateInvoiceDialog
@@ -476,14 +588,17 @@ const AdminInvoices = () => {
           setFilterStatus={setFilterStatus}
         />
 
-        <InvoiceList
-          invoices={filteredInvoices}
-          currencySymbol={currencySymbol}
-          handleViewInvoice={handleViewInvoice}
-          getStatusColor={getStatusColor}
-          onDeleteInvoice={deleteInvoice}
-          onSendWhatsApp={sendInvoiceViaWhatsApp}
-        />
+        <div className="mb-8">
+          <AdminInvoiceTable
+            invoices={filteredInvoices}
+            currencySymbol={currencySymbol}
+            onView={handleViewInvoice}
+            onEdit={handleEditInvoice}
+            onDelete={deleteInvoice}
+            onSendWhatsApp={sendInvoiceViaWhatsApp}
+            getStatusColor={getStatusColor}
+          />
+        </div>
 
         <InvoiceViewer
           invoiceId={selectedInvoiceId || ''}
