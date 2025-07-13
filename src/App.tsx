@@ -55,8 +55,8 @@ import MilestoneViewer from './pages/MilestoneViewer';
 
 function App() {
   return (
-    <AdminProvider>
-      <Router>
+    <Router>
+      <AdminProvider>
         <SecurityHeaders />
         <div className="App">
           <Routes>
@@ -183,8 +183,8 @@ function App() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
-      </Router>
-    </AdminProvider>
+      </AdminProvider>
+    </Router>
   );
 }
 
