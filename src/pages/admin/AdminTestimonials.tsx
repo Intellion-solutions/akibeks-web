@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,7 @@ interface Testimonial {
   is_approved: boolean;
   is_featured: boolean;
   created_at: string;
-  projects: {
+  projects?: {
     title: string;
   } | null;
 }
@@ -75,7 +76,7 @@ const AdminTestimonials = () => {
       const pending = data?.filter(t => !t.is_approved).length || 0;
       const approved = data?.filter(t => t.is_approved).length || 0;
       const featured = data?.filter(t => t.is_featured).length || 0;
-      const averageRating = total > 0 ? data?.reduce((sum, t) => sum + t.rating, 0) / total : 0;
+      const averageRating = total > 0 ? data?.reduce((sum, t) => sum + (t.rating || 0), 0) / total : 0;
 
       setStats({ total, pending, approved, featured, averageRating });
     } catch (error) {
@@ -206,7 +207,7 @@ const AdminTestimonials = () => {
   const filteredTestimonials = testimonials.filter(testimonial => {
     const matchesSearch = testimonial.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          testimonial.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         testimonial.client_role.toLowerCase().includes(searchTerm.toLowerCase());
+                         (testimonial.client_role || '').toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === "all" || 
                          (statusFilter === "pending" && !testimonial.is_approved) ||
@@ -367,8 +368,8 @@ const AdminTestimonials = () => {
                   </div>
                 </div>
                 <div className="flex items-center space-x-1">
-                  {renderStars(testimonial.rating)}
-                  <span className="ml-2 text-sm text-gray-600">({testimonial.rating}/5)</span>
+                  {renderStars(testimonial.rating || 0)}
+                  <span className="ml-2 text-sm text-gray-600">({testimonial.rating || 0}/5)</span>
                 </div>
               </CardHeader>
               <CardContent>
@@ -390,7 +391,7 @@ const AdminTestimonials = () => {
                         <DialogHeader>
                           <div className="flex items-center space-x-3 mb-4">
                             <UserAvatar 
-                              name={selectedTestimonial?.client_name}
+                              name={selectedTestimonial?.client_name || ''}
                               size="lg"
                             />
                             <div>
@@ -401,8 +402,8 @@ const AdminTestimonials = () => {
                         </DialogHeader>
                         <div className="space-y-4">
                           <div className="flex items-center space-x-1">
-                            {selectedTestimonial && renderStars(selectedTestimonial.rating)}
-                            <span className="ml-2">({selectedTestimonial?.rating}/5)</span>
+                            {selectedTestimonial && renderStars(selectedTestimonial.rating || 0)}
+                            <span className="ml-2">({selectedTestimonial?.rating || 0}/5)</span>
                           </div>
                           <p className="text-gray-700">{selectedTestimonial?.content}</p>
                           <p className="text-sm text-gray-500">
@@ -497,7 +498,7 @@ const AdminTestimonials = () => {
                     <Label htmlFor="clientRole">Client Role</Label>
                     <Input
                       id="clientRole"
-                      value={editingTestimonial.client_role}
+                      value={editingTestimonial.client_role || ''}
                       onChange={(e) => setEditingTestimonial({
                         ...editingTestimonial,
                         client_role: e.target.value
@@ -509,7 +510,7 @@ const AdminTestimonials = () => {
                 <div>
                   <Label htmlFor="rating">Rating</Label>
                   <Select 
-                    value={editingTestimonial.rating.toString()} 
+                    value={(editingTestimonial.rating || 0).toString()} 
                     onValueChange={(value) => setEditingTestimonial({
                       ...editingTestimonial,
                       rating: parseInt(value)

@@ -2,22 +2,21 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { FileText, Download, Calendar as CalendarIcon, Filter, TrendingUp, Users, Building, DollarSign, Clock, Send, Settings, BarChart3, PieChart, FileSpreadsheet } from "lucide-react";
+import { CalendarIcon, Download, Filter, TrendingUp, TrendingDown, DollarSign, Users, Building, Activity, BarChart3, PieChart, LineChart } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/contexts/AdminContext";
-import { useToast } from "@/hooks/use-toast";
 import AdminLogin from "@/components/AdminLogin";
 import AdminHeader from "@/components/AdminHeader";
+import { useToast } from "@/hooks/use-toast";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Cell, LineChart as RechartsLineChart, Line } from 'recharts';
 
-// Define proper types for report data
 interface FinancialData {
   revenue: number;
   expenses: number;
@@ -38,46 +37,29 @@ interface ProjectsData {
 
 interface ClientsData {
   total: number;
-  new: number;
-  active: number;
-  retention: number;
   companies: number;
   individuals: number;
+  active: number;
+  retention: number;
 }
 
 interface PerformanceData {
   efficiency: number;
   satisfaction: number;
-  timeline: number;
-  budget: number;
-  tasksCompleted: number;
-  overdueItems: number;
 }
 
-interface ReportData {
-  financial: FinancialData;
-  projects: ProjectsData;
-  clients: ClientsData;
-  performance: PerformanceData;
-}
+type ReportData = FinancialData | ProjectsData | ClientsData | PerformanceData;
 
 const AdminReports = () => {
   const { isAuthenticated } = useAdmin();
+  const [loading, setLoading] = useState(true);
+  const [reportType, setReportType] = useState<'financial' | 'projects' | 'clients' | 'performance'>('financial');
+  const [dateRange, setDateRange] = useState<'week' | 'month' | 'quarter' | 'year'>('month');
+  const [startDate, setStartDate] = useState<Date>();
+  const [endDate, setEndDate] = useState<Date>();
+  const [reportData, setReportData] = useState<ReportData[]>([]);
+  const [chartData, setChartData] = useState<any[]>([]);
   const { toast } = useToast();
-  const [dateRange, setDateRange] = useState<{from: Date; to: Date}>({
-    from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-    to: new Date()
-  });
-  const [reportType, setReportType] = useState("financial");
-  const [reportFormat, setReportFormat] = useState("pdf");
-  const [loading, setLoading] = useState(false);
-  const [scheduledReports, setScheduledReports] = useState([]);
-  const [reportData, setReportData] = useState<ReportData>({
-    financial: { revenue: 0, expenses: 0, profit: 0, growth: 0, invoicesCount: 0, paidInvoices: 0 },
-    projects: { total: 0, completed: 0, inProgress: 0, completion: 0, planning: 0, onHold: 0 },
-    clients: { total: 0, new: 0, active: 0, retention: 0, companies: 0, individuals: 0 },
-    performance: { efficiency: 0, satisfaction: 0, timeline: 0, budget: 0, tasksCompleted: 0, overdueItems: 0 }
-  });
 
   if (!isAuthenticated) {
     return <AdminLogin />;
@@ -85,112 +67,14 @@ const AdminReports = () => {
 
   useEffect(() => {
     fetchReportData();
-    fetchScheduledReports();
-  }, [dateRange, reportType]);
+  }, [reportType, dateRange, startDate, endDate]);
 
   const fetchReportData = async () => {
     setLoading(true);
     try {
-      // Fetch projects data
-      const { data: projects } = await supabase
-        .from('projects')
-        .select('*')
-        .gte('created_at', dateRange.from.toISOString())
-        .lte('created_at', dateRange.to.toISOString());
-
-      // Fetch clients data
-      const { data: clients } = await supabase
-        .from('clients')
-        .select('*')
-        .gte('created_at', dateRange.from.toISOString())
-        .lte('created_at', dateRange.to.toISOString());
-
-      // Fetch invoices data
-      const { data: invoices } = await supabase
-        .from('invoices')
-        .select('*')
-        .gte('created_at', dateRange.from.toISOString())
-        .lte('created_at', dateRange.to.toISOString());
-
-      // Fetch tasks data
-      const { data: tasks } = await supabase
-        .from('tasks')
-        .select('*')
-        .gte('created_at', dateRange.from.toISOString())
-        .lte('created_at', dateRange.to.toISOString());
-
-      // Calculate financial metrics
-      const totalRevenue = invoices?.reduce((sum, inv) => sum + parseFloat(inv.total_amount?.toString() || '0'), 0) || 0;
-      const paidAmount = invoices?.reduce((sum, inv) => sum + parseFloat(inv.paid_amount?.toString() || '0'), 0) || 0;
-      const estimatedExpenses = totalRevenue * 0.7; // Estimated 70% of revenue as expenses
-      const profit = totalRevenue - estimatedExpenses;
-      const previousPeriodRevenue = totalRevenue * 0.9; // Mock previous period
-      const growth = previousPeriodRevenue > 0 ? ((totalRevenue - previousPeriodRevenue) / previousPeriodRevenue) * 100 : 0;
-
-      // Calculate project metrics
-      const completedProjects = projects?.filter(p => p.status === 'completed').length || 0;
-      const inProgressProjects = projects?.filter(p => p.status === 'in_progress').length || 0;
-      const planningProjects = projects?.filter(p => p.status === 'planning').length || 0;
-      const onHoldProjects = projects?.filter(p => p.status === 'on_hold').length || 0;
-      const totalProjects = projects?.length || 0;
-      const completionRate = totalProjects > 0 ? (completedProjects / totalProjects) * 100 : 0;
-
-      // Calculate client metrics
-      const totalClients = clients?.length || 0;
-      const companyClients = clients?.filter(c => c.company_name).length || 0;
-      const individualClients = totalClients - companyClients;
-      const activeClients = Math.floor(totalClients * 0.8); // Estimate 80% are active
-      const retentionRate = 92; // Mock retention rate
-
-      // Calculate performance metrics
-      const completedTasks = tasks?.filter(t => t.status === 'completed').length || 0;
-      const totalTasks = tasks?.length || 0;
-      const overdueTasks = tasks?.filter(t => {
-        if (!t.due_date) return false;
-        return new Date(t.due_date) < new Date() && t.status !== 'completed';
-      }).length || 0;
-      
-      const efficiency = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
-      const satisfaction = 4.7; // Mock satisfaction score
-      const timelinePerformance = 91; // Mock timeline performance
-      const budgetAccuracy = 94; // Mock budget accuracy
-
-      const processedData: ReportData = {
-        financial: {
-          revenue: totalRevenue,
-          expenses: estimatedExpenses,
-          profit: profit,
-          growth: growth,
-          invoicesCount: invoices?.length || 0,
-          paidInvoices: invoices?.filter(i => i.status === 'paid').length || 0
-        },
-        projects: {
-          total: totalProjects,
-          completed: completedProjects,
-          inProgress: inProgressProjects,
-          planning: planningProjects,
-          onHold: onHoldProjects,
-          completion: completionRate
-        },
-        clients: {
-          total: totalClients,
-          new: totalClients, // All clients in date range are "new"
-          active: activeClients,
-          retention: retentionRate,
-          companies: companyClients,
-          individuals: individualClients
-        },
-        performance: {
-          efficiency: efficiency,
-          satisfaction: satisfaction,
-          timeline: timelinePerformance,
-          budget: budgetAccuracy,
-          tasksCompleted: completedTasks,
-          overdueItems: overdueTasks
-        }
-      };
-
-      setReportData(processedData);
+      const data = await generateMockData();
+      setReportData(data);
+      setChartData(generateChartData(data));
     } catch (error) {
       console.error('Error fetching report data:', error);
       toast({
@@ -203,220 +87,374 @@ const AdminReports = () => {
     }
   };
 
-  const fetchScheduledReports = async () => {
-    // Mock scheduled reports data - in real app, fetch from database
-    setScheduledReports([
-      { id: 1, name: 'Monthly Financial Report', type: 'financial', frequency: 'monthly', nextRun: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), status: 'active' },
-      { id: 2, name: 'Weekly Project Status', type: 'projects', frequency: 'weekly', nextRun: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), status: 'active' },
-      { id: 3, name: 'Client Analytics', type: 'clients', frequency: 'monthly', nextRun: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), status: 'paused' },
-      { id: 4, name: 'Performance Dashboard', type: 'performance', frequency: 'weekly', nextRun: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), status: 'active' }
-    ]);
+  const generateMockData = async (): Promise<ReportData[]> => {
+    // Mock data generation based on report type
+    switch (reportType) {
+      case 'financial':
+        return [{
+          revenue: 450000,
+          expenses: 280000,
+          profit: 170000,
+          growth: 12.5,
+          invoicesCount: 45,
+          paidInvoices: 38
+        }] as FinancialData[];
+      case 'projects':
+        return [{
+          total: 24,
+          completed: 18,
+          inProgress: 4,
+          completion: 75,
+          planning: 2,
+          onHold: 0
+        }] as ProjectsData[];
+      case 'clients':
+        return [{
+          total: 156,
+          companies: 89,
+          individuals: 67,
+          active: 142,
+          retention: 94.2
+        }] as ClientsData[];
+      case 'performance':
+        return [{
+          efficiency: 87.5,
+          satisfaction: 92.1
+        }] as PerformanceData[];
+      default:
+        return [];
+    }
   };
 
-  const generateReport = async () => {
-    setLoading(true);
-    try {
-      let reportContent = '';
-      
-      // Type-safe access to report data
-      if (reportType === 'financial') {
-        const data = reportData.financial;
-        reportContent = `Financial Report (${format(dateRange.from, 'MMM dd')} - ${format(dateRange.to, 'MMM dd, yyyy')})
+  const generateChartData = (data: ReportData[]) => {
+    if (data.length === 0) return [];
+    
+    const firstItem = data[0];
+    
+    switch (reportType) {
+      case 'financial':
+        const financialData = firstItem as FinancialData;
+        return [
+          { name: 'Revenue', value: financialData.revenue, color: '#8884d8' },
+          { name: 'Expenses', value: financialData.expenses, color: '#82ca9d' },
+          { name: 'Profit', value: financialData.profit, color: '#ffc658' }
+        ];
+      case 'projects':
+        const projectsData = firstItem as ProjectsData;
+        return [
+          { name: 'Completed', value: projectsData.completed, color: '#8884d8' },
+          { name: 'In Progress', value: projectsData.inProgress, color: '#82ca9d' },
+          { name: 'Planning', value: projectsData.planning, color: '#ffc658' },
+          { name: 'On Hold', value: projectsData.onHold, color: '#ff7c7c' }
+        ];
+      case 'clients':
+        const clientsData = firstItem as ClientsData;
+        return [
+          { name: 'Companies', value: clientsData.companies, color: '#8884d8' },
+          { name: 'Individuals', value: clientsData.individuals, color: '#82ca9d' }
+        ];
+      default:
+        return [];
+    }
+  };
+
+  const renderMetrics = () => {
+    if (reportData.length === 0) return null;
+    
+    const data = reportData[0];
+    
+    switch (reportType) {
+      case 'financial':
+        const financialData = data as FinancialData;
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Revenue</p>
+                    <p className="text-2xl font-bold">KSh {financialData.revenue.toLocaleString()}</p>
+                  </div>
+                  <DollarSign className="w-8 h-8 text-green-600" />
+                </div>
+                <p className="text-sm text-green-600 flex items-center mt-2">
+                  <TrendingUp className="w-4 h-4 mr-1" />
+                  {financialData.growth}% from last period
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Expenses</p>
+                    <p className="text-2xl font-bold">KSh {financialData.expenses.toLocaleString()}</p>
+                  </div>
+                  <TrendingDown className="w-8 h-8 text-red-600" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Profit</p>
+                    <p className="text-2xl font-bold">KSh {financialData.profit.toLocaleString()}</p>
+                  </div>
+                  <BarChart3 className="w-8 h-8 text-blue-600" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Total Invoices</p>
+                    <p className="text-2xl font-bold">{financialData.invoicesCount}</p>
+                  </div>
+                  <Activity className="w-8 h-8 text-purple-600" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Paid Invoices</p>
+                    <p className="text-2xl font-bold">{financialData.paidInvoices}</p>
+                  </div>
+                  <Users className="w-8 h-8 text-orange-600" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
         
-Revenue: KSh ${data.revenue.toLocaleString()}
-Expenses: KSh ${data.expenses.toLocaleString()}
-Profit: KSh ${data.profit.toLocaleString()}
-Growth: ${data.growth.toFixed(1)}%
-Total Invoices: ${data.invoicesCount}
-Paid Invoices: ${data.paidInvoices}`;
-      } else if (reportType === 'projects') {
-        const data = reportData.projects;
-        reportContent = `Project Status Report (${format(dateRange.from, 'MMM dd')} - ${format(dateRange.to, 'MMM dd, yyyy')})
+      case 'projects':
+        const projectsData = data as ProjectsData;
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Total Projects</p>
+                    <p className="text-2xl font-bold">{projectsData.total}</p>
+                  </div>
+                  <Building className="w-8 h-8 text-blue-600" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Completed</p>
+                    <p className="text-2xl font-bold">{projectsData.completed}</p>
+                  </div>
+                  <TrendingUp className="w-8 h-8 text-green-600" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">In Progress</p>
+                    <p className="text-2xl font-bold">{projectsData.inProgress}</p>
+                  </div>
+                  <Activity className="w-8 h-8 text-orange-600" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Planning</p>
+                    <p className="text-2xl font-bold">{projectsData.planning}</p>
+                  </div>
+                  <PieChart className="w-8 h-8 text-purple-600" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">On Hold</p>
+                    <p className="text-2xl font-bold">{projectsData.onHold}</p>
+                  </div>
+                  <TrendingDown className="w-8 h-8 text-red-600" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Completion Rate</p>
+                    <p className="text-2xl font-bold">{projectsData.completion}%</p>
+                  </div>
+                  <LineChart className="w-8 h-8 text-cyan-600" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
         
-Total Projects: ${data.total}
-Completed: ${data.completed}
-In Progress: ${data.inProgress}
-Planning: ${data.planning}
-On Hold: ${data.onHold}
-Completion Rate: ${data.completion.toFixed(1)}%`;
-      } else if (reportType === 'clients') {
-        const data = reportData.clients;
-        reportContent = `Client Analytics Report (${format(dateRange.from, 'MMM dd')} - ${format(dateRange.to, 'MMM dd, yyyy')})
+      case 'clients':
+        const clientsData = data as ClientsData;
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Total Clients</p>
+                    <p className="text-2xl font-bold">{clientsData.total}</p>
+                  </div>
+                  <Users className="w-8 h-8 text-blue-600" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Companies</p>
+                    <p className="text-2xl font-bold">{clientsData.companies}</p>
+                  </div>
+                  <Building className="w-8 h-8 text-green-600" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Individuals</p>
+                    <p className="text-2xl font-bold">{clientsData.individuals}</p>
+                  </div>
+                  <Users className="w-8 h-8 text-purple-600" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Active Clients</p>
+                    <p className="text-2xl font-bold">{clientsData.active}</p>
+                  </div>
+                  <Activity className="w-8 h-8 text-orange-600" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Retention Rate</p>
+                    <p className="text-2xl font-bold">{clientsData.retention}%</p>
+                  </div>
+                  <TrendingUp className="w-8 h-8 text-green-600" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
         
-Total Clients: ${data.total}
-Company Clients: ${data.companies}
-Individual Clients: ${data.individuals}
-Active Clients: ${data.active}
-Retention Rate: ${data.retention}%`;
-      } else if (reportType === 'performance') {
-        const data = reportData.performance;
-        reportContent = `Performance Report (${format(dateRange.from, 'MMM dd')} - ${format(dateRange.to, 'MMM dd, yyyy')})
+      case 'performance':
+        const performanceData = data as PerformanceData;
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Efficiency</p>
+                    <p className="text-2xl font-bold">{performanceData.efficiency}%</p>
+                  </div>
+                  <BarChart3 className="w-8 h-8 text-blue-600" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Satisfaction</p>
+                    <p className="text-2xl font-bold">{performanceData.satisfaction}%</p>
+                  </div>
+                  <TrendingUp className="w-8 h-8 text-green-600" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
         
-Efficiency: ${data.efficiency.toFixed(1)}%
-Satisfaction: ${data.satisfaction}/5
-Timeline Performance: ${data.timeline}%
-Budget Accuracy: ${data.budget}%
-Tasks Completed: ${data.tasksCompleted}
-Overdue Items: ${data.overdueItems}`;
-      }
-
-      // Simulate processing time
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Create and download the report file
-      const blob = new Blob([reportContent], { type: 'text/plain' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${reportType}-report-${format(new Date(), 'yyyy-MM-dd')}.${reportFormat === 'pdf' ? 'pdf' : reportFormat}`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-
-      toast({
-        title: "Report Generated",
-        description: `${reportType} report has been downloaded successfully`,
-      });
-    } catch (error) {
-      console.error('Error generating report:', error);
-      toast({
-        title: "Error",
-        description: "Failed to generate report",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
+      default:
+        return null;
     }
   };
 
-  const handleDateRangeSelect = (range: any) => {
-    if (range?.from && range?.to) {
-      setDateRange({ from: range.from, to: range.to });
-    }
+  const generateReport = () => {
+    const reportContent = `
+${reportType.toUpperCase()} REPORT
+Generated on: ${new Date().toLocaleDateString()}
+Period: ${dateRange}
+
+${JSON.stringify(reportData[0], null, 2)}
+    `;
+    
+    const blob = new Blob([reportContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${reportType}-report-${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Success",
+      description: "Report generated and downloaded successfully"
+    });
   };
 
-  const scheduleReport = async (reportConfig: any) => {
-    try {
-      // In a real app, save to database
-      toast({
-        title: "Report Scheduled",
-        description: `${reportConfig.name} has been scheduled successfully`,
-      });
-      await fetchScheduledReports();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to schedule report",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const exportData = async (format: string) => {
-    setLoading(true);
-    try {
-      // Type-safe data export
-      let dataToExport: any = {};
-      
-      if (reportType === 'financial') {
-        dataToExport = reportData.financial;
-      } else if (reportType === 'projects') {
-        dataToExport = reportData.projects;
-      } else if (reportType === 'clients') {
-        dataToExport = reportData.clients;
-      } else if (reportType === 'performance') {
-        dataToExport = reportData.performance;
-      }
-
-      const exportObject = {
-        reportType,
-        dateRange: {
-          from: format(dateRange.from, 'yyyy-MM-dd'),
-          to: format(dateRange.to, 'yyyy-MM-dd')
-        },
-        data: dataToExport,
-        generatedAt: new Date().toISOString()
-      };
-
-      let content = '';
-      let mimeType = '';
-      let fileExtension = '';
-
-      switch (format) {
-        case 'json':
-          content = JSON.stringify(exportObject, null, 2);
-          mimeType = 'application/json';
-          fileExtension = 'json';
-          break;
-        case 'csv':
-          // Convert to CSV format
-          const csvData = Object.entries(exportObject.data).map(([key, value]) => `${key},${value}`).join('\n');
-          content = `Metric,Value\n${csvData}`;
-          mimeType = 'text/csv';
-          fileExtension = 'csv';
-          break;
-        default:
-          content = JSON.stringify(exportObject, null, 2);
-          mimeType = 'application/json';
-          fileExtension = 'json';
-      }
-
-      const blob = new Blob([content], { type: mimeType });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${reportType}-data-${format(new Date(), 'yyyy-MM-dd')}.${fileExtension}`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-
-      toast({
-        title: "Data Exported",
-        description: `Report data exported as ${format.toUpperCase()}`,
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to export data",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const reportTemplates = [
-    {
-      id: 'financial',
-      name: 'Financial Report',
-      description: 'Revenue, expenses, profit margins, and financial KPIs',
-      icon: DollarSign,
-      color: 'text-green-600'
-    },
-    {
-      id: 'projects',
-      name: 'Project Status Report',
-      description: 'Project progress, timelines, and completion rates',
-      icon: Building,
-      color: 'text-blue-600'
-    },
-    {
-      id: 'clients',
-      name: 'Client Analytics',
-      description: 'Client acquisition, retention, and satisfaction metrics',
-      icon: Users,
-      color: 'text-purple-600'
-    },
-    {
-      id: 'performance',
-      name: 'Performance Dashboard',
-      description: 'Overall business performance and efficiency metrics',
-      icon: TrendingUp,
-      color: 'text-orange-600'
-    }
-  ];
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <AdminHeader />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="animate-pulse space-y-8">
+            <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="h-32 bg-gray-200 rounded-lg"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -427,288 +465,93 @@ Overdue Items: ${data.overdueItems}`;
           <div>
             <h1 className="text-3xl font-bold text-gray-900 flex items-center">
               <BarChart3 className="w-8 h-8 mr-3" />
-              Advanced Reports & Analytics
+              Reports & Analytics
             </h1>
-            <p className="text-gray-600 mt-2">Generate comprehensive business reports and analytics with real-time data</p>
+            <p className="text-gray-600 mt-2">Comprehensive business insights and analytics</p>
           </div>
-          <div className="flex gap-2">
-            <Button onClick={() => exportData('json')} variant="outline">
-              <FileSpreadsheet className="w-4 h-4 mr-2" />
-              Export JSON
-            </Button>
-            <Button onClick={() => exportData('csv')} variant="outline">
-              <PieChart className="w-4 h-4 mr-2" />
-              Export CSV
-            </Button>
-          </div>
+          
+          <Button onClick={generateReport} className="flex items-center space-x-2">
+            <Download className="w-4 h-4" />
+            <span>Generate Report</span>
+          </Button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Report Configuration */}
-          <div className="lg:col-span-1 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Settings className="w-5 h-5 mr-2" />
-                  Report Configuration
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="reportType">Report Type</Label>
-                  <Select value={reportType} onValueChange={setReportType}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {reportTemplates.map(template => (
-                        <SelectItem key={template.id} value={template.id}>
-                          {template.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label>Date Range</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start text-left font-normal">
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {dateRange.from && dateRange.to 
-                          ? `${format(dateRange.from, "MMM dd")} - ${format(dateRange.to, "MMM dd, yyyy")}`
-                          : "Select date range"
-                        }
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="range"
-                        selected={{ from: dateRange.from, to: dateRange.to }}
-                        onSelect={handleDateRangeSelect}
-                        numberOfMonths={2}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                <div>
-                  <Label htmlFor="reportFormat">Export Format</Label>
-                  <Select value={reportFormat} onValueChange={setReportFormat}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pdf">PDF Report</SelectItem>
-                      <SelectItem value="excel">Excel Spreadsheet</SelectItem>
-                      <SelectItem value="csv">CSV Data</SelectItem>
-                      <SelectItem value="json">JSON Data</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <Button onClick={generateReport} disabled={loading} className="w-full">
-                  {loading ? (
-                    <>
-                      <Clock className="w-4 h-4 mr-2 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Download className="w-4 h-4 mr-2" />
-                      Generate Report
-                    </>
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Scheduled Reports */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Send className="w-5 h-5 mr-2" />
-                  Scheduled Reports
-                </CardTitle>
-                <CardDescription>
-                  Automated report generation and delivery
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {scheduledReports.map((report: any) => (
-                    <div key={report.id} className="p-3 border rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">{report.name}</p>
-                          <p className="text-xs text-gray-500">
-                            {report.frequency} • Next: {format(report.nextRun, 'MMM dd')}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant={report.status === 'active' ? 'default' : 'secondary'}>
-                            {report.status}
-                          </Badge>
-                          <Badge variant="outline">{report.type}</Badge>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Report Preview & Templates */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Report Templates */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {reportTemplates.map(template => {
-                const IconComponent = template.icon;
-                return (
-                  <Card key={template.id} className={`cursor-pointer transition-all hover:shadow-lg ${reportType === template.id ? 'ring-2 ring-blue-500' : ''}`} onClick={() => setReportType(template.id)}>
-                    <CardContent className="p-6">
-                      <div className="flex items-start space-x-4">
-                        <IconComponent className={`w-8 h-8 ${template.color}`} />
-                        <div>
-                          <h3 className="font-semibold">{template.name}</h3>
-                          <p className="text-sm text-gray-600 mt-1">{template.description}</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+        {/* Filters */}
+        <Card className="mb-8">
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Report Type</label>
+                <Select value={reportType} onValueChange={(value: any) => setReportType(value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="financial">Financial</SelectItem>
+                    <SelectItem value="projects">Projects</SelectItem>
+                    <SelectItem value="clients">Clients</SelectItem>
+                    <SelectItem value="performance">Performance</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
+                <Select value={dateRange} onValueChange={(value: any) => setDateRange(value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="week">This Week</SelectItem>
+                    <SelectItem value="month">This Month</SelectItem>
+                    <SelectItem value="quarter">This Quarter</SelectItem>
+                    <SelectItem value="year">This Year</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+          </CardContent>
+        </Card>
 
-            {/* Report Data Preview */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Report Preview</CardTitle>
-                <CardDescription>
-                  {reportTemplates.find(t => t.id === reportType)?.description} • {format(dateRange.from, "MMM dd")} - {format(dateRange.to, "MMM dd, yyyy")}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {reportType === 'financial' && (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <div className="text-center p-4 bg-green-50 rounded-lg">
-                      <p className="text-2xl font-bold text-green-600">KSh {reportData.financial.revenue.toLocaleString()}</p>
-                      <p className="text-sm text-gray-600">Revenue</p>
-                    </div>
-                    <div className="text-center p-4 bg-red-50 rounded-lg">
-                      <p className="text-2xl font-bold text-red-600">KSh {reportData.financial.expenses.toLocaleString()}</p>
-                      <p className="text-sm text-gray-600">Expenses</p>
-                    </div>
-                    <div className="text-center p-4 bg-blue-50 rounded-lg">
-                      <p className="text-2xl font-bold text-blue-600">KSh {reportData.financial.profit.toLocaleString()}</p>
-                      <p className="text-sm text-gray-600">Profit</p>
-                    </div>
-                    <div className="text-center p-4 bg-orange-50 rounded-lg">
-                      <p className="text-2xl font-bold text-orange-600">+{reportData.financial.growth.toFixed(1)}%</p>
-                      <p className="text-sm text-gray-600">Growth</p>
-                    </div>
-                    <div className="text-center p-4 bg-purple-50 rounded-lg">
-                      <p className="text-2xl font-bold text-purple-600">{reportData.financial.invoicesCount}</p>
-                      <p className="text-sm text-gray-600">Total Invoices</p>
-                    </div>
-                    <div className="text-center p-4 bg-gray-50 rounded-lg">
-                      <p className="text-2xl font-bold text-gray-600">{reportData.financial.paidInvoices}</p>
-                      <p className="text-sm text-gray-600">Paid Invoices</p>
-                    </div>
-                  </div>
-                )}
+        {/* Metrics */}
+        {renderMetrics()}
 
-                {reportType === 'projects' && (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <div className="text-center p-4 bg-blue-50 rounded-lg">
-                      <p className="text-2xl font-bold text-blue-600">{reportData.projects.total}</p>
-                      <p className="text-sm text-gray-600">Total Projects</p>
-                    </div>
-                    <div className="text-center p-4 bg-green-50 rounded-lg">
-                      <p className="text-2xl font-bold text-green-600">{reportData.projects.completed}</p>
-                      <p className="text-sm text-gray-600">Completed</p>
-                    </div>
-                    <div className="text-center p-4 bg-orange-50 rounded-lg">
-                      <p className="text-2xl font-bold text-orange-600">{reportData.projects.inProgress}</p>
-                      <p className="text-sm text-gray-600">In Progress</p>
-                    </div>
-                    <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                      <p className="text-2xl font-bold text-yellow-600">{reportData.projects.planning}</p>
-                      <p className="text-sm text-gray-600">Planning</p>
-                    </div>
-                    <div className="text-center p-4 bg-red-50 rounded-lg">
-                      <p className="text-2xl font-bold text-red-600">{reportData.projects.onHold}</p>
-                      <p className="text-sm text-gray-600">On Hold</p>
-                    </div>
-                    <div className="text-center p-4 bg-purple-50 rounded-lg">
-                      <p className="text-2xl font-bold text-purple-600">{reportData.projects.completion.toFixed(1)}%</p>
-                      <p className="text-sm text-gray-600">Completion Rate</p>
-                    </div>
-                  </div>
-                )}
+        {/* Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Overview Chart</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#8884d8" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
 
-                {reportType === 'clients' && (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <div className="text-center p-4 bg-purple-50 rounded-lg">
-                      <p className="text-2xl font-bold text-purple-600">{reportData.clients.total}</p>
-                      <p className="text-sm text-gray-600">Total Clients</p>
-                    </div>
-                    <div className="text-center p-4 bg-green-50 rounded-lg">
-                      <p className="text-2xl font-bold text-green-600">{reportData.clients.new}</p>
-                      <p className="text-sm text-gray-600">New Clients</p>
-                    </div>
-                    <div className="text-center p-4 bg-blue-50 rounded-lg">
-                      <p className="text-2xl font-bold text-blue-600">{reportData.clients.active}</p>
-                      <p className="text-sm text-gray-600">Active Clients</p>
-                    </div>
-                    <div className="text-center p-4 bg-orange-50 rounded-lg">
-                      <p className="text-2xl font-bold text-orange-600">{reportData.clients.retention}%</p>
-                      <p className="text-sm text-gray-600">Retention Rate</p>
-                    </div>
-                    <div className="text-center p-4 bg-gray-50 rounded-lg">
-                      <p className="text-2xl font-bold text-gray-600">{reportData.clients.companies}</p>
-                      <p className="text-sm text-gray-600">Companies</p>
-                    </div>
-                    <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                      <p className="text-2xl font-bold text-yellow-600">{reportData.clients.individuals}</p>
-                      <p className="text-sm text-gray-600">Individuals</p>
-                    </div>
-                  </div>
-                )}
-
-                {reportType === 'performance' && (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <div className="text-center p-4 bg-green-50 rounded-lg">
-                      <p className="text-2xl font-bold text-green-600">{reportData.performance.efficiency.toFixed(1)}%</p>
-                      <p className="text-sm text-gray-600">Efficiency</p>
-                    </div>
-                    <div className="text-center p-4 bg-blue-50 rounded-lg">
-                      <p className="text-2xl font-bold text-blue-600">{reportData.performance.satisfaction}/5</p>
-                      <p className="text-sm text-gray-600">Satisfaction</p>
-                    </div>
-                    <div className="text-center p-4 bg-orange-50 rounded-lg">
-                      <p className="text-2xl font-bold text-orange-600">{reportData.performance.timeline}%</p>
-                      <p className="text-sm text-gray-600">Timeline</p>
-                    </div>
-                    <div className="text-center p-4 bg-purple-50 rounded-lg">
-                      <p className="text-2xl font-bold text-purple-600">{reportData.performance.budget}%</p>
-                      <p className="text-sm text-gray-600">Budget Accuracy</p>
-                    </div>
-                    <div className="text-center p-4 bg-gray-50 rounded-lg">
-                      <p className="text-2xl font-bold text-gray-600">{reportData.performance.tasksCompleted}</p>
-                      <p className="text-sm text-gray-600">Tasks Completed</p>
-                    </div>
-                    <div className="text-center p-4 bg-red-50 rounded-lg">
-                      <p className="text-2xl font-bold text-red-600">{reportData.performance.overdueItems}</p>
-                      <p className="text-sm text-gray-600">Overdue Items</p>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Distribution</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <RechartsPieChart>
+                  <Tooltip />
+                  <RechartsPieChart data={chartData} cx="50%" cy="50%" outerRadius={80}>
+                    {chartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </RechartsPieChart>
+                </RechartsPieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
