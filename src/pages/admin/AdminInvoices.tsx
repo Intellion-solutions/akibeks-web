@@ -590,13 +590,13 @@ ${companyName}
 
         <div className="mb-6">
           <CreateInvoiceDialog
-            showCreateInvoice={showCreateInvoice}
-            setShowCreateInvoice={setShowCreateInvoice}
+            open={showCreateInvoice}
+            onOpenChange={setShowCreateInvoice}
             newInvoice={newInvoice}
             setNewInvoice={setNewInvoice}
             clients={clients}
             templates={templates}
-            handleCreateInvoice={handleCreateInvoice}
+            onCreateInvoice={handleCreateInvoice}
             addInvoiceItem={addInvoiceItem}
             removeInvoiceItem={removeInvoiceItem}
             updateInvoiceItem={updateInvoiceItem}

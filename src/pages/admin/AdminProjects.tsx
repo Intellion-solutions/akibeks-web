@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -79,9 +80,9 @@ const AdminProjects: React.FC = () => {
       // Transform the data to match the expected interface
       const transformedData = (data || []).map(item => ({
         ...item,
-        images: Array.isArray(item.images) ? item.images : [],
-        features: Array.isArray(item.features) ? item.features : [],
-        technologies: Array.isArray(item.technologies) ? item.technologies : [],
+        images: Array.isArray(item.images) ? item.images.filter((img): img is string => typeof img === 'string') : [],
+        features: Array.isArray(item.features) ? item.features.filter((f): f is string => typeof f === 'string') : [],
+        technologies: Array.isArray(item.technologies) ? item.technologies.filter((t): t is string => typeof t === 'string') : [],
       }));
       
       setProjects(transformedData);
