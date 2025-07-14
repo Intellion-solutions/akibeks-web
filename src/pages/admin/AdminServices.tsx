@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,28 +5,49 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Edit, Trash2, Star, Search, Filter } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger,
+  DialogFooter
+} from "@/components/ui/dialog";
+import { 
+  Plus, 
+  Search, 
+  Filter, 
+  Star, 
+  Eye, 
+  EyeOff, 
+  Edit,
+  Trash2,
+  Wrench,
+  DollarSign
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 
 interface Service {
   id: string;
   title: string;
-  description: string;
-  icon: string;
+  description: string | null;
   category: string;
+  icon: string | null;
+  base_price: number | null;
+  price_unit: string | null;
   features: string[];
-  base_price: number;
-  price_unit: string;
-  is_featured: boolean;
-  is_active: boolean;
-  display_order: number;
-  seo_title: string;
-  seo_description: string;
-  created_at: string;
+  is_active: boolean | null;
+  is_featured: boolean | null;
+  display_order: number | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 const AdminServices: React.FC = () => {
@@ -35,21 +55,20 @@ const AdminServices: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterCategory, setFilterCategory] = useState('all');
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [showDialog, setShowDialog] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
-
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    category: '',
     icon: '',
-    category: 'general',
-    features: [''],
-    base_price: 0,
-    price_unit: 'project',
-    is_featured: false,
+    base_price: '',
+    price_unit: '',
+    features: '',
     is_active: true,
-    display_order: 0,
+    is_featured: false,
+    display_order: '',
     seo_title: '',
     seo_description: ''
   });
@@ -66,7 +85,7 @@ const AdminServices: React.FC = () => {
         .order('display_order', { ascending: true });
 
       if (error) throw error;
-      
+
       // Transform the data to match the expected interface
       const transformedData = (data || []).map(item => ({
         ...item,
@@ -86,43 +105,112 @@ const AdminServices: React.FC = () => {
     }
   };
 
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+  };
+
+  const filteredServices = services.filter(service => {
+    const searchTermLower = searchTerm.toLowerCase();
+    const titleMatch = service.title.toLowerCase().includes(searchTermLower);
+    const descriptionMatch = (service.description || '').toLowerCase().includes(searchTermLower);
+    const categoryMatch = selectedCategory === 'all' || service.category === selectedCategory;
+
+    return categoryMatch && (titleMatch || descriptionMatch);
+  });
+
+  const openDialog = () => {
+    setFormData({
+      title: '',
+      description: '',
+      category: '',
+      icon: '',
+      base_price: '',
+      price_unit: '',
+      features: '',
+      is_active: true,
+      is_featured: false,
+      display_order: '',
+      seo_title: '',
+      seo_description: ''
+    });
+    setEditingService(null);
+    setShowDialog(true);
+  };
+
+  const closeDialog = () => {
+    setShowDialog(false);
+    setEditingService(null);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSwitchChange = (name: string, checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: checked
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
+      setLoading(true);
+
       const serviceData = {
-        ...formData,
-        features: formData.features.filter(f => f.trim() !== '')
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        icon: formData.icon,
+        base_price: parseFloat(formData.base_price || '0'),
+        price_unit: formData.price_unit,
+        features: formData.features.split(',').map(f => f.trim()),
+        is_active: formData.is_active,
+        is_featured: formData.is_featured,
+        display_order: parseInt(formData.display_order || '0'),
+        seo_title: formData.seo_title,
+        seo_description: formData.seo_description
       };
 
       if (editingService) {
+        // Update existing service
         const { error } = await supabase
           .from('services_content')
           .update(serviceData)
           .eq('id', editingService.id);
 
         if (error) throw error;
-        
+
         toast({
           title: "Success",
-          description: "Service updated successfully"
+          description: "Service updated successfully",
         });
       } else {
+        // Create new service
         const { error } = await supabase
           .from('services_content')
           .insert([serviceData]);
 
         if (error) throw error;
-        
+
         toast({
           title: "Success",
-          description: "Service created successfully"
+          description: "Service created successfully",
         });
       }
 
-      setIsDialogOpen(false);
-      resetForm();
       fetchServices();
+      closeDialog();
     } catch (error) {
       console.error('Error saving service:', error);
       toast({
@@ -130,114 +218,112 @@ const AdminServices: React.FC = () => {
         description: "Failed to save service",
         variant: "destructive"
       });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleEdit = (service: Service) => {
+  const editService = (service: Service) => {
     setEditingService(service);
     setFormData({
       title: service.title,
-      description: service.description,
-      icon: service.icon,
+      description: service.description || '',
       category: service.category,
-      features: service.features || [''],
-      base_price: service.base_price,
-      price_unit: service.price_unit,
-      is_featured: service.is_featured,
-      is_active: service.is_active,
-      display_order: service.display_order,
+      icon: service.icon || '',
+      base_price: service.base_price?.toString() || '',
+      price_unit: service.price_unit || '',
+      features: service.features.join(', '),
+      is_active: service.is_active || true,
+      is_featured: service.is_featured || false,
+      display_order: service.display_order?.toString() || '',
       seo_title: service.seo_title || '',
       seo_description: service.seo_description || ''
     });
-    setIsDialogOpen(true);
+    setShowDialog(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this service?')) return;
+  const deleteService = async (serviceId: string) => {
+    if (window.confirm('Are you sure you want to delete this service?')) {
+      try {
+        setLoading(true);
+        const { error } = await supabase
+          .from('services_content')
+          .delete()
+          .eq('id', serviceId);
 
-    try {
-      const { error } = await supabase
-        .from('services_content')
-        .delete()
-        .eq('id', id);
+        if (error) throw error;
 
-      if (error) throw error;
-      
-      toast({
-        title: "Success",
-        description: "Service deleted successfully"
-      });
-      fetchServices();
-    } catch (error) {
-      console.error('Error deleting service:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete service",
-        variant: "destructive"
-      });
+        toast({
+          title: "Success",
+          description: "Service deleted successfully",
+        });
+        fetchServices();
+      } catch (error) {
+        console.error('Error deleting service:', error);
+        toast({
+          title: "Error",
+          description: "Failed to delete service",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
-  const toggleStatus = async (service: Service, field: 'is_active' | 'is_featured') => {
+  const toggleActive = async (service: Service) => {
     try {
+      setLoading(true);
       const { error } = await supabase
         .from('services_content')
-        .update({ [field]: !service[field] })
+        .update({ is_active: !service.is_active })
         .eq('id', service.id);
 
       if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Service ${service.is_active ? 'deactivated' : 'activated'} successfully`,
+      });
       fetchServices();
     } catch (error) {
-      console.error(`Error updating ${field}:`, error);
+      console.error('Error toggling active status:', error);
       toast({
         title: "Error",
-        description: `Failed to update ${field}`,
+        description: "Failed to toggle active status",
         variant: "destructive"
       });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      title: '',
-      description: '',
-      icon: '',
-      category: 'general',
-      features: [''],
-      base_price: 0,
-      price_unit: 'project',
-      is_featured: false,
-      is_active: true,
-      display_order: 0,
-      seo_title: '',
-      seo_description: ''
-    });
-    setEditingService(null);
+  const toggleFeatured = async (service: Service) => {
+    try {
+      setLoading(true);
+      const { error } = await supabase
+        .from('services_content')
+        .update({ is_featured: !service.is_featured })
+        .eq('id', service.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Service ${service.is_featured ? 'unfeatured' : 'featured'} successfully`,
+      });
+      fetchServices();
+    } catch (error) {
+      console.error('Error toggling featured status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to toggle featured status",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
-
-  const addFeature = () => {
-    setFormData({ ...formData, features: [...formData.features, ''] });
-  };
-
-  const updateFeature = (index: number, value: string) => {
-    const newFeatures = [...formData.features];
-    newFeatures[index] = value;
-    setFormData({ ...formData, features: newFeatures });
-  };
-
-  const removeFeature = (index: number) => {
-    const newFeatures = formData.features.filter((_, i) => i !== index);
-    setFormData({ ...formData, features: newFeatures });
-  };
-
-  const filteredServices = services.filter(service => {
-    const matchesSearch = service.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         service.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = filterCategory === 'all' || service.category === filterCategory;
-    return matchesSearch && matchesCategory;
-  });
-
-  const categories = Array.from(new Set(services.map(s => s.category)));
 
   if (loading) {
     return (
@@ -248,292 +334,228 @@ const AdminServices: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <AdminPageHeader
-        title="Services Management"
-        description="Manage website services and their content"
-      />
+        title="Manage Services"
+        description="Add, edit, and manage the services offered."
+      >
+        <Button onClick={openDialog}>
+          <Plus className="w-4 h-4 mr-2" />
+          Add Service
+        </Button>
+      </AdminPageHeader>
 
-      {/* Filters and Actions */}
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-        <div className="flex flex-1 gap-4">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              placeholder="Search services..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Select value={filterCategory} onValueChange={setFilterCategory}>
-            <SelectTrigger className="w-48">
-              <Filter className="w-4 h-4 mr-2" />
-              <SelectValue placeholder="Filter by category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              {categories.map(category => (
-                <SelectItem key={category} value={category}>
-                  {category.charAt(0).toUpperCase() + category.slice(1)}
-                </SelectItem>
+      <Card>
+        <CardHeader>
+          <CardTitle>Services</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4">
+            <div className="flex items-center space-x-2">
+              <Input
+                type="text"
+                placeholder="Search services..."
+                value={searchTerm}
+                onChange={handleSearch}
+              />
+              <Tabs defaultValue="all" className="ml-auto">
+                <TabsList>
+                  <TabsTrigger value="all" onClick={() => handleCategoryChange('all')}>All</TabsTrigger>
+                  <TabsTrigger value="engineering" onClick={() => handleCategoryChange('engineering')}>Engineering</TabsTrigger>
+                  <TabsTrigger value="construction" onClick={() => handleCategoryChange('construction')}>Construction</TabsTrigger>
+                  <TabsTrigger value="design" onClick={() => handleCategoryChange('design')}>Design</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+
+            <Separator />
+
+            <div className="grid gap-4">
+              {filteredServices.map(service => (
+                <Card key={service.id}>
+                  <CardHeader className="flex items-center justify-between">
+                    <CardTitle>{service.title}</CardTitle>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="secondary">{service.category}</Badge>
+                      <Button variant="ghost" size="sm" onClick={() => toggleActive(service)}>
+                        {service.is_active ? (
+                          <>
+                            <Eye className="w-4 h-4 mr-2" />
+                            Deactivate
+                          </>
+                        ) : (
+                          <>
+                            <EyeOff className="w-4 h-4 mr-2" />
+                            Activate
+                          </>
+                        )}
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => toggleFeatured(service)}>
+                        {service.is_featured ? (
+                          <>
+                            <Star className="w-4 h-4 mr-2" />
+                            Unfeature
+                          </>
+                        ) : (
+                          <>
+                            <Star className="w-4 h-4 mr-2" />
+                            Feature
+                          </>
+                        )}
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => editService(service)}>
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => deleteService(service.id)}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p>{service.description}</p>
+                  </CardContent>
+                </Card>
               ))}
-            </SelectContent>
-          </Select>
-        </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={resetForm}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Service
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {editingService ? 'Edit Service' : 'Add New Service'}
-              </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Title *</label>
-                  <Input
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Icon</label>
-                  <Input
-                    value={formData.icon}
-                    onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                    placeholder="lucide-react icon name"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Description</label>
-                <Textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={3}
+      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{editingService ? 'Edit Service' : 'Add Service'}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="grid gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="title">Title</Label>
+                <Input
+                  type="text"
+                  id="title"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  required
                 />
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Category</label>
-                  <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="general">General</SelectItem>
-                      <SelectItem value="construction">Construction</SelectItem>
-                      <SelectItem value="renovation">Renovation</SelectItem>
-                      <SelectItem value="plumbing">Plumbing</SelectItem>
-                      <SelectItem value="electrical">Electrical</SelectItem>
-                      <SelectItem value="civil_works">Civil Works</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Base Price</label>
-                  <Input
-                    type="number"
-                    value={formData.base_price}
-                    onChange={(e) => setFormData({ ...formData, base_price: parseFloat(e.target.value) || 0 })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Price Unit</label>
-                  <Select value={formData.price_unit} onValueChange={(value) => setFormData({ ...formData, price_unit: value })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="project">Per Project</SelectItem>
-                      <SelectItem value="hour">Per Hour</SelectItem>
-                      <SelectItem value="day">Per Day</SelectItem>
-                      <SelectItem value="sqm">Per Sq.M</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div>
+                <Label htmlFor="category">Category</Label>
+                <Input
+                  type="text"
+                  id="category"
+                  name="category"
+                  value={formData.category}
+                  onChange={handleInputChange}
+                  required
+                />
               </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Features</label>
-                {formData.features.map((feature, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Input
-                      value={feature}
-                      onChange={(e) => updateFeature(index, e.target.value)}
-                      placeholder="Feature description"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeFeature(index)}
-                      disabled={formData.features.length === 1}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-                <Button type="button" variant="outline" onClick={addFeature}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Feature
-                </Button>
+            </div>
+            <div>
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="icon">Icon</Label>
+                <Input
+                  type="text"
+                  id="icon"
+                  name="icon"
+                  value={formData.icon}
+                  onChange={handleInputChange}
+                />
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">SEO Title</label>
-                  <Input
-                    value={formData.seo_title}
-                    onChange={(e) => setFormData({ ...formData, seo_title: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Display Order</label>
-                  <Input
-                    type="number"
-                    value={formData.display_order}
-                    onChange={(e) => setFormData({ ...formData, display_order: parseInt(e.target.value) || 0 })}
-                  />
-                </div>
+              <div>
+                <Label htmlFor="base_price">Base Price</Label>
+                <Input
+                  type="number"
+                  id="base_price"
+                  name="base_price"
+                  value={formData.base_price}
+                  onChange={handleInputChange}
+                />
               </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">SEO Description</label>
-                <Textarea
+              <div>
+                <Label htmlFor="price_unit">Price Unit</Label>
+                <Input
+                  type="text"
+                  id="price_unit"
+                  name="price_unit"
+                  value={formData.price_unit}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div>
+                <Label htmlFor="display_order">Display Order</Label>
+                <Input
+                  type="number"
+                  id="display_order"
+                  name="display_order"
+                  value={formData.display_order}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="features">Features (comma separated)</Label>
+              <Input
+                type="text"
+                id="features"
+                name="features"
+                value={formData.features}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="seo_title">SEO Title</Label>
+                <Input
+                  type="text"
+                  id="seo_title"
+                  name="seo_title"
+                  value={formData.seo_title}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div>
+                <Label htmlFor="seo_description">SEO Description</Label>
+                <Input
+                  type="text"
+                  id="seo_description"
+                  name="seo_description"
                   value={formData.seo_description}
-                  onChange={(e) => setFormData({ ...formData, seo_description: e.target.value })}
-                  rows={2}
+                  onChange={handleInputChange}
                 />
               </div>
-
-              <div className="flex gap-6">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    checked={formData.is_featured}
-                    onCheckedChange={(checked) => setFormData({ ...formData, is_featured: checked })}
-                  />
-                  <label className="text-sm font-medium">Featured</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    checked={formData.is_active}
-                    onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
-                  />
-                  <label className="text-sm font-medium">Active</label>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit">
-                  {editingService ? 'Update Service' : 'Create Service'}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {/* Services Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredServices.map((service) => (
-          <Card key={service.id} className="relative">
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <CardTitle className="text-lg">{service.title}</CardTitle>
-                    {service.is_featured && (
-                      <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <Badge variant={service.is_active ? "default" : "secondary"}>
-                      {service.is_active ? 'Active' : 'Inactive'}
-                    </Badge>
-                    <Badge variant="outline">{service.category}</Badge>
-                  </div>
-                </div>
-                <div className="flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleEdit(service)}
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDelete(service.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                {service.description}
-              </p>
-              {service.base_price > 0 && (
-                <p className="text-lg font-semibold text-green-600 mb-3">
-                  KSh {service.base_price.toLocaleString()} / {service.price_unit}
-                </p>
-              )}
-              {service.features && service.features.length > 0 && (
-                <div className="space-y-1">
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Features</p>
-                  <ul className="text-sm space-y-1">
-                    {service.features.slice(0, 3).map((feature, idx) => (
-                      <li key={idx} className="text-gray-600">• {feature}</li>
-                    ))}
-                    {service.features.length > 3 && (
-                      <li className="text-gray-500 text-xs">+{service.features.length - 3} more</li>
-                    )}
-                  </ul>
-                </div>
-              )}
-              <div className="flex gap-2 mt-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => toggleStatus(service, 'is_featured')}
-                >
-                  {service.is_featured ? 'Unfeature' : 'Feature'}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => toggleStatus(service, 'is_active')}
-                >
-                  {service.is_active ? 'Deactivate' : 'Activate'}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {filteredServices.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-gray-500">No services found</p>
-        </div>
-      )}
+            </div>
+            <div className="flex items-center space-x-2">
+              <Label htmlFor="is_active">Active</Label>
+              <Switch
+                id="is_active"
+                name="is_active"
+                checked={formData.is_active}
+                onCheckedChange={(checked) => handleSwitchChange('is_active', checked)}
+              />
+              <Label htmlFor="is_featured">Featured</Label>
+              <Switch
+                id="is_featured"
+                name="is_featured"
+                checked={formData.is_featured}
+                onCheckedChange={(checked) => handleSwitchChange('is_featured', checked)}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="submit">{editingService ? 'Update' : 'Save'}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

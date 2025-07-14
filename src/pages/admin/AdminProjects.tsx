@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,33 +5,56 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Edit, Trash2, Star, Search, Filter, Calendar, MapPin, DollarSign } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger,
+  DialogFooter
+} from "@/components/ui/dialog";
+import { 
+  Plus, 
+  Search, 
+  Filter, 
+  Star, 
+  Eye, 
+  EyeOff, 
+  Edit,
+  Trash2,
+  Calendar,
+  MapPin,
+  Building2,
+  DollarSign
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 
 interface ProjectShowcase {
   id: string;
   title: string;
-  description: string;
-  short_description: string;
+  description: string | null;
+  short_description: string | null;
   category: string;
-  client_name: string;
-  location: string;
-  project_value: number;
-  completion_date: string;
-  duration_months: number;
+  client_name: string | null;
+  location: string | null;
+  completion_date: string | null;
+  duration_months: number | null;
+  project_value: number | null;
   images: string[];
   features: string[];
   technologies: string[];
-  is_featured: boolean;
-  is_active: boolean;
-  display_order: number;
-  seo_title: string;
-  seo_description: string;
-  created_at: string;
+  is_active: boolean | null;
+  is_featured: boolean | null;
+  display_order: number | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 const AdminProjects: React.FC = () => {
@@ -40,26 +62,24 @@ const AdminProjects: React.FC = () => {
   const [projects, setProjects] = useState<ProjectShowcase[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterCategory, setFilterCategory] = useState('all');
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [showDialog, setShowDialog] = useState(false);
   const [editingProject, setEditingProject] = useState<ProjectShowcase | null>(null);
-
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     short_description: '',
-    category: 'construction',
+    category: '',
     client_name: '',
     location: '',
-    project_value: 0,
     completion_date: '',
-    duration_months: 0,
-    images: [''],
-    features: [''],
-    technologies: [''],
-    is_featured: false,
+    duration_months: '',
+    project_value: '',
+    features: '',
+    technologies: '',
     is_active: true,
-    display_order: 0,
+    is_featured: false,
+    display_order: '',
     seo_title: '',
     seo_description: ''
   });
@@ -76,7 +96,7 @@ const AdminProjects: React.FC = () => {
         .order('display_order', { ascending: true });
 
       if (error) throw error;
-      
+
       // Transform the data to match the expected interface
       const transformedData = (data || []).map(item => ({
         ...item,
@@ -98,93 +118,188 @@ const AdminProjects: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
+  };
+
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+  };
+
+  const filteredProjects = projects.filter(project => {
+    const searchRegex = new RegExp(searchTerm, 'i');
+    const matchesSearch = searchRegex.test(project.title) || searchRegex.test(project.description || '') || searchRegex.test(project.short_description || '');
+    const matchesCategory = selectedCategory === 'all' || project.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  const openDialog = () => {
+    setEditingProject(null);
+    setFormData({
+      title: '',
+      description: '',
+      short_description: '',
+      category: '',
+      client_name: '',
+      location: '',
+      completion_date: '',
+      duration_months: '',
+      project_value: '',
+      features: '',
+      technologies: '',
+      is_active: true,
+      is_featured: false,
+      display_order: '',
+      seo_title: '',
+      seo_description: ''
+    });
+    setShowDialog(true);
+  };
+
+  const closeDialog = () => {
+    setShowDialog(false);
+    setEditingProject(null);
+  };
+
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = event.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSwitchChange = (name: string, checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: checked
+    }));
+  };
+
+  const handleSubmit = async () => {
     try {
-      const projectData = {
-        ...formData,
-        images: formData.images.filter(img => img.trim() !== ''),
-        features: formData.features.filter(f => f.trim() !== ''),
-        technologies: formData.technologies.filter(t => t.trim() !== '')
-      };
-
+      setLoading(true);
+      const { title, description, short_description, category, client_name, location, completion_date, duration_months, project_value, features, technologies, is_active, is_featured, display_order, seo_title, seo_description } = formData;
+  
+      const featuresArray = features.split(',').map(item => item.trim());
+      const technologiesArray = technologies.split(',').map(item => item.trim());
+  
       if (editingProject) {
-        const { error } = await supabase
+        // Update existing project
+        const { data, error } = await supabase
           .from('projects_showcase')
-          .update(projectData)
+          .update({
+            title,
+            description,
+            short_description,
+            category,
+            client_name,
+            location,
+            completion_date,
+            duration_months: parseInt(duration_months),
+            project_value: parseFloat(project_value),
+            images: [], // Handle images separately if needed
+            features: featuresArray,
+            technologies: technologiesArray,
+            is_active,
+            is_featured,
+            display_order: parseInt(display_order),
+            seo_title,
+            seo_description,
+            updated_at: new Date().toISOString()
+          })
           .eq('id', editingProject.id);
-
+  
         if (error) throw error;
-        
+  
         toast({
           title: "Success",
-          description: "Project updated successfully"
+          description: "Project updated successfully",
         });
       } else {
-        const { error } = await supabase
+        // Create new project
+        const { data, error } = await supabase
           .from('projects_showcase')
-          .insert([projectData]);
-
+          .insert([{
+            title,
+            description,
+            short_description,
+            category,
+            client_name,
+            location,
+            completion_date,
+            duration_months: parseInt(duration_months),
+            project_value: parseFloat(project_value),
+            images: [], // Handle images separately if needed
+            features: featuresArray,
+            technologies: technologiesArray,
+            is_active,
+            is_featured,
+            display_order: parseInt(display_order),
+            seo_title,
+            seo_description,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }]);
+  
         if (error) throw error;
-        
+  
         toast({
           title: "Success",
-          description: "Project created successfully"
+          description: "Project created successfully",
         });
       }
-
-      setIsDialogOpen(false);
-      resetForm();
+  
       fetchProjects();
+      closeDialog();
     } catch (error) {
-      console.error('Error saving project:', error);
+      console.error('Error submitting project:', error);
       toast({
         title: "Error",
-        description: "Failed to save project",
+        description: "Failed to submit project",
         variant: "destructive"
       });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleEdit = (project: ProjectShowcase) => {
+  const openEditDialog = (project: ProjectShowcase) => {
     setEditingProject(project);
     setFormData({
       title: project.title,
-      description: project.description,
-      short_description: project.short_description,
+      description: project.description || '',
+      short_description: project.short_description || '',
       category: project.category,
       client_name: project.client_name || '',
       location: project.location || '',
-      project_value: project.project_value || 0,
       completion_date: project.completion_date || '',
-      duration_months: project.duration_months || 0,
-      images: project.images || [''],
-      features: project.features || [''],
-      technologies: project.technologies || [''],
-      is_featured: project.is_featured,
-      is_active: project.is_active,
-      display_order: project.display_order,
+      duration_months: project.duration_months?.toString() || '',
+      project_value: project.project_value?.toString() || '',
+      features: project.features.join(', '),
+      technologies: project.technologies.join(', '),
+      is_active: project.is_active ?? true,
+      is_featured: project.is_featured ?? false,
+      display_order: project.display_order?.toString() || '',
       seo_title: project.seo_title || '',
       seo_description: project.seo_description || ''
     });
-    setIsDialogOpen(true);
+    setShowDialog(true);
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this project?')) return;
-
     try {
+      setLoading(true);
       const { error } = await supabase
         .from('projects_showcase')
         .delete()
         .eq('id', id);
 
       if (error) throw error;
-      
+
       toast({
         title: "Success",
-        description: "Project deleted successfully"
+        description: "Project deleted successfully",
       });
       fetchProjects();
     } catch (error) {
@@ -194,75 +309,66 @@ const AdminProjects: React.FC = () => {
         description: "Failed to delete project",
         variant: "destructive"
       });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const toggleStatus = async (project: ProjectShowcase, field: 'is_active' | 'is_featured') => {
+  const toggleVisibility = async (id: string, is_active: boolean) => {
     try {
+      setLoading(true);
       const { error } = await supabase
         .from('projects_showcase')
-        .update({ [field]: !project[field] })
-        .eq('id', project.id);
+        .update({ is_active: !is_active })
+        .eq('id', id);
 
       if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Project ${is_active ? 'hidden' : 'visible'} successfully`,
+      });
       fetchProjects();
     } catch (error) {
-      console.error(`Error updating ${field}:`, error);
+      console.error('Error toggling visibility:', error);
       toast({
         title: "Error",
-        description: `Failed to update ${field}`,
+        description: "Failed to toggle visibility",
         variant: "destructive"
       });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      title: '',
-      description: '',
-      short_description: '',
-      category: 'construction',
-      client_name: '',
-      location: '',
-      project_value: 0,
-      completion_date: '',
-      duration_months: 0,
-      images: [''],
-      features: [''],
-      technologies: [''],
-      is_featured: false,
-      is_active: true,
-      display_order: 0,
-      seo_title: '',
-      seo_description: ''
-    });
-    setEditingProject(null);
+  const toggleFeatured = async (id: string, is_featured: boolean) => {
+    try {
+      setLoading(true);
+      const { error } = await supabase
+        .from('projects_showcase')
+        .update({ is_featured: !is_featured })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Project ${is_featured ? 'unfeatured' : 'featured'} successfully`,
+      });
+      fetchProjects();
+    } catch (error) {
+      console.error('Error toggling featured:', error);
+      toast({
+        title: "Error",
+        description: "Failed to toggle featured",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const addArrayItem = (field: 'images' | 'features' | 'technologies') => {
-    setFormData({ ...formData, [field]: [...formData[field], ''] });
-  };
-
-  const updateArrayItem = (field: 'images' | 'features' | 'technologies', index: number, value: string) => {
-    const newArray = [...formData[field]];
-    newArray[index] = value;
-    setFormData({ ...formData, [field]: newArray });
-  };
-
-  const removeArrayItem = (field: 'images' | 'features' | 'technologies', index: number) => {
-    const newArray = formData[field].filter((_, i) => i !== index);
-    setFormData({ ...formData, [field]: newArray });
-  };
-
-  const filteredProjects = projects.filter(project => {
-    const matchesSearch = project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         project.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         project.client_name?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = filterCategory === 'all' || project.category === filterCategory;
-    return matchesSearch && matchesCategory;
-  });
-
-  const categories = Array.from(new Set(projects.map(p => p.category)));
+  const categories = ['all', ...new Set(projects.map(project => project.category))];
 
   if (loading) {
     return (
@@ -273,389 +379,220 @@ const AdminProjects: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <AdminPageHeader
         title="Projects Showcase"
-        description="Manage website project portfolio and showcase"
+        description="Manage and showcase your projects on the website."
       />
 
-      {/* Filters and Actions */}
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-        <div className="flex flex-1 gap-4">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+      <Tabs defaultValue="all" className="space-y-4">
+        <div className="flex items-center justify-between">
+          <TabsList>
+            {categories.map(category => (
+              <TabsTrigger key={category} value={category} onClick={() => handleCategoryChange(category)}>
+                {category.charAt(0).toUpperCase() + category.slice(1)}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          <div className="flex items-center space-x-4">
             <Input
+              type="search"
               placeholder="Search projects..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              onChange={handleSearch}
             />
-          </div>
-          <Select value={filterCategory} onValueChange={setFilterCategory}>
-            <SelectTrigger className="w-48">
-              <Filter className="w-4 h-4 mr-2" />
-              <SelectValue placeholder="Filter by category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              {categories.map(category => (
-                <SelectItem key={category} value={category}>
-                  {category.charAt(0).toUpperCase() + category.slice(1)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={resetForm}>
+            <Button onClick={openDialog}>
               <Plus className="w-4 h-4 mr-2" />
               Add Project
             </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {editingProject ? 'Edit Project' : 'Add New Project'}
-              </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Title *</label>
-                  <Input
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Category</label>
-                  <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="construction">Construction</SelectItem>
-                      <SelectItem value="renovation">Renovation</SelectItem>
-                      <SelectItem value="plumbing">Plumbing</SelectItem>
-                      <SelectItem value="electrical">Electrical</SelectItem>
-                      <SelectItem value="civil_works">Civil Works</SelectItem>
-                      <SelectItem value="industrial">Industrial</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Short Description</label>
-                <Input
-                  value={formData.short_description}
-                  onChange={(e) => setFormData({ ...formData, short_description: e.target.value })}
-                  maxLength={200}
-                  placeholder="Brief description for cards (max 200 characters)"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Full Description</label>
-                <Textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={4}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Client Name</label>
-                  <Input
-                    value={formData.client_name}
-                    onChange={(e) => setFormData({ ...formData, client_name: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Location</label>
-                  <Input
-                    value={formData.location}
-                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Project Value (KSh)</label>
-                  <Input
-                    type="number"
-                    value={formData.project_value}
-                    onChange={(e) => setFormData({ ...formData, project_value: parseFloat(e.target.value) || 0 })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Completion Date</label>
-                  <Input
-                    type="date"
-                    value={formData.completion_date}
-                    onChange={(e) => setFormData({ ...formData, completion_date: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Duration (Months)</label>
-                  <Input
-                    type="number"
-                    value={formData.duration_months}
-                    onChange={(e) => setFormData({ ...formData, duration_months: parseInt(e.target.value) || 0 })}
-                  />
-                </div>
-              </div>
-
-              {/* Images */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Project Images</label>
-                {formData.images.map((image, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Input
-                      value={image}
-                      onChange={(e) => updateArrayItem('images', index, e.target.value)}
-                      placeholder="Image URL"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeArrayItem('images', index)}
-                      disabled={formData.images.length === 1}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-                <Button type="button" variant="outline" onClick={() => addArrayItem('images')}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Image
-                </Button>
-              </div>
-
-              {/* Features */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Key Features</label>
-                {formData.features.map((feature, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Input
-                      value={feature}
-                      onChange={(e) => updateArrayItem('features', index, e.target.value)}
-                      placeholder="Feature description"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeArrayItem('features', index)}
-                      disabled={formData.features.length === 1}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-                <Button type="button" variant="outline" onClick={() => addArrayItem('features')}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Feature
-                </Button>
-              </div>
-
-              {/* Technologies */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Technologies Used</label>
-                {formData.technologies.map((tech, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Input
-                      value={tech}
-                      onChange={(e) => updateArrayItem('technologies', index, e.target.value)}
-                      placeholder="Technology or method"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeArrayItem('technologies', index)}
-                      disabled={formData.technologies.length === 1}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-                <Button type="button" variant="outline" onClick={() => addArrayItem('technologies')}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Technology
-                </Button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">SEO Title</label>
-                  <Input
-                    value={formData.seo_title}
-                    onChange={(e) => setFormData({ ...formData, seo_title: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Display Order</label>
-                  <Input
-                    type="number"
-                    value={formData.display_order}
-                    onChange={(e) => setFormData({ ...formData, display_order: parseInt(e.target.value) || 0 })}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">SEO Description</label>
-                <Textarea
-                  value={formData.seo_description}
-                  onChange={(e) => setFormData({ ...formData, seo_description: e.target.value })}
-                  rows={2}
-                />
-              </div>
-
-              <div className="flex gap-6">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    checked={formData.is_featured}
-                    onCheckedChange={(checked) => setFormData({ ...formData, is_featured: checked })}
-                  />
-                  <label className="text-sm font-medium">Featured</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    checked={formData.is_active}
-                    onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
-                  />
-                  <label className="text-sm font-medium">Active</label>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit">
-                  {editingProject ? 'Update Project' : 'Create Project'}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {/* Projects Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredProjects.map((project) => (
-          <Card key={project.id} className="relative">
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <CardTitle className="text-lg line-clamp-1">{project.title}</CardTitle>
-                    {project.is_featured && (
-                      <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                    )}
-                  </div>
-                  <div className="flex gap-2 mb-2">
-                    <Badge variant={project.is_active ? "default" : "secondary"}>
-                      {project.is_active ? 'Active' : 'Inactive'}
-                    </Badge>
-                    <Badge variant="outline">{project.category}</Badge>
-                  </div>
-                  {project.client_name && (
-                    <p className="text-sm text-gray-600">Client: {project.client_name}</p>
-                  )}
-                </div>
-                <div className="flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleEdit(project)}
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDelete(project.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                {project.short_description || project.description}
-              </p>
-              
-              <div className="space-y-2 mb-4">
-                {project.location && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <MapPin className="w-4 h-4" />
-                    {project.location}
-                  </div>
-                )}
-                {project.project_value > 0 && (
-                  <div className="flex items-center gap-2 text-sm text-green-600 font-semibold">
-                    <DollarSign className="w-4 h-4" />
-                    KSh {project.project_value.toLocaleString()}
-                  </div>
-                )}
-                {project.completion_date && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Calendar className="w-4 h-4" />
-                    {new Date(project.completion_date).toLocaleDateString()}
-                  </div>
-                )}
-              </div>
-
-              {project.features && project.features.length > 0 && (
-                <div className="space-y-1 mb-4">
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Features</p>
-                  <ul className="text-sm space-y-1">
-                    {project.features.slice(0, 2).map((feature, idx) => (
-                      <li key={idx} className="text-gray-600">• {feature}</li>
-                    ))}
-                    {project.features.length > 2 && (
-                      <li className="text-gray-500 text-xs">+{project.features.length - 2} more</li>
-                    )}
-                  </ul>
-                </div>
-              )}
-
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => toggleStatus(project, 'is_featured')}
-                >
-                  {project.is_featured ? 'Unfeature' : 'Feature'}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => toggleStatus(project, 'is_active')}
-                >
-                  {project.is_active ? 'Deactivate' : 'Activate'}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {filteredProjects.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-gray-500">No projects found</p>
+          </div>
         </div>
-      )}
+        <Separator />
+
+        {categories.map(category => (
+          <TabsContent key={category} value={category} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredProjects.map(project => (
+                <Card key={project.id} className="bg-white shadow-md rounded-lg overflow-hidden">
+                  <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                    <CardTitle className="text-sm font-medium">{project.title}</CardTitle>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="secondary">{project.category}</Badge>
+                      {project.is_featured && (
+                        <Badge variant="outline">
+                          <Star className="w-3 h-3 mr-1" />
+                          Featured
+                        </Badge>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-sm text-gray-500 line-clamp-3">{project.short_description || project.description || 'No description'}</div>
+                    <div className="flex items-center space-x-4 mt-4">
+                      <Button variant="outline" size="sm" onClick={() => openEditDialog(project)}>
+                        <Edit className="w-4 h-4 mr-2" />
+                        Edit
+                      </Button>
+                      <Button variant="destructive" size="sm" onClick={() => handleDelete(project.id)}>
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => toggleVisibility(project.id, project.is_active ?? true)}
+                      >
+                        {project.is_active ? (
+                          <>
+                            <EyeOff className="w-4 h-4 mr-2" />
+                            Hide
+                          </>
+                        ) : (
+                          <>
+                            <Eye className="w-4 h-4 mr-2" />
+                            Show
+                          </>
+                        )}
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => toggleFeatured(project.id, project.is_featured ?? true)}
+                      >
+                        {project.is_featured ? (
+                          <>
+                            <Star className="w-4 h-4 mr-2" />
+                            Unfeature
+                          </>
+                        ) : (
+                          <>
+                            <Star className="w-4 h-4 mr-2" />
+                            Feature
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+        ))}
+      </Tabs>
+
+      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{editingProject ? 'Edit Project' : 'Add Project'}</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="title" className="text-right">
+                Title
+              </Label>
+              <Input type="text" id="title" name="title" value={formData.title} onChange={handleInputChange} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="description" className="text-right">
+                Description
+              </Label>
+              <Textarea id="description" name="description" value={formData.description} onChange={handleInputChange} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="short_description" className="text-right">
+                Short Description
+              </Label>
+              <Textarea id="short_description" name="short_description" value={formData.short_description} onChange={handleInputChange} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="category" className="text-right">
+                Category
+              </Label>
+              <Input type="text" id="category" name="category" value={formData.category} onChange={handleInputChange} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="client_name" className="text-right">
+                Client Name
+              </Label>
+              <Input type="text" id="client_name" name="client_name" value={formData.client_name} onChange={handleInputChange} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="location" className="text-right">
+                Location
+              </Label>
+              <Input type="text" id="location" name="location" value={formData.location} onChange={handleInputChange} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="completion_date" className="text-right">
+                Completion Date
+              </Label>
+              <Input type="date" id="completion_date" name="completion_date" value={formData.completion_date} onChange={handleInputChange} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="duration_months" className="text-right">
+                Duration (Months)
+              </Label>
+              <Input type="number" id="duration_months" name="duration_months" value={formData.duration_months} onChange={handleInputChange} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="project_value" className="text-right">
+                Project Value
+              </Label>
+              <Input type="number" id="project_value" name="project_value" value={formData.project_value} onChange={handleInputChange} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="features" className="text-right">
+                Features (comma-separated)
+              </Label>
+              <Input type="text" id="features" name="features" value={formData.features} onChange={handleInputChange} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="technologies" className="text-right">
+                Technologies (comma-separated)
+              </Label>
+              <Input type="text" id="technologies" name="technologies" value={formData.technologies} onChange={handleInputChange} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="display_order" className="text-right">
+                Display Order
+              </Label>
+              <Input type="number" id="display_order" name="display_order" value={formData.display_order} onChange={handleInputChange} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="seo_title" className="text-right">
+                SEO Title
+              </Label>
+              <Input type="text" id="seo_title" name="seo_title" value={formData.seo_title} onChange={handleInputChange} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="seo_description" className="text-right">
+                SEO Description
+              </Label>
+              <Textarea id="seo_description" name="seo_description" value={formData.seo_description} onChange={handleInputChange} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="is_active" className="text-right">
+                Active
+              </Label>
+              <Switch id="is_active" name="is_active" checked={formData.is_active} onCheckedChange={(checked) => handleSwitchChange('is_active', checked)} />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="is_featured" className="text-right">
+                Featured
+              </Label>
+              <Switch id="is_featured" name="is_featured" checked={formData.is_featured} onCheckedChange={(checked) => handleSwitchChange('is_featured', checked)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="secondary" onClick={closeDialog}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleSubmit}>
+              {editingProject ? 'Update Project' : 'Create Project'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
