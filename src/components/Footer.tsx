@@ -14,7 +14,7 @@ const Footer = () => {
           {/* Company Info - Enhanced for mobile */}
           <div className="col-span-1 sm:col-span-2 lg:col-span-2 space-y-4">
             <div className="mb-4">
-              <Logo variant="white" size="md" className="mb-3" />
+              <Logo variant="white" size="md" />
             </div>
             <p className="text-gray-300 text-sm leading-relaxed max-w-md">
               Leading construction and engineering company in Kenya, delivering excellence with over 15 years of experience. 
