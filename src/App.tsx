@@ -22,7 +22,7 @@ import AdminDocuments from "@/pages/admin/AdminDocuments";
 import AdminLetterheads from "@/pages/admin/AdminLetterheads";
 import AdminBackup from "@/pages/admin/AdminBackup";
 import AdminTestimonials from "@/pages/admin/AdminTestimonials";
-import PublicPage from "@/pages/PublicPage";
+import Index from "@/pages/Index";
 import AdminQuotations from "@/pages/admin/AdminQuotations";
 import Quotes from "@/pages/Quotes";
 
@@ -39,7 +39,7 @@ const App = () => (
             <BrowserRouter>
               <Routes>
                 {/* Public Routes */}
-                <Route path="/" element={<PublicPage />} />
+                <Route path="/" element={<Index />} />
                 <Route path="/quotes" element={<Quotes />} />
                 
                 {/* Admin Routes */}
