@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +16,50 @@ import { useToast } from "@/hooks/use-toast";
 import AdminLogin from "@/components/AdminLogin";
 import AdminHeader from "@/components/AdminHeader";
 
+// Define proper types for report data
+interface FinancialData {
+  revenue: number;
+  expenses: number;
+  profit: number;
+  growth: number;
+  invoicesCount: number;
+  paidInvoices: number;
+}
+
+interface ProjectsData {
+  total: number;
+  completed: number;
+  inProgress: number;
+  completion: number;
+  planning: number;
+  onHold: number;
+}
+
+interface ClientsData {
+  total: number;
+  new: number;
+  active: number;
+  retention: number;
+  companies: number;
+  individuals: number;
+}
+
+interface PerformanceData {
+  efficiency: number;
+  satisfaction: number;
+  timeline: number;
+  budget: number;
+  tasksCompleted: number;
+  overdueItems: number;
+}
+
+interface ReportData {
+  financial: FinancialData;
+  projects: ProjectsData;
+  clients: ClientsData;
+  performance: PerformanceData;
+}
+
 const AdminReports = () => {
   const { isAuthenticated } = useAdmin();
   const { toast } = useToast();
@@ -28,7 +71,7 @@ const AdminReports = () => {
   const [reportFormat, setReportFormat] = useState("pdf");
   const [loading, setLoading] = useState(false);
   const [scheduledReports, setScheduledReports] = useState([]);
-  const [reportData, setReportData] = useState({
+  const [reportData, setReportData] = useState<ReportData>({
     financial: { revenue: 0, expenses: 0, profit: 0, growth: 0, invoicesCount: 0, paidInvoices: 0 },
     projects: { total: 0, completed: 0, inProgress: 0, completion: 0, planning: 0, onHold: 0 },
     clients: { total: 0, new: 0, active: 0, retention: 0, companies: 0, individuals: 0 },
@@ -111,7 +154,7 @@ const AdminReports = () => {
       const timelinePerformance = 91; // Mock timeline performance
       const budgetAccuracy = 94; // Mock budget accuracy
 
-      const processedData = {
+      const processedData: ReportData = {
         financial: {
           revenue: totalRevenue,
           expenses: estimatedExpenses,
@@ -172,53 +215,48 @@ const AdminReports = () => {
   const generateReport = async () => {
     setLoading(true);
     try {
-      // Generate actual report content based on selected type
       let reportContent = '';
-      const currentData = reportData[reportType as keyof typeof reportData];
       
-      switch (reportType) {
-        case 'financial':
-          reportContent = `Financial Report (${format(dateRange.from, 'MMM dd')} - ${format(dateRange.to, 'MMM dd, yyyy')})
-          
-Revenue: KSh ${currentData.revenue.toLocaleString()}
-Expenses: KSh ${currentData.expenses.toLocaleString()}
-Profit: KSh ${currentData.profit.toLocaleString()}
-Growth: ${currentData.growth.toFixed(1)}%
-Total Invoices: ${currentData.invoicesCount}
-Paid Invoices: ${currentData.paidInvoices}`;
-          break;
-          
-        case 'projects':
-          reportContent = `Project Status Report (${format(dateRange.from, 'MMM dd')} - ${format(dateRange.to, 'MMM dd, yyyy')})
-          
-Total Projects: ${currentData.total}
-Completed: ${currentData.completed}
-In Progress: ${currentData.inProgress}
-Planning: ${currentData.planning}
-On Hold: ${currentData.onHold}
-Completion Rate: ${currentData.completion.toFixed(1)}%`;
-          break;
-          
-        case 'clients':
-          reportContent = `Client Analytics Report (${format(dateRange.from, 'MMM dd')} - ${format(dateRange.to, 'MMM dd, yyyy')})
-          
-Total Clients: ${currentData.total}
-Company Clients: ${currentData.companies}
-Individual Clients: ${currentData.individuals}
-Active Clients: ${currentData.active}
-Retention Rate: ${currentData.retention}%`;
-          break;
-          
-        case 'performance':
-          reportContent = `Performance Report (${format(dateRange.from, 'MMM dd')} - ${format(dateRange.to, 'MMM dd, yyyy')})
-          
-Efficiency: ${currentData.efficiency.toFixed(1)}%
-Satisfaction: ${currentData.satisfaction}/5
-Timeline Performance: ${currentData.timeline}%
-Budget Accuracy: ${currentData.budget}%
-Tasks Completed: ${currentData.tasksCompleted}
-Overdue Items: ${currentData.overdueItems}`;
-          break;
+      // Type-safe access to report data
+      if (reportType === 'financial') {
+        const data = reportData.financial;
+        reportContent = `Financial Report (${format(dateRange.from, 'MMM dd')} - ${format(dateRange.to, 'MMM dd, yyyy')})
+        
+Revenue: KSh ${data.revenue.toLocaleString()}
+Expenses: KSh ${data.expenses.toLocaleString()}
+Profit: KSh ${data.profit.toLocaleString()}
+Growth: ${data.growth.toFixed(1)}%
+Total Invoices: ${data.invoicesCount}
+Paid Invoices: ${data.paidInvoices}`;
+      } else if (reportType === 'projects') {
+        const data = reportData.projects;
+        reportContent = `Project Status Report (${format(dateRange.from, 'MMM dd')} - ${format(dateRange.to, 'MMM dd, yyyy')})
+        
+Total Projects: ${data.total}
+Completed: ${data.completed}
+In Progress: ${data.inProgress}
+Planning: ${data.planning}
+On Hold: ${data.onHold}
+Completion Rate: ${data.completion.toFixed(1)}%`;
+      } else if (reportType === 'clients') {
+        const data = reportData.clients;
+        reportContent = `Client Analytics Report (${format(dateRange.from, 'MMM dd')} - ${format(dateRange.to, 'MMM dd, yyyy')})
+        
+Total Clients: ${data.total}
+Company Clients: ${data.companies}
+Individual Clients: ${data.individuals}
+Active Clients: ${data.active}
+Retention Rate: ${data.retention}%`;
+      } else if (reportType === 'performance') {
+        const data = reportData.performance;
+        reportContent = `Performance Report (${format(dateRange.from, 'MMM dd')} - ${format(dateRange.to, 'MMM dd, yyyy')})
+        
+Efficiency: ${data.efficiency.toFixed(1)}%
+Satisfaction: ${data.satisfaction}/5
+Timeline Performance: ${data.timeline}%
+Budget Accuracy: ${data.budget}%
+Tasks Completed: ${data.tasksCompleted}
+Overdue Items: ${data.overdueItems}`;
       }
 
       // Simulate processing time
@@ -277,14 +315,26 @@ Overdue Items: ${currentData.overdueItems}`;
   const exportData = async (format: string) => {
     setLoading(true);
     try {
-      // Export current report data in specified format
-      const dataToExport = {
+      // Type-safe data export
+      let dataToExport: any = {};
+      
+      if (reportType === 'financial') {
+        dataToExport = reportData.financial;
+      } else if (reportType === 'projects') {
+        dataToExport = reportData.projects;
+      } else if (reportType === 'clients') {
+        dataToExport = reportData.clients;
+      } else if (reportType === 'performance') {
+        dataToExport = reportData.performance;
+      }
+
+      const exportObject = {
         reportType,
         dateRange: {
           from: format(dateRange.from, 'yyyy-MM-dd'),
           to: format(dateRange.to, 'yyyy-MM-dd')
         },
-        data: reportData[reportType as keyof typeof reportData],
+        data: dataToExport,
         generatedAt: new Date().toISOString()
       };
 
@@ -294,19 +344,19 @@ Overdue Items: ${currentData.overdueItems}`;
 
       switch (format) {
         case 'json':
-          content = JSON.stringify(dataToExport, null, 2);
+          content = JSON.stringify(exportObject, null, 2);
           mimeType = 'application/json';
           fileExtension = 'json';
           break;
         case 'csv':
           // Convert to CSV format
-          const csvData = Object.entries(dataToExport.data).map(([key, value]) => `${key},${value}`).join('\n');
+          const csvData = Object.entries(exportObject.data).map(([key, value]) => `${key},${value}`).join('\n');
           content = `Metric,Value\n${csvData}`;
           mimeType = 'text/csv';
           fileExtension = 'csv';
           break;
         default:
-          content = JSON.stringify(dataToExport, null, 2);
+          content = JSON.stringify(exportObject, null, 2);
           mimeType = 'application/json';
           fileExtension = 'json';
       }

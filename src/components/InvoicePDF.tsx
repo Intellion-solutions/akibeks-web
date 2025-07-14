@@ -118,8 +118,8 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice, company }) => {
       {invoice.letterhead_enabled && (
         <div className={`bg-gradient-to-r ${colors.gradient} text-white p-12 print:p-8`}>
           <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-6">
-              <div className="bg-white p-6 rounded-xl shadow-2xl">
+            <div className="flex items-center space-x-8">
+              <div className="bg-white p-8 rounded-xl shadow-2xl min-w-[120px] min-h-[120px] flex items-center justify-center">
                 <Logo size="lg" variant="default" />
               </div>
               <div>
@@ -148,8 +148,8 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice, company }) => {
         {!invoice.letterhead_enabled && (
           <div className="flex justify-between items-start mb-8">
             <div className="flex-1">
-              <div className="mb-6">
-                <Logo size="xl" variant="default" />
+              <div className="mb-6 min-w-[100px] min-h-[100px] flex items-center">
+                <Logo size="lg" variant="default" />
               </div>
               <div className="space-y-1 text-sm text-gray-600">
                 <p className="font-medium text-gray-900 text-lg">{company.company_name}</p>
