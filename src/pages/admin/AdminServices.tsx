@@ -89,7 +89,9 @@ const AdminServices: React.FC = () => {
       // Transform the data to match the expected interface
       const transformedData = (data || []).map(item => ({
         ...item,
-        features: Array.isArray(item.features) ? item.features.filter((f): f is string => typeof f === 'string') : [],
+        features: Array.isArray(item.features) ? 
+          item.features.filter((f): f is string => typeof f === 'string') : 
+          [],
       }));
       
       setServices(transformedData);
@@ -338,12 +340,13 @@ const AdminServices: React.FC = () => {
       <AdminPageHeader
         title="Manage Services"
         description="Add, edit, and manage the services offered."
-      >
-        <Button onClick={openDialog}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Service
-        </Button>
-      </AdminPageHeader>
+        actions={
+          <Button onClick={openDialog}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Service
+          </Button>
+        }
+      />
 
       <Card>
         <CardHeader>
