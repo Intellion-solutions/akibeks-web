@@ -539,6 +539,75 @@ export type Database = {
           },
         ]
       }
+      projects_showcase: {
+        Row: {
+          category: string
+          client_name: string | null
+          completion_date: string | null
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          duration_months: number | null
+          features: Json | null
+          id: string
+          images: Json | null
+          is_active: boolean | null
+          is_featured: boolean | null
+          location: string | null
+          project_value: number | null
+          seo_description: string | null
+          seo_title: string | null
+          short_description: string | null
+          technologies: Json | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          client_name?: string | null
+          completion_date?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          duration_months?: number | null
+          features?: Json | null
+          id?: string
+          images?: Json | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          location?: string | null
+          project_value?: number | null
+          seo_description?: string | null
+          seo_title?: string | null
+          short_description?: string | null
+          technologies?: Json | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          client_name?: string | null
+          completion_date?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          duration_months?: number | null
+          features?: Json | null
+          id?: string
+          images?: Json | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          location?: string | null
+          project_value?: number | null
+          seo_description?: string | null
+          seo_title?: string | null
+          short_description?: string | null
+          technologies?: Json | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       quote_items: {
         Row: {
           created_at: string | null
@@ -736,6 +805,60 @@ export type Database = {
           is_active?: boolean | null
           name?: string
           unit?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      services_content: {
+        Row: {
+          base_price: number | null
+          category: string
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          features: Json | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          is_featured: boolean | null
+          price_unit: string | null
+          seo_description: string | null
+          seo_title: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          base_price?: number | null
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          features?: Json | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          price_unit?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          base_price?: number | null
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          features?: Json | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          price_unit?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          title?: string
           updated_at?: string | null
         }
         Relationships: []
