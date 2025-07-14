@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -66,7 +65,14 @@ const AdminServices: React.FC = () => {
         .order('display_order', { ascending: true });
 
       if (error) throw error;
-      setServices(data || []);
+      
+      // Transform the data to match the expected interface
+      const transformedData = (data || []).map(item => ({
+        ...item,
+        features: Array.isArray(item.features) ? item.features : [],
+      }));
+      
+      setServices(transformedData);
     } catch (error) {
       console.error('Error fetching services:', error);
       toast({

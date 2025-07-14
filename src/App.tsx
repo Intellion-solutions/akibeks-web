@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
-import { QueryClient } from 'react-query';
+import { Toaster } from "@/components/ui/toaster";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import ScrollToTop from '@/components/ScrollToTop';
 import Home from '@/pages/Home';
@@ -30,9 +31,11 @@ import AuthGuard from '@/components/AuthGuard';
 import AdminServices from '@/pages/admin/AdminServices';
 import AdminProjects from '@/pages/admin/AdminProjects';
 
+const queryClient = new QueryClient();
+
 function App() {
   return (
-    <QueryClient>
+    <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <div className="min-h-screen bg-background">
           <ScrollToTop />
@@ -82,7 +85,7 @@ function App() {
           <Toaster />
         </div>
       </BrowserRouter>
-    </QueryClient>
+    </QueryClientProvider>
   );
 }
 
