@@ -3,6 +3,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AdminProvider } from '@/contexts/AdminContext';
 
 import ScrollToTop from '@/components/ScrollToTop';
 import Home from '@/pages/Home';
@@ -37,53 +38,55 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <div className="min-h-screen bg-background">
-          <ScrollToTop />
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/services" element={<Services />} />
-            <Route path="/projects" element={<Projects />} />
-            <Route path="/blog" element={<Blog />} />
-            <Route path="/contact" element={<Contact />} />
-            
-            {/* Admin Routes */}
-            <Route path="/admin-access" element={
-              <AuthGuard requireAuth={false}>
-                <AdminAccess />
-              </AuthGuard>
-            } />
-            <Route path="/admin/*" element={
-              <AuthGuard requireAuth={true}>
-                <Routes>
-                  <Route index element={<AdminDashboard />} />
-                  <Route path="dashboard" element={<AdminDashboard />} />
-                  <Route path="clients" element={<AdminClients />} />
-                  <Route path="projects" element={<AdminProjects />} />
-                  <Route path="invoices" element={<AdminInvoices />} />
-                  <Route path="quotes" element={<AdminQuotes />} />
-                  <Route path="tasks" element={<AdminTasks />} />
-                  <Route path="inventory" element={<AdminInventory />} />
-                  <Route path="documents" element={<AdminDocuments />} />
-                  <Route path="users" element={<AdminUsers />} />
-                  <Route path="testimonials" element={<AdminTestimonials />} />
-                  <Route path="services" element={<AdminServices />} />
-                  <Route path="reports" element={<AdminReports />} />
-                  <Route path="settings" element={<AdminSettings />} />
-                  <Route path="templates" element={<AdminTemplates />} />
-                  <Route path="letterheads" element={<AdminLetterheads />} />
-                  <Route path="analytics" element={<AdminAnalytics />} />
-                  <Route path="backup" element={<AdminBackup />} />
-                </Routes>
-              </AuthGuard>
-            } />
-            
-            {/* Catch-all route */}
-            <Route path="*" element={<div>Page not found</div>} />
-          </Routes>
-          <Toaster />
-        </div>
+        <AdminProvider>
+          <div className="min-h-screen bg-background">
+            <ScrollToTop />
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<Home />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/services" element={<Services />} />
+              <Route path="/projects" element={<Projects />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route path="/contact" element={<Contact />} />
+              
+              {/* Admin Routes */}
+              <Route path="/admin-access" element={
+                <AuthGuard requireAuth={false}>
+                  <AdminAccess />
+                </AuthGuard>
+              } />
+              <Route path="/admin/*" element={
+                <AuthGuard requireAuth={true}>
+                  <Routes>
+                    <Route index element={<AdminDashboard />} />
+                    <Route path="dashboard" element={<AdminDashboard />} />
+                    <Route path="clients" element={<AdminClients />} />
+                    <Route path="projects" element={<AdminProjects />} />
+                    <Route path="invoices" element={<AdminInvoices />} />
+                    <Route path="quotes" element={<AdminQuotes />} />
+                    <Route path="tasks" element={<AdminTasks />} />
+                    <Route path="inventory" element={<AdminInventory />} />
+                    <Route path="documents" element={<AdminDocuments />} />
+                    <Route path="users" element={<AdminUsers />} />
+                    <Route path="testimonials" element={<AdminTestimonials />} />
+                    <Route path="services" element={<AdminServices />} />
+                    <Route path="reports" element={<AdminReports />} />
+                    <Route path="settings" element={<AdminSettings />} />
+                    <Route path="templates" element={<AdminTemplates />} />
+                    <Route path="letterheads" element={<AdminLetterheads />} />
+                    <Route path="analytics" element={<AdminAnalytics />} />
+                    <Route path="backup" element={<AdminBackup />} />
+                  </Routes>
+                </AuthGuard>
+              } />
+              
+              {/* Catch-all route */}
+              <Route path="*" element={<div>Page not found</div>} />
+            </Routes>
+            <Toaster />
+          </div>
+        </AdminProvider>
       </BrowserRouter>
     </QueryClientProvider>
   );
