@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -82,12 +83,6 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice, company }) => {
     return sectionSubtotal * (laborPercentage / 100);
   };
 
-  const calculateSectionTotal = (items: InvoiceItem[]) => {
-    const subtotal = calculateSectionSubtotal(items);
-    const laborCharge = calculateSectionLaborCharge(subtotal);
-    return subtotal + laborCharge;
-  };
-
   // Get template colors based on template type
   const getTemplateColors = () => {
     switch (invoice.template_type) {
@@ -119,23 +114,29 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice, company }) => {
 
   return (
     <div className="max-w-4xl mx-auto bg-white print:shadow-none shadow-2xl">
-      {/* Professional Letterhead */}
+      {/* Enhanced Professional Letterhead */}
       {invoice.letterhead_enabled && (
-        <div className={`bg-gradient-to-r ${colors.gradient} text-white p-8 print:p-6`}>
+        <div className={`bg-gradient-to-r ${colors.gradient} text-white p-12 print:p-8`}>
           <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-4">
-              <div className="bg-white p-3 rounded-lg shadow-lg">
-                <Logo size="md" variant="default" />
+            <div className="flex items-center space-x-6">
+              <div className="bg-white p-6 rounded-xl shadow-2xl">
+                <Logo size="lg" variant="default" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold tracking-wide">{company.company_name}</h1>
-                <p className="text-blue-100 text-lg">Professional Engineering Solutions</p>
+                <h1 className="text-4xl font-bold tracking-wide mb-2">{company.company_name}</h1>
+                <p className="text-blue-100 text-xl">Professional Engineering Solutions</p>
+                <div className="mt-4 text-blue-100 space-y-1">
+                  <p className="text-sm">{company.address}</p>
+                  <p className="text-sm">{company.phone} | {company.email}</p>
+                  {company.website && <p className="text-sm">{company.website}</p>}
+                </div>
               </div>
             </div>
             <div className="text-right">
-              <div className="bg-white bg-opacity-20 p-4 rounded-lg backdrop-blur-sm">
+              <div className="bg-white bg-opacity-20 p-6 rounded-xl backdrop-blur-sm">
                 <p className="text-sm text-blue-100">Invoice Number</p>
-                <p className="text-2xl font-bold">{invoice.invoice_number}</p>
+                <p className="text-3xl font-bold">{invoice.invoice_number}</p>
+                <p className="text-sm text-blue-100 mt-2">{formatDate(invoice.issue_date)}</p>
               </div>
             </div>
           </div>
@@ -147,9 +148,11 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice, company }) => {
         {!invoice.letterhead_enabled && (
           <div className="flex justify-between items-start mb-8">
             <div className="flex-1">
-              <Logo size="lg" variant="default" />
-              <div className="mt-4 space-y-1 text-sm text-gray-600">
-                <p className="font-medium text-gray-900">{company.company_name}</p>
+              <div className="mb-6">
+                <Logo size="xl" variant="default" />
+              </div>
+              <div className="space-y-1 text-sm text-gray-600">
+                <p className="font-medium text-gray-900 text-lg">{company.company_name}</p>
                 <p>{company.address}</p>
                 <p>{company.phone}</p>
                 <p>{company.email}</p>
@@ -159,26 +162,15 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice, company }) => {
             </div>
             
             <div className="text-right">
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">INVOICE</h1>
-              <p className="text-lg text-gray-600 mb-4">{formatDate(invoice.issue_date)}</p>
-              <div className="bg-blue-50 p-4 rounded-lg">
+              <h1 className="text-5xl font-bold text-gray-900 mb-4">INVOICE</h1>
+              <div className="bg-blue-50 p-6 rounded-lg">
                 <p className="text-sm text-gray-600">Invoice Number</p>
-                <p className="text-xl font-bold text-blue-600">{invoice.invoice_number}</p>
+                <p className="text-2xl font-bold text-blue-600">{invoice.invoice_number}</p>
+                <p className="text-sm text-gray-600 mt-2">{formatDate(invoice.issue_date)}</p>
               </div>
             </div>
           </div>
         )}
-
-        {/* System Generated Badge */}
-        <div className="flex justify-center mb-6">
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-2 rounded-full shadow-lg">
-            <div className="flex items-center gap-2">
-              <span className="text-sm">🤖</span>
-              <span className="font-semibold text-sm">SYSTEM GENERATED INVOICE</span>
-              <span className="text-sm">⚡</span>
-            </div>
-          </div>
-        </div>
 
         {/* Client Information */}
         <div className="grid grid-cols-2 gap-8 mb-8">
@@ -217,12 +209,11 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice, company }) => {
           </div>
         </div>
 
-        {/* Items by Section */}
+        {/* Items by Section - Fixed Row Layout */}
         <div className="mb-8">
           {Object.entries(groupedItems).map(([sectionName, sectionItems], sectionIndex) => {
             const sectionSubtotal = calculateSectionSubtotal(sectionItems);
             const sectionLaborCharge = calculateSectionLaborCharge(sectionSubtotal);
-            const sectionTotal = sectionSubtotal + sectionLaborCharge;
 
             return (
               <div key={sectionName} className={`${sectionIndex > 0 ? 'mt-8 print:break-before-page' : ''}`}>
@@ -234,10 +225,10 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice, company }) => {
                 </div>
                 
                 <div className="border border-t-0 rounded-b-lg overflow-hidden shadow-lg">
-                  {/* Section Items Header */}
-                  <div className="bg-gray-100 p-3">
-                    <div className="grid grid-cols-12 gap-4 font-medium text-gray-700">
-                      <div className="col-span-1">#</div>
+                  {/* Table Header */}
+                  <div className="bg-gray-100 px-4 py-3">
+                    <div className="grid grid-cols-12 gap-4 font-medium text-gray-700 text-sm">
+                      <div className="col-span-1 text-center">#</div>
                       <div className="col-span-5">Description</div>
                       <div className="col-span-2 text-center">Qty</div>
                       <div className="col-span-2 text-center">Unit Price</div>
@@ -245,11 +236,11 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice, company }) => {
                     </div>
                   </div>
                   
-                  {/* Section Items */}
+                  {/* Table Body - Each item in a row */}
                   <div className="bg-white">
                     {sectionItems.map((item, index) => (
-                      <div key={item.id} className={`grid grid-cols-12 gap-4 p-3 hover:bg-gray-50 ${index < sectionItems.length - 1 ? 'border-b border-gray-200' : ''}`}>
-                        <div className="col-span-1 text-gray-500 font-medium">
+                      <div key={item.id} className="grid grid-cols-12 gap-4 px-4 py-3 border-b border-gray-100 hover:bg-gray-50">
+                        <div className="col-span-1 text-center text-gray-500 font-medium">
                           {index + 1}
                         </div>
                         <div className="col-span-5">
@@ -269,19 +260,24 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice, company }) => {
                   </div>
 
                   {/* Section Totals */}
-                  <div className="bg-gray-50 border-t-2 border-gray-200 p-4">
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium text-gray-700">Section Subtotal:</span>
-                        <span className="font-bold text-lg">{formatCurrency(sectionSubtotal)}</span>
+                  <div className="bg-gray-50 border-t-2 border-gray-200 px-4 py-4">
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-12 gap-4">
+                        <div className="col-span-8"></div>
+                        <div className="col-span-2 text-right font-medium text-gray-700">Section Subtotal:</div>
+                        <div className="col-span-2 text-right font-bold text-lg">{formatCurrency(sectionSubtotal)}</div>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium text-gray-700">Labor Charge (36%):</span>
-                        <span className="font-bold text-lg text-blue-600">{formatCurrency(sectionLaborCharge)}</span>
+                      <div className="grid grid-cols-12 gap-4">
+                        <div className="col-span-8"></div>
+                        <div className="col-span-2 text-right font-medium text-gray-700">Labor Charge (36%):</div>
+                        <div className="col-span-2 text-right font-bold text-lg text-blue-600">{formatCurrency(sectionLaborCharge)}</div>
                       </div>
-                      <div className={`flex justify-between items-center bg-gradient-to-r ${colors.gradient} text-white p-3 rounded-lg`}>
-                        <span className="font-bold">Section Total:</span>
-                        <span className="font-bold text-xl">{formatCurrency(sectionTotal)}</span>
+                      <div className={`bg-gradient-to-r ${colors.gradient} text-white p-3 rounded-lg`}>
+                        <div className="grid grid-cols-12 gap-4">
+                          <div className="col-span-8"></div>
+                          <div className="col-span-2 text-right font-bold">Section Total:</div>
+                          <div className="col-span-2 text-right font-bold text-xl">{formatCurrency(sectionSubtotal + sectionLaborCharge)}</div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -379,7 +375,7 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice, company }) => {
         </div>
 
         {/* Dealers Section */}
-        <div className="bg-gradient-to-r from-gray-100 to-gray-200 p-6 rounded-lg shadow-inner">
+        <div className="bg-gradient-to-r from-gray-100 to-gray-200 p-6 rounded-lg shadow-inner mb-6">
           <h4 className={`font-bold text-center mb-4 text-[${colors.primary}] text-lg`}>Our Trusted Partners & Dealers</h4>
           <div className="grid grid-cols-4 gap-4 text-xs text-gray-600">
             <div className="text-center">
@@ -409,13 +405,13 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice, company }) => {
           </div>
         </div>
 
-        {/* System Footer */}
-        <div className="text-center mt-6 py-4 border-t border-gray-200">
+        {/* System Generated Footer - Moved to very bottom */}
+        <div className="text-center border-t border-gray-200 pt-4">
           <p className="text-xs text-gray-500">
             This invoice was automatically generated by {company.company_name} Invoice Management System on {new Date().toLocaleDateString()}
           </p>
           <p className="text-xs text-gray-400 mt-1">
-            For any queries regarding this invoice, please contact us using the information provided above.
+            📄 <strong>SYSTEM GENERATED INVOICE</strong> - For any queries regarding this invoice, please contact us using the information provided above.
           </p>
         </div>
 
