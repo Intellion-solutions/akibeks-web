@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, ArrowLeft, Trash2, DollarSign, Calendar } from "lucide-react";
+import { FileText, ArrowLeft, Trash2, DollarSign, Calendar, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/contexts/AdminContext";
 import { useNavigate } from "react-router-dom";
@@ -502,6 +503,13 @@ ${companyName}
           </div>
           
           <div className="flex gap-2">
+            <Button
+              onClick={() => setShowCreateInvoice(true)}
+              className="flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Create Invoice
+            </Button>
             <Button
               variant="outline"
               onClick={() => setShowAuditLog(!showAuditLog)}

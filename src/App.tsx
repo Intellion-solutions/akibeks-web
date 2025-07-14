@@ -1,95 +1,75 @@
-
-import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AdminProvider } from '@/contexts/AdminContext';
-
-import ScrollToTop from '@/components/ScrollToTop';
-import Home from '@/pages/Home';
-import About from '@/pages/About';
-import Services from '@/pages/Services';
-import Projects from '@/pages/Projects';
-import Blog from '@/pages/Blog';
-import Contact from '@/pages/Contact';
-import AdminAccess from '@/pages/AdminAccess';
-import AdminDashboard from '@/pages/admin/AdminDashboard';
-import AdminClients from '@/pages/admin/AdminClients';
-import AdminInvoices from '@/pages/admin/AdminInvoices';
-import AdminQuotes from '@/pages/admin/AdminQuotes';
-import AdminTasks from '@/pages/admin/AdminTasks';
-import AdminInventory from '@/pages/admin/AdminInventory';
-import AdminDocuments from '@/pages/admin/AdminDocuments';
-import AdminUsers from '@/pages/admin/AdminUsers';
-import AdminTestimonials from '@/pages/admin/AdminTestimonials';
-import AdminReports from '@/pages/admin/AdminReports';
-import AdminSettings from '@/pages/admin/AdminSettings';
-import AdminTemplates from '@/pages/admin/AdminTemplates';
-import AdminLetterheads from '@/pages/admin/AdminLetterheads';
-import AdminAnalytics from '@/pages/admin/AdminAnalytics';
-import AdminBackup from '@/pages/admin/AdminBackup';
-import AuthGuard from '@/components/AuthGuard';
-import AdminServices from '@/pages/admin/AdminServices';
-import AdminProjects from '@/pages/admin/AdminProjects';
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HelmetProvider } from 'react-helmet-async';
+import { AdminProvider } from "@/contexts/AdminContext";
+import React from "react";
+import AdminDashboard from "@/pages/admin/AdminDashboard";
+import AdminProjects from "@/pages/admin/AdminProjects";
+import AdminInvoices from "@/pages/admin/AdminInvoices";
+import AdminClients from "@/pages/admin/AdminClients";
+import AdminServices from "@/pages/admin/AdminServices";
+import AdminTemplates from "@/pages/admin/AdminTemplates";
+import AdminSettings from "@/pages/admin/AdminSettings";
+import AdminUsers from "@/pages/admin/AdminUsers";
+import AdminReports from "@/pages/admin/AdminReports";
+import AdminAnalytics from "@/pages/admin/AdminAnalytics";
+import AdminInventory from "@/pages/admin/AdminInventory";
+import AdminTasks from "@/pages/admin/AdminTasks";
+import AdminDocuments from "@/pages/admin/AdminDocuments";
+import AdminLetterheads from "@/pages/admin/AdminLetterheads";
+import AdminBackup from "@/pages/admin/AdminBackup";
+import AdminTestimonials from "@/pages/admin/AdminTestimonials";
+import PublicPage from "@/pages/PublicPage";
+import AdminQuotations from "@/pages/admin/AdminQuotations";
+import Quotes from "@/pages/Quotes";
 
 const queryClient = new QueryClient();
 
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+const App = () => (
+  <React.StrictMode>
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
         <AdminProvider>
-          <div className="min-h-screen bg-background">
-            <ScrollToTop />
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<Home />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/services" element={<Services />} />
-              <Route path="/projects" element={<Projects />} />
-              <Route path="/blog" element={<Blog />} />
-              <Route path="/contact" element={<Contact />} />
-              
-              {/* Admin Routes */}
-              <Route path="/admin-access" element={
-                <AuthGuard requireAuth={false}>
-                  <AdminAccess />
-                </AuthGuard>
-              } />
-              <Route path="/admin/*" element={
-                <AuthGuard requireAuth={true}>
-                  <Routes>
-                    <Route index element={<AdminDashboard />} />
-                    <Route path="dashboard" element={<AdminDashboard />} />
-                    <Route path="clients" element={<AdminClients />} />
-                    <Route path="projects" element={<AdminProjects />} />
-                    <Route path="invoices" element={<AdminInvoices />} />
-                    <Route path="quotes" element={<AdminQuotes />} />
-                    <Route path="tasks" element={<AdminTasks />} />
-                    <Route path="inventory" element={<AdminInventory />} />
-                    <Route path="documents" element={<AdminDocuments />} />
-                    <Route path="users" element={<AdminUsers />} />
-                    <Route path="testimonials" element={<AdminTestimonials />} />
-                    <Route path="services" element={<AdminServices />} />
-                    <Route path="reports" element={<AdminReports />} />
-                    <Route path="settings" element={<AdminSettings />} />
-                    <Route path="templates" element={<AdminTemplates />} />
-                    <Route path="letterheads" element={<AdminLetterheads />} />
-                    <Route path="analytics" element={<AdminAnalytics />} />
-                    <Route path="backup" element={<AdminBackup />} />
-                  </Routes>
-                </AuthGuard>
-              } />
-              
-              {/* Catch-all route */}
-              <Route path="*" element={<div>Page not found</div>} />
-            </Routes>
+          <TooltipProvider>
             <Toaster />
-          </div>
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={<PublicPage />} />
+                <Route path="/quotes" element={<Quotes />} />
+                
+                {/* Admin Routes */}
+                <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                <Route path="/admin/projects" element={<AdminProjects />} />
+                <Route path="/admin/invoices" element={<AdminInvoices />} />
+                <Route path="/admin/quotations" element={<AdminQuotations />} />
+                <Route path="/admin/clients" element={<AdminClients />} />
+                <Route path="/admin/services" element={<AdminServices />} />
+                <Route path="/admin/templates" element={<AdminTemplates />} />
+                <Route path="/admin/settings" element={<AdminSettings />} />
+                <Route path="/admin/users" element={<AdminUsers />} />
+                <Route path="/admin/reports" element={<AdminReports />} />
+                <Route path="/admin/analytics" element={<AdminAnalytics />} />
+                <Route path="/admin/inventory" element={<AdminInventory />} />
+                <Route path="/admin/tasks" element={<AdminTasks />} />
+                <Route path="/admin/documents" element={<AdminDocuments />} />
+                <Route path="/admin/letterheads" element={<AdminLetterheads />} />
+                <Route path="/admin/backup" element={<AdminBackup />} />
+                <Route path="/admin/testimonials" element={<AdminTestimonials />} />
+                <Route path="/admin/quotes" element={<AdminQuotations />} />
+                
+                {/* Add more routes as needed */}
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
         </AdminProvider>
-      </BrowserRouter>
-    </QueryClientProvider>
-  );
-}
+      </QueryClientProvider>
+    </HelmetProvider>
+  </React.StrictMode>
+);
 
 export default App;
